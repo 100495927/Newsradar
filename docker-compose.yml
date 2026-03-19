@@ -1,0 +1,105 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: newsradar-frontend
+    restart: unless-stopped
+    profiles:
+      - frontend
+    environment:
+      NODE_ENV: ${FRONTEND_NODE_ENV:-development}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+      FRONTEND_PORT: ${FRONTEND_PORT:-5173}
+    ports:
+      - "${FRONTEND_EXPOSE_PORT:-5173}:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:5173').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - newsradar_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: newsradar-backend
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      APP_HOST: ${APP_HOST:-0.0.0.0}
+      APP_PORT: ${APP_PORT:-8000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      PYTHONUNBUFFERED: "1"
+      # URI usada por el backend para conectar con Mongo usando el usuario de aplicacion.
+      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_INITDB_DATABASE:-admin}
+      MONGO_DB_NAME: ${MONGO_APP_DB:-newsradar}
+    ports:
+      - "${BACKEND_EXPOSE_PORT:-8000}:8000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+    networks:
+      - newsradar_net
+
+  mongodb:
+    image: mongo:7.0
+    container_name: newsradar-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-newsradar_root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-change_me_root_pwd}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-admin}
+      MONGO_APP_USER: ${MONGO_APP_USER:-newsradar_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-change_me_app_pwd}
+      MONGO_APP_DB: ${MONGO_APP_DB:-newsradar}
+    # Mantener mapeo solo para depuracion local. En despliegue real se recomienda cerrar este puerto.
+    ports:
+      - "${MONGO_EXPOSE_PORT:-27017}:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./docker/mongo/init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "echo 'db.runCommand({ ping: 1 })' | mongosh mongodb://localhost:27017/admin --quiet",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 8
+      start_period: 30s
+    networks:
+      - newsradar_net
+
+networks:
+  newsradar_net:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    name: newsradar_mongodb_data
