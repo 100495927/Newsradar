@@ -1,9 +1,88 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" class="light">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NewsRadar</title>
+    <title>NewsRadar | Panel Global</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'surface-dim': '#d8dadd',
+              'on-tertiary-fixed-variant': '#005312',
+              'on-secondary-fixed': '#410002',
+              'secondary-fixed-dim': '#ffb4ac',
+              'on-tertiary': '#ffffff',
+              'surface-container-highest': '#e0e3e6',
+              secondary: '#b7131a',
+              'outline-variant': '#c5c6cd',
+              background: '#f8fafc',
+              surface: '#f8fafc',
+              'surface-container-low': '#f1f5f9',
+              'on-surface-variant': '#64748b',
+              primary: '#0A192F',
+              'on-error': '#ffffff',
+              'on-background': '#0f172a',
+              tertiary: '#000000',
+              'inverse-primary': '#b9c7e4',
+              'secondary-container': '#db322f',
+              'surface-container-lowest': '#ffffff',
+              'secondary-fixed': '#fee2e2',
+              'on-primary-fixed': '#0d1c32',
+              'on-error-container': '#93000a',
+              'on-primary': '#ffffff',
+              'surface-container': '#f1f5f9',
+              'primary-fixed': '#e2e8f0',
+              'surface-bright': '#f8fafc',
+              outline: '#94a3b8',
+              'on-tertiary-fixed': '#002204',
+              'inverse-on-surface': '#f8fafc',
+              'on-primary-container': '#1e293b',
+              'primary-fixed-dim': '#cbd5e1',
+              'surface-variant': '#e2e8f0',
+              'on-secondary': '#ffffff',
+              'tertiary-container': '#002204',
+              'surface-container-high': '#e2e8f0',
+              'tertiary-fixed-dim': '#88d982',
+              'tertiary-fixed': '#dcfce7',
+              'on-secondary-container': '#fffbff',
+              'on-surface': '#0f172a',
+              'on-tertiary-container': '#166534',
+              'inverse-surface': '#1e293b',
+              'surface-tint': '#0A192F',
+              'on-primary-fixed-variant': '#334155',
+              'error-container': '#fee2e2',
+              'primary-container': '#0A192F',
+              error: '#b91c1c',
+              'on-secondary-fixed-variant': '#991b1b',
+            },
+            fontFamily: {
+              headline: ['Manrope', 'sans-serif'],
+              body: ['Inter', 'sans-serif'],
+              label: ['Inter', 'sans-serif'],
+            },
+            borderRadius: {
+              DEFAULT: '0.125rem',
+              lg: '0.25rem',
+              xl: '0.5rem',
+              full: '9999px',
+            },
+          },
+        },
+      }
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>
