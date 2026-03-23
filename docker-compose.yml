@@ -46,6 +46,11 @@ services:
       # URI usada por el backend para conectar con Mongo usando el usuario de aplicacion.
       MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_INITDB_DATABASE:-admin}
       MONGO_DB_NAME: ${MONGO_APP_DB:-newsradar}
+      SMTP_SERVER: "smtp.gmail.com"
+      SMTP_PORT: 587
+      SMTP_USER: "newsradar.uc3m.gr5@gmail.com"
+      SMTP_PASSWORD: "mwli wwhx oioe bhte" 
+      MAIL_FROM: "newsradar.uc3m.gr5@gmail.com"
     ports:
       - "${BACKEND_EXPOSE_PORT:-8000}:8000"
     depends_on:
