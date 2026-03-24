@@ -32,28 +32,6 @@ class RSSFeedList:
                 return i.url
 
 
-class RSSFeedSource:
-    # Fuente RSS
-    nombre: str
-    url: str
-    parser: Callable[[feedparser.FeedParserDict], RSSEntrada]
-
-    def __init__(
-        self,
-        nombre: str,
-        url: str,
-        parser: Callable[[feedparser.FeedParserDict], RSSEntrada],
-    ):
-        self.nombre = nombre
-        self.url = url
-        self.parser = parser
-
-    def obtener_entradas(self) -> RSSFeed:
-        feed = feedparser.parse(self.url)
-        objeto_feed = RSSFeed(self, feed.feed.title, feed.feed.link, feed.entries)
-        return objeto_feed
-
-
 class RSSFeed:
     # RSS
     def __init__(self, fuente, titulo, link, entradas):
@@ -80,14 +58,43 @@ class RSSFeed:
         yield from self._entradas
 
 
+class RSSFeedSource:
+    # Fuente RSS
+    nombre: str
+    url: str
+    parser: Callable[[feedparser.FeedParserDict], RSSEntrada]
+
+    def __init__(
+        self,
+        nombre: str,
+        url: str,
+        parser: Callable[[feedparser.FeedParserDict], RSSEntrada],
+    ):
+        self.nombre = nombre
+        self.url = url
+        self.parser = parser
+
+    def obtener_entradas(self) -> RSSFeed:
+        feed = feedparser.parse(self.url)
+        objeto_feed = RSSFeed(self, feed.feed.title, feed.feed.link, feed.entries)
+        return objeto_feed
+
+
 if __name__ == "__main__":
     # Pruebas
     feeds = RSSFeedList(parsers)
-    feeds.añadir(
+    """feeds.añadir(
         "el_pais", "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada"
     )
     feeds.añadir("abc", "https://www.abc.es/rss/feeds/abcPortada.xml")
     feeds.añadir("bbc", "https://feeds.bbci.co.uk/news/world/rss.xml")
+    feeds.añadir("rtve_noticias", "https://api2.rtve.es/rss/temas_noticias.xml")
+    feeds.añadir("elconfidencial_mundo", "https://rss.elconfidencial.com/mundo/")
+    feeds.añadir("marca_primera_division", "https://objetos.estaticos-marca.com/rss/futbol/primera-division.xml")
+    feeds.añadir("esdiario", "https://www.esdiario.com/rss/home.xml")
+    feeds.añadir("antena3", "https://www.antena3.com/noticias/rss/4013050.xml")
+    feeds.añadir("ministerio_dsa", "https://www.dsca.gob.es/es/rss-noticias.xml")"""
+    feeds.añadir("moncloa", "https://www.lamoncloa.gob.es/paginas/rss.aspx")
     for feed in feeds:
         f = feed.obtener_entradas()
         print(f)
