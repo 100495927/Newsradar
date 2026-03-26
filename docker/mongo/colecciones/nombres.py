@@ -1,0 +1,7 @@
+COLECCION_USUARIOS = "users"
+COLECCION_RSS = "rss"
+
+__all__ = [
+    "COLECCION_USUARIOS",
+    "COLECCION_RSS"
+]
