@@ -1,0 +1,499 @@
+{
+  "generated_at": "2026-03-25T20:29:10.543461+00:00",
+  "feed_count": 7,
+  "ok_count": 7,
+  "error_count": 0,
+  "results": [
+    {
+      "id": "cnmv_notas_prensa",
+      "name": "CNMV Notas de Prensa",
+      "url": "https://www.cnmv.es/portal/RSS/RSS.asmx/GetDatos?iID=1",
+      "started_at": "2026-03-25T20:29:08.049440+00:00",
+      "status": "ok",
+      "http": {
+        "status_code": 200,
+        "content_type": "text/xml; charset=utf-8",
+        "final_url": "https://www.cnmv.es/portal/RSS/RSS.asmx/GetDatos?iID=1"
+      },
+      "xml": {
+        "root_tag": "rss",
+        "namespaces": {
+          "xsi": "http://www.w3.org/2001/XMLSchema-instance",
+          "xsd": "http://www.w3.org/2001/XMLSchema"
+        },
+        "first_item_pubDate": "Tue, 24 Mar 2026 13:07:00 GMT",
+        "raw_path": "D:\\UC3M\\5º Curso\\2º Cuatrimestre\\Devops\\newsradar-g5-2026\\docs\\rss_probe\\raw\\cnmv_notas_prensa.xml"
+      },
+      "feedparser": {
+        "version": "rss20",
+        "bozo": false,
+        "bozo_exception": null,
+        "channel_keys": [
+          "generator",
+          "generator_detail",
+          "image",
+          "language",
+          "link",
+          "links",
+          "subtitle",
+          "subtitle_detail",
+          "title",
+          "title_detail",
+          "ttl"
+        ],
+        "item_count_sampled": 34,
+        "item_field_presence": {
+          "title": 34,
+          "link": 34,
+          "summary": 34,
+          "description": 34,
+          "content": 0,
+          "published": 34,
+          "published_parsed": 34,
+          "updated": 34,
+          "id": 34,
+          "guid": 34,
+          "author": 0,
+          "authors": 0,
+          "tags": 0
+        },
+        "item_key_frequency": {
+          "guidislink": 34,
+          "id": 34,
+          "link": 34,
+          "links": 34,
+          "published": 34,
+          "published_parsed": 34,
+          "summary": 34,
+          "summary_detail": 34,
+          "title": 34,
+          "title_detail": 34
+        }
+      },
+      "ended_at": "2026-03-25T20:29:08.313368+00:00"
+    },
+    {
+      "id": "cnmv_info_privilegiada",
+      "name": "CNMV Informacion Privilegiada",
+      "url": "https://www.cnmv.es/portal/informacion-privilegiada/RSS.asmx/GetNoticiasCNMV",
+      "started_at": "2026-03-25T20:29:08.314063+00:00",
+      "status": "ok",
+      "http": {
+        "status_code": 200,
+        "content_type": "text/xml; charset=utf-8",
+        "final_url": "https://www.cnmv.es/portal/informacion-privilegiada/RSS.asmx/GetNoticiasCNMV"
+      },
+      "xml": {
+        "root_tag": "rss",
+        "namespaces": {
+          "xsi": "http://www.w3.org/2001/XMLSchema-instance",
+          "xsd": "http://www.w3.org/2001/XMLSchema"
+        },
+        "first_item_pubDate": "Wed, 25 Mar 2026 17:41:20 GMT",
+        "raw_path": "D:\\UC3M\\5º Curso\\2º Cuatrimestre\\Devops\\newsradar-g5-2026\\docs\\rss_probe\\raw\\cnmv_info_privilegiada.xml"
+      },
+      "feedparser": {
+        "version": "rss20",
+        "bozo": false,
+        "bozo_exception": null,
+        "channel_keys": [
+          "generator",
+          "generator_detail",
+          "image",
+          "language",
+          "link",
+          "links",
+          "subtitle",
+          "subtitle_detail",
+          "title",
+          "title_detail",
+          "ttl"
+        ],
+        "item_count_sampled": 3,
+        "item_field_presence": {
+          "title": 3,
+          "link": 3,
+          "summary": 3,
+          "description": 3,
+          "content": 0,
+          "published": 3,
+          "published_parsed": 3,
+          "updated": 3,
+          "id": 3,
+          "guid": 3,
+          "author": 0,
+          "authors": 0,
+          "tags": 0
+        },
+        "item_key_frequency": {
+          "guidislink": 3,
+          "id": 3,
+          "link": 3,
+          "links": 3,
+          "published": 3,
+          "published_parsed": 3,
+          "summary": 3,
+          "summary_detail": 3,
+          "title": 3,
+          "title_detail": 3
+        }
+      },
+      "ended_at": "2026-03-25T20:29:08.541465+00:00"
+    },
+    {
+      "id": "una_al_dia",
+      "name": "Una al Dia (Hispasec)",
+      "url": "https://feeds.feedburner.com/hispasec/zCAd",
+      "started_at": "2026-03-25T20:29:08.542063+00:00",
+      "status": "ok",
+      "http": {
+        "status_code": 200,
+        "content_type": "text/xml; charset=utf-8",
+        "final_url": "https://feeds.feedburner.com/hispasec/zCAd"
+      },
+      "xml": {
+        "root_tag": "rss",
+        "namespaces": {
+          "atom": "http://www.w3.org/2005/Atom",
+          "content": "http://purl.org/rss/1.0/modules/content/",
+          "dc": "http://purl.org/dc/elements/1.1/",
+          "slash": "http://purl.org/rss/1.0/modules/slash/",
+          "sy": "http://purl.org/rss/1.0/modules/syndication/",
+          "wfw": "http://wellformedweb.org/CommentAPI/",
+          "default": "com-wordpress:feed-additions:1",
+          "xhtml": "http://www.w3.org/1999/xhtml"
+        },
+        "first_item_pubDate": "Wed, 25 Mar 2026 08:41:52 +0000",
+        "raw_path": "D:\\UC3M\\5º Curso\\2º Cuatrimestre\\Devops\\newsradar-g5-2026\\docs\\rss_probe\\raw\\una_al_dia.xml"
+      },
+      "feedparser": {
+        "version": "rss20",
+        "bozo": false,
+        "bozo_exception": null,
+        "channel_keys": [
+          "image",
+          "language",
+          "link",
+          "links",
+          "site",
+          "subtitle",
+          "subtitle_detail",
+          "sy_updatefrequency",
+          "sy_updateperiod",
+          "title",
+          "title_detail",
+          "updated",
+          "updated_parsed",
+          "xhtml_meta"
+        ],
+        "item_count_sampled": 10,
+        "item_field_presence": {
+          "title": 10,
+          "link": 10,
+          "summary": 10,
+          "description": 10,
+          "content": 10,
+          "published": 10,
+          "published_parsed": 10,
+          "updated": 10,
+          "id": 10,
+          "guid": 10,
+          "author": 10,
+          "authors": 10,
+          "tags": 10
+        },
+        "item_key_frequency": {
+          "author": 10,
+          "author_detail": 10,
+          "authors": 10,
+          "comments": 10,
+          "content": 10,
+          "guidislink": 10,
+          "id": 10,
+          "link": 10,
+          "links": 10,
+          "post-id": 10,
+          "published": 10,
+          "published_parsed": 10,
+          "slash_comments": 10,
+          "summary": 10,
+          "summary_detail": 10,
+          "tags": 10,
+          "title": 10,
+          "title_detail": 10,
+          "wfw_commentrss": 10
+        }
+      },
+      "ended_at": "2026-03-25T20:29:09.029333+00:00"
+    },
+    {
+      "id": "bbc_world",
+      "name": "BBC World",
+      "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "started_at": "2026-03-25T20:29:09.030483+00:00",
+      "status": "ok",
+      "http": {
+        "status_code": 200,
+        "content_type": "text/xml; charset=utf-8",
+        "final_url": "https://feeds.bbci.co.uk/news/world/rss.xml"
+      },
+      "xml": {
+        "root_tag": "rss",
+        "namespaces": {
+          "dc": "http://purl.org/dc/elements/1.1/",
+          "content": "http://purl.org/rss/1.0/modules/content/",
+          "atom": "http://www.w3.org/2005/Atom",
+          "media": "http://search.yahoo.com/mrss/"
+        },
+        "first_item_pubDate": "Wed, 25 Mar 2026 19:38:00 GMT",
+        "raw_path": "D:\\UC3M\\5º Curso\\2º Cuatrimestre\\Devops\\newsradar-g5-2026\\docs\\rss_probe\\raw\\bbc_world.xml"
+      },
+      "feedparser": {
+        "version": "rss20",
+        "bozo": false,
+        "bozo_exception": null,
+        "channel_keys": [
+          "generator",
+          "generator_detail",
+          "image",
+          "language",
+          "link",
+          "links",
+          "rights",
+          "rights_detail",
+          "subtitle",
+          "subtitle_detail",
+          "title",
+          "title_detail",
+          "ttl",
+          "updated",
+          "updated_parsed"
+        ],
+        "item_count_sampled": 40,
+        "item_field_presence": {
+          "title": 40,
+          "link": 40,
+          "summary": 40,
+          "description": 40,
+          "content": 0,
+          "published": 40,
+          "published_parsed": 40,
+          "updated": 40,
+          "id": 40,
+          "guid": 40,
+          "author": 0,
+          "authors": 0,
+          "tags": 0
+        },
+        "item_key_frequency": {
+          "guidislink": 40,
+          "href": 40,
+          "id": 40,
+          "link": 40,
+          "links": 40,
+          "media_thumbnail": 40,
+          "published": 40,
+          "published_parsed": 40,
+          "summary": 40,
+          "summary_detail": 40,
+          "title": 40,
+          "title_detail": 40
+        }
+      },
+      "ended_at": "2026-03-25T20:29:09.302154+00:00"
+    },
+    {
+      "id": "dsca_noticias",
+      "name": "Ministerio DSCA Noticias",
+      "url": "https://www.dsca.gob.es/es/rss-noticias.xml",
+      "started_at": "2026-03-25T20:29:09.302817+00:00",
+      "status": "ok",
+      "http": {
+        "status_code": 200,
+        "content_type": "application/rss+xml; charset=utf-8",
+        "final_url": "https://www.dsca.gob.es/es/rss-noticias.xml"
+      },
+      "xml": {
+        "root_tag": "rss",
+        "namespaces": {
+          "dc": "http://purl.org/dc/elements/1.1/"
+        },
+        "first_item_pubDate": "22 de Marzo de 2026",
+        "raw_path": "D:\\UC3M\\5º Curso\\2º Cuatrimestre\\Devops\\newsradar-g5-2026\\docs\\rss_probe\\raw\\dsca_noticias.xml"
+      },
+      "feedparser": {
+        "version": "rss20",
+        "bozo": false,
+        "bozo_exception": null,
+        "channel_keys": [
+          "language",
+          "link",
+          "links",
+          "subtitle",
+          "subtitle_detail",
+          "title",
+          "title_detail"
+        ],
+        "item_count_sampled": 10,
+        "item_field_presence": {
+          "title": 10,
+          "link": 10,
+          "summary": 10,
+          "description": 10,
+          "content": 0,
+          "published": 10,
+          "published_parsed": 0,
+          "updated": 10,
+          "id": 10,
+          "guid": 10,
+          "author": 0,
+          "authors": 10,
+          "tags": 0
+        },
+        "item_key_frequency": {
+          "author": 10,
+          "authors": 10,
+          "guidislink": 10,
+          "id": 10,
+          "link": 10,
+          "links": 10,
+          "published": 10,
+          "published_parsed": 10,
+          "summary": 10,
+          "summary_detail": 10,
+          "title": 10,
+          "title_detail": 10
+        }
+      },
+      "ended_at": "2026-03-25T20:29:09.547811+00:00"
+    },
+    {
+      "id": "lamoncloa_destacadas",
+      "name": "La Moncloa Destacadas",
+      "url": "https://www.lamoncloa.gob.es/paginas/rss.aspx",
+      "started_at": "2026-03-25T20:29:09.548429+00:00",
+      "status": "ok",
+      "http": {
+        "status_code": 200,
+        "content_type": "application/rss+xml; charset=UTF-8",
+        "final_url": "https://www.lamoncloa.gob.es/paginas/rss.aspx"
+      },
+      "xml": {
+        "root_tag": "rss",
+        "namespaces": {
+          "xsd": "http://www.w3.org/2001/XMLSchema",
+          "xsi": "http://www.w3.org/2001/XMLSchema-instance"
+        },
+        "first_item_pubDate": "Wed, 25 Mar 2026 12:40:00 GMT",
+        "raw_path": "D:\\UC3M\\5º Curso\\2º Cuatrimestre\\Devops\\newsradar-g5-2026\\docs\\rss_probe\\raw\\lamoncloa_destacadas.xml"
+      },
+      "feedparser": {
+        "version": "rss20",
+        "bozo": false,
+        "bozo_exception": null,
+        "channel_keys": [
+          "image",
+          "language",
+          "link",
+          "links",
+          "rights",
+          "rights_detail",
+          "subtitle",
+          "subtitle_detail",
+          "title",
+          "title_detail"
+        ],
+        "item_count_sampled": 4,
+        "item_field_presence": {
+          "title": 4,
+          "link": 4,
+          "summary": 4,
+          "description": 4,
+          "content": 0,
+          "published": 4,
+          "published_parsed": 4,
+          "updated": 4,
+          "id": 4,
+          "guid": 4,
+          "author": 0,
+          "authors": 0,
+          "tags": 4
+        },
+        "item_key_frequency": {
+          "guidislink": 4,
+          "id": 4,
+          "link": 4,
+          "links": 4,
+          "published": 4,
+          "published_parsed": 4,
+          "summary": 4,
+          "summary_detail": 4,
+          "tags": 4,
+          "title": 4,
+          "title_detail": 4
+        }
+      },
+      "ended_at": "2026-03-25T20:29:10.265288+00:00"
+    },
+    {
+      "id": "rtve_noticias",
+      "name": "RTVE Noticias",
+      "url": "https://api2.rtve.es/rss/temas_noticias.xml",
+      "started_at": "2026-03-25T20:29:10.266333+00:00",
+      "status": "ok",
+      "http": {
+        "status_code": 200,
+        "content_type": "text/xml",
+        "final_url": "https://api2.rtve.es/rss/temas_noticias.xml"
+      },
+      "xml": {
+        "root_tag": "rss",
+        "namespaces": {
+          "media": "http://search.yahoo.com/mrss/"
+        },
+        "first_item_pubDate": "Fri, 10 Jun 2022 01:05:00 +0200",
+        "raw_path": "D:\\UC3M\\5º Curso\\2º Cuatrimestre\\Devops\\newsradar-g5-2026\\docs\\rss_probe\\raw\\rtve_noticias.xml"
+      },
+      "feedparser": {
+        "version": "rss20",
+        "bozo": false,
+        "bozo_exception": null,
+        "channel_keys": [
+          "link",
+          "links",
+          "subtitle",
+          "subtitle_detail",
+          "title",
+          "title_detail"
+        ],
+        "item_count_sampled": 40,
+        "item_field_presence": {
+          "title": 40,
+          "link": 40,
+          "summary": 40,
+          "description": 40,
+          "content": 0,
+          "published": 40,
+          "published_parsed": 40,
+          "updated": 40,
+          "id": 0,
+          "guid": 0,
+          "author": 0,
+          "authors": 0,
+          "tags": 0
+        },
+        "item_key_frequency": {
+          "link": 40,
+          "links": 40,
+          "published": 40,
+          "published_parsed": 40,
+          "summary": 40,
+          "summary_detail": 40,
+          "title": 40,
+          "title_detail": 40
+        }
+      },
+      "ended_at": "2026-03-25T20:29:10.542837+00:00"
+    }
+  ]
+}

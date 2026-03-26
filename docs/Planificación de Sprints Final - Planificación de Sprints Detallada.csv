@@ -1,0 +1,8 @@
+Sprint,Objetivo Principal,Tareas de Desarrollo (Back/Data/Scripting),Tareas de Interfaz (Frontend),Control de Calidad (Pruebas Cruzadas),
+S0,Arquitectura Base,Definición de ADRs. Configuración de docker-compose (Mongo + Frontend + Backend).,Estructura de carpetas del proyecto en Git.,Validación de conectividad entre contenedores.,16/03
+S1,Componentes Core,"Script RSS (feedparser), Configuración DB, Script envío Email, Auth (Login/Reg).","Maquetación funcional: Base de la interfaz  (usando Google AI Studio, por ejemplo).",Pruebas funcionales de los scripts y del flujo de Auth.,23/03
+S2,Integración y QA,Refactorización de lógica para soporte de Front. Creación de suite de tests completa.,"Conexión total de los componentes del S1 (RSS, Auth, Email) en la interfaz.",Ejecución de tests cruzados sobre la integración.,30/03
+S3,Inteligencia,"Procesado de lenguaje, gestión de Keywords y motor de Alertas.",Implementación de vistas para gestión de palabras clave y alertas.,"Pruebas de ""Match"" de palabras clave y clasificación.",06/04
+S4,Personalización,Integración de preferencias: cada usuario gestiona sus propios filtros y medios.,Panel de usuario personalizado y dashboard de preferencias.,Validación de aislamiento de datos entre usuarios.,13/04
+S5,Notificaciones,Sistema de disparo de notificaciones finales y generación de Nubes de Palabras.,Visualización de estadísticas y alertas en tiempo real.,Pruebas de estrés finales (Escenario de competición).,20/04
+,,,,,11 de mayo

@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:slash="http://purl.org/rss/1.0/modules/slash/" xmlns:sy="http://purl.org/rss/1.0/modules/syndication/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" version="2.0">
+
+<channel>
+	<title>Una Al Día</title>
+	<atom:link href="https://unaaldia.hispasec.com/feed" rel="self" type="application/rss+xml"/>
+	<link>https://unaaldia.hispasec.com/</link>
+	<description>Boletín de noticias de Seguridad Informática ofrecido por Hispasec</description>
+	<lastBuildDate>Wed, 25 Mar 2026 08:41:55 +0000</lastBuildDate>
+	<language>es</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	
+
+<image>
+	<url>https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2022/08/cropped-Favicon-1.png?fit=32%2C32&amp;ssl=1</url>
+	<title>Una Al Día</title>
+	<link>https://unaaldia.hispasec.com/</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+<site xmlns="com-wordpress:feed-additions:1">151686138</site>	<xhtml:meta content="noindex" name="robots" xmlns:xhtml="http://www.w3.org/1999/xhtml"/><item>
+		<title>Ransomware Interlock explota Zero-Day crítico en Cisco FMC (CVE-2026-20131)</title>
+		<link>https://unaaldia.hispasec.com/2026/03/ransomware-interlock-explota-zero-day-critico-en-cisco-fmc-cve-2026-20131.html?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=ransomware-interlock-explota-zero-day-critico-en-cisco-fmc-cve-2026-20131</link>
+					<comments>https://unaaldia.hispasec.com/2026/03/ransomware-interlock-explota-zero-day-critico-en-cisco-fmc-cve-2026-20131.html#respond</comments>
+		
+		<dc:creator><![CDATA[Raúl]]></dc:creator>
+		<pubDate>Wed, 25 Mar 2026 08:41:52 +0000</pubDate>
+				<category><![CDATA[General]]></category>
+		<guid isPermaLink="false">https://unaaldia.hispasec.com/?p=78008</guid>
+
+					<description><![CDATA[<p>El equipo de respuesta a incidentes de Cisco (PSIRT) ha emitido un parche de emergencia extraordinario para abordar una vulnerabilidad de severidad crítica (CVSS 10.0) en su plataforma Cisco Secure Firewall Management Center (FMC). El fallo, catalogado como CVE-2026-20131, permite a un atacante remoto no autenticado ejecutar comandos arbitrarios con privilegios de root en el [&#8230;]</p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/ransomware-interlock-explota-zero-day-critico-en-cisco-fmc-cve-2026-20131.html">Ransomware Interlock explota Zero-Day crítico en Cisco FMC (CVE-2026-20131)</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[
+<p>El equipo de respuesta a incidentes de Cisco (PSIRT) ha emitido un parche de emergencia extraordinario para abordar una vulnerabilidad de severidad crítica (CVSS 10.0) en su plataforma <strong>Cisco Secure Firewall Management Center (FMC)</strong>. El fallo, catalogado como <strong><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-20131" target="_blank" rel="noreferrer noopener">CVE-2026-20131</a></strong>, permite a un atacante remoto no autenticado ejecutar comandos arbitrarios con privilegios de <em>root</em> en el sistema operativo subyacente.</p>
+
+
+
+<figure class="wp-block-image size-large"><img data-recalc-dims="1" fetchpriority="high" decoding="async" width="1536" height="864" src="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/ChatGPT-Image-25-mar-2026-09_40_59-edited.png?resize=1536%2C864&#038;ssl=1" alt="" class="wp-image-78022" srcset="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/ChatGPT-Image-25-mar-2026-09_40_59-edited.png?w=1536&amp;ssl=1 1536w, https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/ChatGPT-Image-25-mar-2026-09_40_59-edited.png?resize=300%2C169&amp;ssl=1 300w, https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/ChatGPT-Image-25-mar-2026-09_40_59-edited.png?resize=1024%2C576&amp;ssl=1 1024w, https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/ChatGPT-Image-25-mar-2026-09_40_59-edited.png?resize=768%2C432&amp;ssl=1 768w, https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/ChatGPT-Image-25-mar-2026-09_40_59-edited.png?resize=1200%2C675&amp;ssl=1 1200w" sizes="(max-width: 1000px) 100vw, 1000px" /></figure>
+
+
+
+<h3 class="wp-block-heading" id="h-descripcion-de-la-vulnerabilidad-y-detalles-tecnicos">Descripción de la vulnerabilidad y detalles técnicos</h3>
+
+
+
+<p>La vulnerabilidad, descubierta por Keane O&#8217;Kelley durante un ejercicio de seguridad interno, reside en un fallo de diseño en el manejo de datos entrantes por la interfaz web de administración de Cisco Secure FMC. La aplicación falla al realizar una deserialización de objetos Java recibidos a través de la API web, sin validación previa.</p>
+
+
+
+<p>La interfaz web de FMC está construida sobre un ecosistema Java. En su funcionamiento normal, la aplicación recibe objetos serializados (estructuras de datos convertidas a formato binario para viajar por la red) y los «reconstruye» (deserializa) en el servidor para utilizarlos. El error sucede cuando el FMC realiza este proceso de reconstrucción <strong>sin validar ni verificar</strong> previamente la integridad de dichos datos.</p>
+
+
+
+<p>Un atacante remoto y no autenticado puede explotar esta debilidad enviando una petición HTTP web estándar que contenga un objeto Java malicioso serializado.</p>
+
+
+
+<p>Al recibir el <em>payload</em>, el motor del FMC comienza a deserializar el objeto. Durante esta reconstrucción automática, el <em>payload</em> utiliza técnicas de <em>Gadget Chains</em> (aprovechando clases y librerías ya existentes y legítimas dentro de la aplicación de Cisco) para alterar el flujo de ejecución de la Máquina Virtual de Java (JVM).</p>
+
+
+
+<p>Como resultado final, la aplicación termina ejecutando el código embebido por el atacante, y dado que la consola de administración requiere privilegios máximos para operar los firewalls, la ejecución se realiza con permisos de <strong>root</strong> a nivel del sistema operativo, otorgando al atacante control sobre el servidor.</p>
+
+
+
+<h3 class="wp-block-heading" id="h-solucion-y-medidas-preventivas">Solución y medidas preventivas</h3>
+
+
+
+<p>Cisco ha lanzado parches de emergencia extraordinarios y urge a todos los administradores a aplicar las actualizaciones de software correspondientes de manera inmediata.</p>
+
+
+
+<p>Dada la explotación activa por el grupo de ransomware, se recomienda encarecidamente lo siguiente a las organizaciones afectadas o con riesgo de serlo:</p>
+
+
+
+<ol start="1" class="wp-block-list">
+<li><strong>Aplicar el parche de Cisco:</strong> Instalar la actualización de seguridad inmediatamente.</li>
+
+
+
+<li><strong>Aislar la interfaz de administración:</strong> Como medida temporal, restringir estrictamente el acceso a la interfaz web del FMC. Esta solo debe ser accesible desde direcciones IP de administración confiables o a través de una VPN interna dedicada, bloqueando cualquier exposición a Internet o a segmentos de red no confiables.</li>
+</ol>
+
+
+
+<h3 class="wp-block-heading" id="h-referencias">Referencias</h3>
+
+
+
+<ul class="wp-block-list">
+<li><strong>Cisco Security Advisories:</strong> <a href="https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmc-rce-NKhnULJh" target="_blank" rel="noreferrer noopener">https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmc-rce-NKhnULJh</a></li>
+
+
+
+<li><strong>National Vulnerability Database:</strong> <a href="https://nvd.nist.gov/vuln/detail/CVE-2026-20131" target="_blank" rel="noreferrer noopener">https://nvd.nist.gov/vuln/detail/CVE-2026-20131</a></li>
+</ul>
+
+
+
+<p></p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/ransomware-interlock-explota-zero-day-critico-en-cisco-fmc-cve-2026-20131.html">Ransomware Interlock explota Zero-Day crítico en Cisco FMC (CVE-2026-20131)</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://unaaldia.hispasec.com/2026/03/ransomware-interlock-explota-zero-day-critico-en-cisco-fmc-cve-2026-20131.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">78008</post-id>	</item>
+		<item>
+		<title>Crunchyroll investiga un presunto robo de datos tras la filtración de millones de tickets de soporte</title>
+		<link>https://unaaldia.hispasec.com/2026/03/crunchyroll-investiga-un-presunto-robo-de-datos-tras-la-filtracion-de-millones-de-tickets-de-soporte.html?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=crunchyroll-investiga-un-presunto-robo-de-datos-tras-la-filtracion-de-millones-de-tickets-de-soporte</link>
+					<comments>https://unaaldia.hispasec.com/2026/03/crunchyroll-investiga-un-presunto-robo-de-datos-tras-la-filtracion-de-millones-de-tickets-de-soporte.html#respond</comments>
+		
+		<dc:creator><![CDATA[Hispasec]]></dc:creator>
+		<pubDate>Tue, 24 Mar 2026 12:06:13 +0000</pubDate>
+				<category><![CDATA[General]]></category>
+		<category><![CDATA[ciberseguridad]]></category>
+		<category><![CDATA[Phishing]]></category>
+		<guid isPermaLink="false">https://unaaldia.hispasec.com/?p=78018</guid>
+
+					<description><![CDATA[<p>Crunchyroll está investigando las afirmaciones de un atacante que asegura haber exfiltrado cerca de 8 millones de tickets de soporte con unos 6,8 millones de correos únicos. La compañía sostiene que, por ahora, cree que el alcance se limitaría principalmente a información de atención al cliente y dice no haber visto indicios de acceso persistente [&#8230;]</p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/crunchyroll-investiga-un-presunto-robo-de-datos-tras-la-filtracion-de-millones-de-tickets-de-soporte.html">Crunchyroll investiga un presunto robo de datos tras la filtración de millones de tickets de soporte</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[<p><strong>Crunchyroll</strong> está investigando las afirmaciones de un atacante que asegura haber exfiltrado cerca de <strong>8 millones de tickets de soporte</strong> con unos <strong>6,8 millones de correos</strong> únicos. La compañía sostiene que, por ahora, cree que el alcance se limitaría principalmente a información de <strong>atención al cliente</strong> y dice no haber visto indicios de acceso persistente en curso.</p>
+<p><img data-recalc-dims="1" decoding="async" src="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/crunchyroll-investiga-presunto-robo-datos-tickets-soporte-68m-emails.png?ssl=1" alt="Entry image" /></p>
+<p><strong>Crunchyroll</strong> ha iniciado una investigación tras las afirmaciones de un actor de amenazas que asegura haber robado datos asociados a la plataforma, supuestamente mediante el acceso a sistemas de soporte y la exfiltración de un volumen masivo de registros. El atacante afirma haber descargado aproximadamente <strong>8 millones de tickets</strong> de una instancia de <strong>Zendesk</strong>, y sostiene que en ese conjunto habría alrededor de <strong>6,8 millones de direcciones de email</strong> únicas. La compañía ha reconocido que está al tanto de estas afirmaciones y que está trabajando con expertos para determinar qué ocurrió y cuál sería el impacto real.</p>
+<p>El vector descrito por el atacante apunta a un escenario habitual en incidentes de este tipo: el compromiso de credenciales de un tercero con acceso a herramientas internas. En este caso, la intrusión se habría producido a través de una cuenta de <strong>Okta SSO</strong> perteneciente a un agente de soporte que trabajaría para un proveedor externo de tipo <strong>BPO</strong>, mencionado como <strong>Telus International</strong>. El atacante asegura que logró infectar el equipo del agente con <strong>malware</strong> para capturar credenciales y, desde ahí, acceder a diversas aplicaciones utilizadas en el flujo de soporte y operaciones, entre ellas <strong>Zendesk</strong>, además de otras herramientas citadas como <strong>MaestroQA</strong>, <strong>Mixpanel</strong>, <strong>Google Workspace Mail</strong>, <strong>Jira Service Management</strong> y <strong>Slack</strong>.</p>
+<p>En muestras de tickets revisadas, aparecerían datos como <strong>nombre</strong>, <strong>login</strong>, <strong>email</strong>, <strong>dirección IP</strong>, una <strong>ubicación geográfica aproximada</strong> y, especialmente relevante, el propio <strong>contenido del ticket</strong>, que en algunos casos puede incluir información sensible aportada por el usuario al solicitar ayuda. En cuanto a datos de pago, se recoge que normalmente solo estarían presentes si el propio cliente los incluyó en el texto del ticket; el atacante habría afirmado que en la mayoría de casos se trataría de información parcial (por ejemplo, <strong>últimos cuatro dígitos</strong> o <strong>fecha de caducidad</strong>) y que habría pocos casos con números completos.</p>
+<p>De acuerdo con la narración del atacante, el acceso habría sido revocado en torno a 24 horas después. También afirma haber intentado una <strong>extorsión</strong> por <strong>5 millones de dólares</strong> para evitar la publicación, sin obtener respuesta. Por su parte, <strong>Crunchyroll</strong> ha señalado que, en relación con estas afirmaciones, no ha identificado evidencias de un acceso continuo a sus sistemas, y que por el momento sugiere que el alcance se concentraría en datos de <strong>tickets de soporte</strong> derivados de un incidente en un proveedor externo.</p>
+<p>Aunque la investigación sigue abierta, el caso subraya el riesgo recurrente asociado a <strong>mesas de ayuda</strong> y <strong>proveedores BPO</strong>: suelen disponer de accesos amplios para resolver incidencias con rapidez, lo que los convierte en objetivos atractivos para campañas de <strong>robo de credenciales</strong>, <strong>phishing</strong> y malware orientado a capturar sesiones de <strong>SSO</strong>. Para los usuarios, el impacto más probable, si se confirma la exposición de emails y contenido de tickets, sería un aumento de intentos de <strong>phishing</strong> o <strong>suplantación</strong> apoyados en detalles creíbles extraídos de conversaciones reales con soporte. Como medida prudente, conviene extremar la cautela ante mensajes que se hagan pasar por <strong>Crunchyroll</strong> o por su soporte, no compartir códigos de <strong>2FA/MFA</strong>, y evitar reutilizar contraseñas en distintos servicios.</p>
+<h3>Más información</h3>
+<ul>
+<li>BleepingComputer: <a href="https://www.bleepingcomputer.com/news/security/crunchyroll-probes-breach-after-hacker-claims-to-steal-68m-users-data/" target="_blank" rel="noopener">https://www.bleepingcomputer.com/news/security/crunchyroll-probes-breach-after-hacker-claims-to-steal-68m-users-data/</a></li>
+</ul>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/crunchyroll-investiga-un-presunto-robo-de-datos-tras-la-filtracion-de-millones-de-tickets-de-soporte.html">Crunchyroll investiga un presunto robo de datos tras la filtración de millones de tickets de soporte</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://unaaldia.hispasec.com/2026/03/crunchyroll-investiga-un-presunto-robo-de-datos-tras-la-filtracion-de-millones-de-tickets-de-soporte.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">78018</post-id>	</item>
+		<item>
+		<title>Explotación activa de CVE-2025-32975 permite tomar el control de Quest KACE SMA sin parchear</title>
+		<link>https://unaaldia.hispasec.com/2026/03/explotacion-activa-de-cve-2025-32975-permite-tomar-el-control-de-quest-kace-sma-sin-parchear.html?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=explotacion-activa-de-cve-2025-32975-permite-tomar-el-control-de-quest-kace-sma-sin-parchear</link>
+					<comments>https://unaaldia.hispasec.com/2026/03/explotacion-activa-de-cve-2025-32975-permite-tomar-el-control-de-quest-kace-sma-sin-parchear.html#respond</comments>
+		
+		<dc:creator><![CDATA[Hispasec]]></dc:creator>
+		<pubDate>Mon, 23 Mar 2026 11:04:49 +0000</pubDate>
+				<category><![CDATA[General]]></category>
+		<category><![CDATA[ciberseguridad]]></category>
+		<category><![CDATA[vulnerabilidades]]></category>
+		<guid isPermaLink="false">https://unaaldia.hispasec.com/?p=77991</guid>
+
+					<description><![CDATA[<p>Arctic Wolf ha detectado actividad compatible con la explotación en curso de CVE-2025-32975 (severidad CVSS 10.0) contra instancias Quest KACE SMA sin parchear y expuestas a Internet. El fallo permite un bypass de autenticación y puede acabar en control administrativo y movimientos laterales hacia sistemas críticos, incluidos controladores de dominio y plataformas de backups. Una [&#8230;]</p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/explotacion-activa-de-cve-2025-32975-permite-tomar-el-control-de-quest-kace-sma-sin-parchear.html">Explotación activa de CVE-2025-32975 permite tomar el control de Quest KACE SMA sin parchear</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[<p><strong>Arctic Wolf</strong> ha detectado actividad compatible con la explotación en curso de <strong>CVE-2025-32975</strong> (severidad <strong>CVSS 10.0</strong>) contra instancias <strong>Quest KACE SMA</strong> sin parchear y expuestas a <strong>Internet</strong>. El fallo permite un <strong>bypass de autenticación</strong> y puede acabar en control administrativo y movimientos laterales hacia sistemas críticos, incluidos <strong>controladores de dominio</strong> y plataformas de <strong>backups</strong>.</p>
+<p><img data-recalc-dims="1" decoding="async" src="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/explotacion-activa-cve-2025-32975-control-quest-kace-sma-sin-parchear.png?ssl=1" alt="Entry image" /></p>
+<p>Una vulnerabilidad crítica identificada como <a href="https://arcticwolf.com/resources/blog/cve-2025-32975/" target="_blank" rel="noopener"><strong>CVE-2025-32975</strong></a> (con puntuación máxima <strong>CVSS 10.0</strong>) está siendo explotada activamente contra sistemas <strong>Quest KACE Systems Management Appliance (SMA)</strong> que no han sido actualizados y que permanecen accesibles desde <strong>Internet</strong>, según actividad observada por <strong>Arctic Wolf</strong>. El problema se describe como un <strong>bypass de autenticación</strong>, lo que implica que un atacante podría suplantar a usuarios legítimos sin disponer de credenciales válidas y, en determinadas condiciones, alcanzar un nivel de control equivalente al de una cuenta con privilegios administrativos. En entornos donde <strong>KACE SMA</strong> se utiliza para administración de endpoints, inventario y despliegue de software, una intrusión de este tipo puede convertirse rápidamente en un punto de apoyo de alto valor.</p>
+<p>La telemetría citada sitúa el inicio de los indicios a partir de la semana del 9 de marzo de 2026 en entornos de clientes, con patrones consistentes con explotación sobre instancias vulnerables expuestas. Tras el acceso inicial, los atacantes habrían ejecutado <strong>comandos remotos</strong> y descargado cargas adicionales codificadas en <strong>Base64</strong> desde infraestructura externa, incluyendo el servidor <strong>216.126.225[.]156</strong>, utilizando herramientas como <strong>curl</strong>. Este tipo de descarga y ejecución por etapas es habitual cuando se busca mantener flexibilidad: primero se obtiene acceso, después se incorpora el tooling necesario para reconocimiento, persistencia y escalado.</p>
+<p>Uno de los elementos más relevantes observados es la creación de nuevas cuentas con privilegios de <strong>administrador</strong>, asociada al proceso <strong>runkbot.exe</strong>, que se vincula al <strong>SMA Agent</strong> y a la ejecución de scripts e instalaciones. En un contexto de administración de sistemas, el abuso de mecanismos legítimos de automatización es especialmente peligroso porque puede camuflar acciones maliciosas entre operaciones rutinarias. También se detectaron modificaciones del <strong>Registro de Windows</strong> mediante <strong>PowerShell</strong>, una señal que puede corresponder a cambios de configuración, habilitación de capacidades, o intentos de persistencia.</p>
+<p>En la fase de post-explotación, se describe actividad de robo de credenciales con <strong>Mimikatz</strong>, además de tareas de reconocimiento como enumeración de usuarios con sesión iniciada y cuentas con privilegios. Asimismo, aparecen comandos típicos de verificación y enumeración como <strong>net time</strong> y <strong>net group</strong>, que ayudan a entender la estructura del dominio y los recursos accesibles. Con credenciales y visibilidad suficientes, los atacantes dieron el salto mediante <strong>RDP</strong> hacia infraestructura especialmente sensible: plataformas de copia de seguridad como <strong>Veeam</strong> y <strong>Veritas</strong>, y también hacia <strong>controladores de dominio</strong>. Este punto es crítico: el acceso a sistemas de <strong>backups</strong> puede facilitar la interrupción de la recuperación ante incidentes, y el acceso a un <strong>Domain Controller</strong> puede derivar en compromiso generalizado del entorno.</p>
+<p>Aunque el objetivo final de la campaña no se concreta, el patrón (toma de control, obtención de credenciales y movimiento lateral a activos clave) encaja con operaciones orientadas a maximizar el impacto potencial. La vulnerabilidad fue corregida por <strong>Quest</strong> en mayo de 2025, por lo que el riesgo se concentra en organizaciones que aún no han aplicado los parches o que mantienen el servicio expuesto. La mitigación prioritaria pasa por actualizar <strong>KACE SMA</strong> a versiones corregidas, reducir drásticamente la superficie de exposición evitando publicarlo directamente en <strong>Internet</strong>, y revisar indicadores como cuentas admin inesperadas, actividad anómala vinculada a <strong>runkbot.exe</strong>, descargas con <strong>curl</strong> y conexiones <strong>RDP</strong> inusuales hacia <strong>Veeam/Veritas</strong> y <strong>controladores de dominio</strong>.</p>
+<h3>Más información</h3>
+<ul>
+<li>The Hacker News: <a href="https://thehackernews.com/2026/03/hackers-exploit-cve-2025-32975-cvss-100.html" target="_blank" rel="noopener">https://thehackernews.com/2026/03/hackers-exploit-cve-2025-32975-cvss-100.html</a></li>
+<li>Arctic Wolf : <a href="https://arcticwolf.com/resources/blog/cve-2025-32975/" target="_blank" rel="noopener">https://arcticwolf.com/resources/blog/cve-2025-32975/</a></li>
+</ul>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/explotacion-activa-de-cve-2025-32975-permite-tomar-el-control-de-quest-kace-sma-sin-parchear.html">Explotación activa de CVE-2025-32975 permite tomar el control de Quest KACE SMA sin parchear</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://unaaldia.hispasec.com/2026/03/explotacion-activa-de-cve-2025-32975-permite-tomar-el-control-de-quest-kace-sma-sin-parchear.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">77991</post-id>	</item>
+		<item>
+		<title>Oracle lanza un parche urgente por una RCE crítica sin autenticación en Identity Manager</title>
+		<link>https://unaaldia.hispasec.com/2026/03/oracle-lanza-un-parche-urgente-por-una-rce-critica-sin-autenticacion-en-identity-manager.html?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=oracle-lanza-un-parche-urgente-por-una-rce-critica-sin-autenticacion-en-identity-manager</link>
+					<comments>https://unaaldia.hispasec.com/2026/03/oracle-lanza-un-parche-urgente-por-una-rce-critica-sin-autenticacion-en-identity-manager.html#respond</comments>
+		
+		<dc:creator><![CDATA[Hispasec]]></dc:creator>
+		<pubDate>Sun, 22 Mar 2026 07:35:21 +0000</pubDate>
+				<category><![CDATA[General]]></category>
+		<category><![CDATA[ciberseguridad]]></category>
+		<category><![CDATA[parches]]></category>
+		<category><![CDATA[vulnerabilidades]]></category>
+		<guid isPermaLink="false">https://unaaldia.hispasec.com/?p=77983</guid>
+
+					<description><![CDATA[<p>Oracle ha emitido una actualización de seguridad fuera del ciclo habitual para corregir CVE-2026-21992, una vulnerabilidad clasificada como crítica (puntuación CVSS v3.1 9.8) que permitiría ejecución remota de código (RCE) sin necesidad de autenticación. Según la información publicada, el fallo puede explotarse de forma remota a través de HTTP, con baja complejidad, y sin requerir [&#8230;]</p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/oracle-lanza-un-parche-urgente-por-una-rce-critica-sin-autenticacion-en-identity-manager.html">Oracle lanza un parche urgente por una RCE crítica sin autenticación en Identity Manager</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[<p><strong>Oracle</strong> ha emitido una actualización de seguridad fuera del ciclo habitual para corregir <strong>CVE-2026-21992</strong>, una vulnerabilidad clasificada como crítica (puntuación <strong>CVSS v3.1 9.8</strong>) que permitiría <strong>ejecución remota de código (RCE)</strong> sin necesidad de autenticación.</p>
+<p><img data-recalc-dims="1" decoding="async" src="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/oracle-parche-urgente-rce-critica-sin-autenticacion-identity-manager-cve-2026-21992.png?ssl=1" alt="Entry image" /></p>
+<p>Según la información publicada, el fallo puede explotarse de forma remota a través de <strong>HTTP</strong>, con baja complejidad, y sin requerir interacción del usuario, lo que incrementa de forma significativa el riesgo en despliegues accesibles desde Internet.</p>
+<p>El problema afecta a componentes habituales en arquitecturas de identidad y middleware, concretamente <strong>Oracle Identity Manager</strong> y <strong>Oracle Web Services Manager</strong>, en versiones <strong>12.2.1.4.0</strong> y <strong>14.1.2.1.0</strong>. Estos productos suelen estar integrados en flujos de autenticación, provisión de identidades, control de accesos y orquestación de servicios, por lo que una compromisión puede tener efectos en cascada: desde el control del servidor afectado hasta la alteración de procesos de gestión de cuentas, credenciales y políticas asociadas a múltiples aplicaciones corporativas.</p>
+<p>En este tipo de vulnerabilidades, la combinación de &#8216;remota&#8217;, &#8216;sin autenticación&#8217; y &#8216;sobre HTTP&#8217; suele traducirse en una ventana de exposición muy sensible: basta con que el servicio esté accesible y mal parcheado para que un atacante pueda intentar automatizar la explotación a escala. Por ello, <strong>Oracle</strong> &#8216;recomienda encarecidamente&#8217; aplicar las actualizaciones o mitigaciones indicadas en su <strong>Security Alert</strong> con la máxima prioridad, dando preferencia a los sistemas publicados a Internet o ubicados en zonas con tránsito elevado (por ejemplo, <strong>DMZ</strong> o redes compartidas con terceros).</p>
+<p>Un aspecto relevante es el alcance del programa de <strong>Security Alert</strong>: las correcciones se proporcionan para versiones bajo <strong>Premier Support</strong> o <strong>Extended Support</strong>. Esto implica que organizaciones que mantengan ediciones antiguas sin soporte podrían no disponer de un arreglo oficial y, en consecuencia, podrían permanecer vulnerables incluso tras el anuncio. En la práctica, esto convierte el inventario de versiones y el estado de soporte en una tarea urgente: localizar instancias de <strong>Oracle Identity Manager</strong> y <strong>Oracle Web Services Manager</strong>, confirmar su versión exacta, revisar dependencias y planificar actualizaciones si se está fuera de soporte.</p>
+<p>Por el momento, según el artículo, <strong>Oracle</strong> no ha confirmado si existe explotación activa y habría declinado comentarlo cuando se le preguntó. Aun así, tratándose de una <strong>RCE crítica</strong> en software de identidad, la respuesta recomendada es tratarlo como una emergencia operativa: parchear o mitigar, reducir exposición de <strong>HTTP</strong> cuando sea posible, y reforzar la monitorización de indicadores de compromiso en los sistemas afectados mientras se completa el despliegue de la corrección.</p>
+<h3>Más información</h3>
+<ul>
+<li>BleepingComputer: <a href="https://www.bleepingcomputer.com/news/security/oracle-pushes-emergency-fix-for-critical-identity-manager-rce-flaw/" rel="nofollow">https://www.bleepingcomputer.com/news/security/oracle-pushes-emergency-fix-for-critical-identity-manager-rce-flaw/</a></li>
+</ul>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/oracle-lanza-un-parche-urgente-por-una-rce-critica-sin-autenticacion-en-identity-manager.html">Oracle lanza un parche urgente por una RCE crítica sin autenticación en Identity Manager</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://unaaldia.hispasec.com/2026/03/oracle-lanza-un-parche-urgente-por-una-rce-critica-sin-autenticacion-en-identity-manager.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">77983</post-id>	</item>
+		<item>
+		<title>Filtración en Navia expone datos personales de 2,7 millones de usuarios en EE.UU.</title>
+		<link>https://unaaldia.hispasec.com/2026/03/filtracion-en-navia-expone-datos-personales-de-27-millones-de-usuarios-en-ee-uu.html?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=filtracion-en-navia-expone-datos-personales-de-27-millones-de-usuarios-en-ee-uu</link>
+					<comments>https://unaaldia.hispasec.com/2026/03/filtracion-en-navia-expone-datos-personales-de-27-millones-de-usuarios-en-ee-uu.html#respond</comments>
+		
+		<dc:creator><![CDATA[SOC]]></dc:creator>
+		<pubDate>Sat, 21 Mar 2026 07:37:51 +0000</pubDate>
+				<category><![CDATA[General]]></category>
+		<guid isPermaLink="false">https://unaaldia.hispasec.com/?p=77977</guid>
+
+					<description><![CDATA[<p>Navia Benefit Solutions ha sufrido una brecha de datos que ha expuesto información sensible de 2,7 millones de personas. Aunque no se comprometieron datos financieros ni de reclamaciones, sí se vieron afectados nombres, fechas de nacimiento, números de seguro social y otros datos vinculados a la gestión de beneficios. El reciente incidente de seguridad que [&#8230;]</p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/filtracion-en-navia-expone-datos-personales-de-27-millones-de-usuarios-en-ee-uu.html">Filtración en Navia expone datos personales de 2,7 millones de usuarios en EE.UU.</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[<article class="post-content">
+<section class="post-intro"><strong data-start="0" data-end="27">Navia Benefit Solutions</strong> ha sufrido una <strong data-start="43" data-end="62">brecha de datos</strong> que ha expuesto información sensible de <strong data-start="103" data-end="131">2,7 millones de personas</strong>. Aunque <strong data-start="140" data-end="202">no se comprometieron datos financieros ni de reclamaciones</strong>, sí se vieron afectados <strong data-start="227" data-end="286" data-is-only-node="">nombres, fechas de nacimiento, números de seguro social</strong> y otros datos vinculados a la gestión de beneficios.</section>
+<p><!-- Imagen destacada --></p>
+<figure class="wp-block-image size-large post-featured-image"><img data-recalc-dims="1" decoding="async" src="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/cover-image-3c2da28bd09a2216b8787221ede9dfe5.png?ssl=1" alt="Ilustración de una alerta de ciberseguridad sobre fuga de datos personales en una empresa de servicios." /></figure>
+<p data-start="0" data-end="508">El reciente incidente de seguridad que afecta a <strong data-start="48" data-end="75">Navia Benefit Solutions</strong> pone de manifiesto cómo el sector de servicios empresariales es un <strong data-start="143" data-end="194">objetivo prioritario para los ciberdelincuentes</strong>. Entre <strong data-start="202" data-end="239">diciembre de 2025 y enero de 2026</strong>, atacantes accedieron de forma no autorizada a los sistemas de la compañía, comprometiendo <strong data-start="331" data-end="379">información personal de millones de usuarios</strong> y marcando un nuevo episodio relevante en la creciente ola de filtraciones que afecta a entidades que gestionan datos sensibles.</p>
+<p data-start="510" data-end="1248">El ataque a Navia transcurrió sin que se revelasen detalles específicos sobre la <strong data-start="591" data-end="615">metodología empleada</strong>, lo que dificulta la identificación de <strong data-start="655" data-end="696">indicadores técnicos concretos (IoCs)</strong>. Los atacantes estuvieron presentes en los sistemas corporativos durante <strong data-start="770" data-end="796">aproximadamente un mes</strong>. Aunque la investigación interna descarta la exposición de <strong data-start="856" data-end="900">datos financieros o relativos a reclamos</strong>, sí se ha confirmado el acceso a información clave: <strong data-start="953" data-end="1012">nombres, fechas de nacimiento, números de seguro social</strong> y detalles ligados a beneficios administrativos. Como resultado, la falta de indicadores técnicos reconocibles amplifica la dificultad de detección a posteriori y eleva la importancia de las <strong data-start="1204" data-end="1247">medidas preventivas y de monitorización</strong>.</p>
+<p data-start="1250" data-end="1827">La brecha afecta directamente a <strong data-start="1282" data-end="1315">casi 2,7 millones de personas</strong>, exponiendo información que puede ser aprovechada en actividades de <strong data-start="1384" data-end="1476">fraude, robo de identidad, ataques de ingeniería social y campañas de phishing dirigidas</strong>. La sensibilidad de los datos comprometidos eleva el riesgo de <strong data-start="1540" data-end="1565">impacto a largo plazo</strong> sobre los afectados, ya que la información personal básica resulta difícil de rotar o cambiar una vez divulgada. Además, la publicación de este tipo de incidentes puede dañar la <strong data-start="1744" data-end="1781">confianza de empleados y clientes</strong> en la organización gestora de los beneficios.</p>
+<p data-start="1829" data-end="2065">Ante este escenario, resulta fundamental reforzar tanto las capacidades de prevención como los mecanismos de detección y contención, con el fin de reducir la superficie de exposición y limitar el impacto de posibles intrusiones futuras.</p>
+<ul data-start="2102" data-end="2794">
+<li data-section-id="1tn6nol" data-start="2102" data-end="2326">
+<p data-start="2104" data-end="2326"><strong data-start="2104" data-end="2128">Medidas preventivas:</strong> revisar exhaustivamente las políticas de seguridad, impartir formación específica sobre reconocimiento de tácticas de phishing y reforzar los controles de acceso en los sistemas de la organización.</p>
+</li>
+<li data-section-id="16f69b4" data-start="2327" data-end="2523">
+<p data-start="2329" data-end="2523"><strong data-start="2329" data-end="2354">Workarounds posibles:</strong> implementar restricciones adicionales al acceso de información sensible y segmentar la red corporativa para limitar el movimiento lateral en caso de nuevas intrusiones.</p>
+</li>
+<li data-section-id="mjpqm5" data-start="2524" data-end="2794">
+<p data-start="2526" data-end="2794"><strong data-start="2526" data-end="2550">Soluciones técnicas:</strong> potenciar los sistemas de monitorización y detección de amenazas (<strong data-start="2617" data-end="2630">SIEM, EDR</strong>), aplicar de forma ágil los parches y actualizaciones críticas, y auditar con regularidad los accesos y operaciones en los sistemas que alberguen datos personales.</p>
+</li>
+</ul>
+<p data-start="2796" data-end="3289" data-is-last-node="" data-is-only-node="">Incidentes como el sufrido por Navia subrayan la necesidad de reforzar las <strong data-start="2871" data-end="2897">estrategias de defensa</strong> y la <strong data-start="2903" data-end="2925">respuesta temprana</strong> ante brechas de datos en el sector de servicios. Además de la tecnología, el <strong data-start="3003" data-end="3020">factor humano</strong> sigue siendo fundamental: la concienciación y el entrenamiento de empleados pueden marcar la diferencia en la prevención de futuros ataques. Mantener <strong data-start="3171" data-end="3193">controles robustos</strong> y una <strong data-start="3200" data-end="3221">actitud vigilante</strong> minimiza el alcance y las consecuencias de este tipo de incidentes.</p>
+<section class="post-sources">
+<h3>Más información</h3>
+<ul>
+<li>Navia data breach impacts nearly 2.7 million people: <a href="https://securityaffairs.com/189726/data-breach/navia-data-breach-impacts-nearly-2-7-million-people.html" target="_blank" rel="noopener">https://securityaffairs.com/189726/data-breach/navia-data-breach-impacts-nearly-2-7-million-people.html</a></li>
+</ul>
+</section>
+</article>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/filtracion-en-navia-expone-datos-personales-de-27-millones-de-usuarios-en-ee-uu.html">Filtración en Navia expone datos personales de 2,7 millones de usuarios en EE.UU.</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://unaaldia.hispasec.com/2026/03/filtracion-en-navia-expone-datos-personales-de-27-millones-de-usuarios-en-ee-uu.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">77977</post-id>	</item>
+		<item>
+		<title>Interlock explota como zero-day un fallo crítico de Cisco Secure FMC desde enero</title>
+		<link>https://unaaldia.hispasec.com/2026/03/interlock-explota-como-zero-day-un-fallo-critico-de-cisco-secure-fmc-desde-enero.html?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=interlock-explota-como-zero-day-un-fallo-critico-de-cisco-secure-fmc-desde-enero</link>
+					<comments>https://unaaldia.hispasec.com/2026/03/interlock-explota-como-zero-day-un-fallo-critico-de-cisco-secure-fmc-desde-enero.html#respond</comments>
+		
+		<dc:creator><![CDATA[Hispasec]]></dc:creator>
+		<pubDate>Fri, 20 Mar 2026 07:32:45 +0000</pubDate>
+				<category><![CDATA[General]]></category>
+		<category><![CDATA[ciberseguridad]]></category>
+		<category><![CDATA[ransomware]]></category>
+		<category><![CDATA[vulnerabilidades]]></category>
+		<guid isPermaLink="false">https://unaaldia.hispasec.com/?p=77974</guid>
+
+					<description><![CDATA[<p>La banda de ransomware Interlock habría estado explotando desde el 26 de enero de 2026 una vulnerabilidad crítica en Cisco Secure Firewall Management Center (FMC), antes de que Cisco la hiciera pública y la corrigiera el 4 de marzo de 2026. El fallo, CVE-2026-20131, permitiría ejecución remota de código sin autenticación con privilegios de root. [&#8230;]</p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/interlock-explota-como-zero-day-un-fallo-critico-de-cisco-secure-fmc-desde-enero.html">Interlock explota como zero-day un fallo crítico de Cisco Secure FMC desde enero</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[<p>La banda de <strong>ransomware Interlock</strong> habría estado explotando desde el <strong>26 de enero de 2026</strong> una vulnerabilidad crítica en <strong>Cisco Secure Firewall Management Center (FMC)</strong>, antes de que <strong>Cisco</strong> la hiciera pública y la corrigiera el <strong>4 de marzo de 2026</strong>. El fallo, <strong>CVE-2026-20131</strong>, permitiría <strong>ejecución remota de código</strong> sin autenticación con privilegios de <strong>root</strong>.</p>
+<p><img data-recalc-dims="1" decoding="async" src="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/interlock-zero-day-cisco-secure-fmc-cve-2026-20131-enero-2026.png?ssl=1" alt="Entry image" /></p>
+<p>Una campaña atribuida a la banda de <strong>ransomware Interlock</strong> ha puesto el foco en un componente especialmente sensible para muchas organizaciones: <strong>Cisco Secure Firewall Management Center (FMC)</strong>, la consola usada para administrar y orquestar políticas de seguridad en entornos con <strong>firewalls</strong> de Cisco. Según la información publicada, el grupo habría aprovechado un fallo de máxima gravedad identificado como <strong>CVE-2026-20131</strong> en ataques de tipo <strong>zero-day</strong> desde al menos el <strong>26 de enero de 2026</strong>, es decir, varias semanas antes de que hubiera un aviso público y una corrección disponible.</p>
+<p>La vulnerabilidad afecta a la <strong>interfaz web</strong> de <strong>FMC</strong> y, en los escenarios descritos, permitiría a un atacante remoto <strong>no autenticado</strong> ejecutar <strong>código Java arbitrario</strong> en el sistema vulnerable, con permisos de <strong>root</strong>. En términos prácticos, esto equivale a una toma de control completa del appliance o servidor que ejecute FMC si está sin parchear. Por la naturaleza del producto, el riesgo va más allá del propio servidor comprometido: una intrusión en la plataforma de gestión puede facilitar cambios maliciosos de configuración, alteración de reglas, desactivación de controles o preparación del terreno para despliegues de <strong>ransomware</strong> en redes internas.</p>
+<p>El artículo indica que la detección de esta explotación temprana proviene de inteligencia de amenazas, y que <strong>Cisco</strong> finalmente divulgó y corrigió el problema el <strong>4 de marzo de 2026</strong>. Este desfase &#8211;en el que los atacantes habrían tenido ventaja antes de que los defensores supieran qué buscar&#8211; es precisamente lo que hace que los <strong>zero-day</strong> sean tan dañinos: durante ese periodo, muchas organizaciones pueden estar expuestas sin medidas específicas, limitándose a controles generales como segmentación, filtrado o monitorización.</p>
+<p>Dado el contexto, la prioridad operativa es clara: <strong>actualizar/parchear</strong> <strong>Cisco Secure FMC</strong> de inmediato a las versiones corregidas indicadas por <strong>Cisco</strong> y revisar la guía del aviso de seguridad correspondiente a <a href="https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmc-rce-NKhnULJh" target="_blank" rel="noopener"><strong>CVE-2026-20131</strong></a>. Además, si FMC ha estado accesible desde redes no confiables o simplemente ha permanecido sin parchear desde finales de enero, conviene actuar como si pudiera haberse producido una intrusión: revisar logs, buscar actividad anómala en la <strong>interfaz web</strong>, validar integridad del sistema, comprobar cuentas y claves, y evaluar posibles signos de ejecución con privilegios elevados. En productos de gestión de seguridad, asumir &#8216;solo&#8217; un compromiso del servidor suele quedarse corto; también es importante auditar cambios recientes de políticas y configuraciones distribuidas hacia el resto de la infraestructura.</p>
+<h3>Más información</h3>
+<ul>
+<li>BleepingComputer: <a href="https://www.bleepingcomputer.com/news/security/interlock-ransomware-exploited-secure-fmc-flaw-in-zero-day-attacks-since-january/" target="_blank" rel="noopener">https://www.bleepingcomputer.com/news/security/interlock-ransomware-exploited-secure-fmc-flaw-in-zero-day-attacks-since-january/</a></li>
+</ul>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/interlock-explota-como-zero-day-un-fallo-critico-de-cisco-secure-fmc-desde-enero.html">Interlock explota como zero-day un fallo crítico de Cisco Secure FMC desde enero</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://unaaldia.hispasec.com/2026/03/interlock-explota-como-zero-day-un-fallo-critico-de-cisco-secure-fmc-desde-enero.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">77974</post-id>	</item>
+		<item>
+		<title>CVE-2026-3888 en Ubuntu: escalada a root aprovechando snap-confine y la limpieza de systemd-tmpfiles</title>
+		<link>https://unaaldia.hispasec.com/2026/03/cve-2026-3888-en-ubuntu-escalada-a-root-aprovechando-snap-confine-y-la-limpieza-de-systemd-tmpfiles.html?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=cve-2026-3888-en-ubuntu-escalada-a-root-aprovechando-snap-confine-y-la-limpieza-de-systemd-tmpfiles</link>
+					<comments>https://unaaldia.hispasec.com/2026/03/cve-2026-3888-en-ubuntu-escalada-a-root-aprovechando-snap-confine-y-la-limpieza-de-systemd-tmpfiles.html#respond</comments>
+		
+		<dc:creator><![CDATA[Hispasec]]></dc:creator>
+		<pubDate>Wed, 18 Mar 2026 15:18:23 +0000</pubDate>
+				<category><![CDATA[General]]></category>
+		<category><![CDATA[linux]]></category>
+		<category><![CDATA[vulnerabilidades]]></category>
+		<guid isPermaLink="false">https://unaaldia.hispasec.com/?p=77965</guid>
+
+					<description><![CDATA[<p>CVE-2026-3888 permite a un atacante con acceso local escalar privilegios hasta root en instalaciones por defecto de Ubuntu Desktop 24.04+ combinando snap-confine con la limpieza programada de systemd-tmpfiles. Aunque el ataque depende de una ventana temporal de limpieza (de 10 a 30 días según versión), el impacto final puede ser el control completo del equipo [&#8230;]</p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/cve-2026-3888-en-ubuntu-escalada-a-root-aprovechando-snap-confine-y-la-limpieza-de-systemd-tmpfiles.html">CVE-2026-3888 en Ubuntu: escalada a root aprovechando snap-confine y la limpieza de systemd-tmpfiles</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-3888" target="_blank" rel="noopener"><strong>CVE-2026-3888</strong></a> permite a un atacante con acceso local escalar privilegios hasta <strong>root</strong> en instalaciones por defecto de <strong>Ubuntu Desktop 24.04+</strong> combinando <strong>snap-confine</strong> con la limpieza programada de <strong>systemd-tmpfiles</strong>. Aunque el ataque depende de una ventana temporal de limpieza (de <strong>10 a 30 días</strong> según versión), el impacto final puede ser el control completo del equipo si no se actualiza <strong>snapd</strong> a versiones corregidas.</p>
+<p><img data-recalc-dims="1" decoding="async" src="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/cve-2026-3888-ubuntu-escalada-root-snap-confine-systemd-tmpfiles.png?ssl=1" alt="Entry image" /></p>
+<p>El fallo permite que un usuario local acabe ejecutando acciones como <strong>root</strong>, lo que en la práctica equivale a un compromiso total del sistema si el atacante ya ha conseguido una sesión en el equipo (por ejemplo, mediante credenciales robadas, una cuenta con pocos privilegios o acceso físico). La gravedad se califica como alta, con una puntuación <strong>CVSS 7.8</strong> citada en el artículo.</p>
+<p>La raíz del problema está en una interacción inesperada entre dos componentes muy comunes en estas instalaciones. Por un lado, <strong>snap-confine</strong>, pieza clave de <strong>snapd</strong> que se encarga de preparar el sandbox y aislar las aplicaciones <strong>Snap</strong>; por otro, <strong>systemd-tmpfiles</strong>, el mecanismo de <strong>systemd</strong> que aplica políticas de limpieza automática en directorios temporales como <strong>/tmp</strong>, <strong>/run</strong> o <strong>/var/tmp</strong>. El escenario descrito se apoya en el manejo del directorio <strong>/tmp/.snap</strong>: cuando la política de limpieza elimina ese directorio en un momento programado, un atacante puede aprovechar la ventana posterior para recrearlo con una estructura o contenido malicioso. La clave es que, más adelante, <strong>snap-confine</strong> vuelve a interactuar con esa ruta durante la inicialización del entorno y, si se cumplen las condiciones de carrera y permisos implicados, la cadena puede terminar derivando en ejecución con privilegios elevados.</p>
+<p>Un matiz importante es que no se trata de un exploit &#8216;instantáneo&#8217;: el propio análisis indica que la explotación depende de la cadencia de limpieza. En <strong>Ubuntu 24.04</strong>, la espera típica se sitúa alrededor de <strong>30 días</strong>, mientras que en versiones posteriores se menciona un ciclo de aproximadamente <strong>10 días</strong>, debido a ajustes en la política de limpieza. Aun así, en entornos reales esa espera no elimina el riesgo: en un puesto de trabajo o un servidor que permanezca encendido de forma prolongada, un atacante con persistencia puede simplemente preparar el sistema y esperar a que se cumpla la condición temporal.</p>
+<p>La recomendación principal es actualizar <strong>snapd</strong> a una versión que ya incluya la corrección. Las versiones señaladas como solucionadas incluyen <strong>2.73+ubuntu24.04.1</strong> para <strong>Ubuntu 24.04</strong>, <strong>2.73+ubuntu25.10.1</strong> para <strong>Ubuntu 25.10</strong>, <strong>2.74.1+ubuntu26.04.1</strong> para <strong>Ubuntu 26.04</strong> (rama de desarrollo, según el artículo) y, en el proyecto upstream, <strong>snapd 2.75</strong> o superior. Para equipos gestionados en flota, conviene verificar la versión instalada y priorizar los sistemas <strong>Ubuntu Desktop 24.04+</strong> donde el uso de <strong>Snaps</strong> es parte del flujo estándar. Como medida adicional de defensa, también resulta razonable vigilar comportamientos anómalos alrededor de <strong>/tmp/.snap</strong>, especialmente recreaciones inesperadas, cambios de propietario/permisos y patrones inusuales coincidiendo con ejecuciones de <strong>snap-confine</strong> o con tareas de limpieza de <strong>systemd-tmpfiles</strong>.</p>
+<h3>Más información</h3>
+<ul>
+<li>The Hacker News: <a href="https://thehackernews.com/2026/03/ubuntu-cve-2026-3888-bug-lets-attackers.html" target="_blank" rel="noopener">https://thehackernews.com/2026/03/ubuntu-cve-2026-3888-bug-lets-attackers.html</a></li>
+<li>NVD: <a href="https://nvd.nist.gov/vuln/detail/CVE-2026-3888" target="_blank" rel="noopener">https://nvd.nist.gov/vuln/detail/CVE-2026-3888</a></li>
+</ul>
+
+
+<p></p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/cve-2026-3888-en-ubuntu-escalada-a-root-aprovechando-snap-confine-y-la-limpieza-de-systemd-tmpfiles.html">CVE-2026-3888 en Ubuntu: escalada a root aprovechando snap-confine y la limpieza de systemd-tmpfiles</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://unaaldia.hispasec.com/2026/03/cve-2026-3888-en-ubuntu-escalada-a-root-aprovechando-snap-confine-y-la-limpieza-de-systemd-tmpfiles.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">77965</post-id>	</item>
+		<item>
+		<title>UAT-9244: ciberespionaje chino apunta a telecomunicaciones en Sudamérica con backdoors multiplataforma</title>
+		<link>https://unaaldia.hispasec.com/2026/03/uat-9244-ciberespionaje-chino-apunta-a-telecomunicaciones-en-sudamerica-con-backdoors-multiplataforma.html?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=uat-9244-ciberespionaje-chino-apunta-a-telecomunicaciones-en-sudamerica-con-backdoors-multiplataforma</link>
+					<comments>https://unaaldia.hispasec.com/2026/03/uat-9244-ciberespionaje-chino-apunta-a-telecomunicaciones-en-sudamerica-con-backdoors-multiplataforma.html#respond</comments>
+		
+		<dc:creator><![CDATA[SOC]]></dc:creator>
+		<pubDate>Tue, 17 Mar 2026 07:02:10 +0000</pubDate>
+				<category><![CDATA[General]]></category>
+		<guid isPermaLink="false">https://unaaldia.hispasec.com/?p=77941</guid>
+
+					<description><![CDATA[<p>Un grupo de ciberespionaje vinculado a China ha llevado a cabo una campaña contra proveedores de telecomunicaciones en Sudamérica, utilizando herramientas diseñadas para comprometer sistemas Windows, Linux y dispositivos de borde. La operación, atribuida al grupo UAT-9244, pone de relieve el creciente interés por las infraestructuras críticas de la región y el uso de malware [&#8230;]</p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/uat-9244-ciberespionaje-chino-apunta-a-telecomunicaciones-en-sudamerica-con-backdoors-multiplataforma.html">UAT-9244: ciberespionaje chino apunta a telecomunicaciones en Sudamérica con backdoors multiplataforma</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[<article class="post-content">
+<section class="post-intro">
+<p>Un <strong data-start="114" data-end="159">grupo de ciberespionaje vinculado a China</strong> ha llevado a cabo una campaña contra <strong data-start="197" data-end="248">proveedores de telecomunicaciones en Sudamérica</strong>, utilizando herramientas diseñadas para comprometer <strong data-start="301" data-end="352">sistemas Windows, Linux y dispositivos de borde</strong>. La operación, atribuida al grupo <strong data-start="387" data-end="399">UAT-9244</strong>, pone de relieve el creciente interés por las infraestructuras críticas de la región y el uso de malware especializado para mantener acceso persistente en redes complejas.</p>
+</section>
+<p><!-- Imagen destacada --></p>
+<figure class="wp-block-image size-large post-featured-image"><img data-recalc-dims="1" decoding="async" src="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/cover-image-f5fb44ef7ebe1dee70dcb9f771a49988.png?ssl=1" alt="Ilustración de ciberataque dirigido a infraestructuras de telecomunicaciones sudamericanas con mapas y nodos de red comprometidos." /></figure>
+<section class="post-section">
+<p data-start="573" data-end="1023">Según investigadores de <strong data-start="597" data-end="612">Cisco Talos</strong>, la actividad del grupo se remonta al menos a <strong data-start="659" data-end="667">2024</strong> y presenta vínculos operativos con el clúster de amenazas <strong data-start="726" data-end="743">FamousSparrow</strong>, también asociado a intereses chinos. Los analistas identificaron el uso de tres implantes principales: <strong data-start="848" data-end="860">TernDoor</strong>, <strong data-start="862" data-end="874">PeerTime</strong> y <strong data-start="877" data-end="891">BruteEntry</strong>, cada uno diseñado para operar en distintos componentes de la infraestructura tecnológica de los proveedores de telecomunicaciones.</p>
+<p data-start="1025" data-end="1482">La operación se caracteriza por una <strong data-start="1061" data-end="1100">estrategia de compromiso multinivel</strong>. El malware <strong data-start="1113" data-end="1125">TernDoor</strong> se emplea para comprometer <strong data-start="1153" data-end="1173">sistemas Windows</strong>, mientras que <strong data-start="1188" data-end="1200">PeerTime</strong> se dirige a <strong data-start="1213" data-end="1233">servidores Linux</strong> dentro de la red corporativa. Por su parte, <strong data-start="1278" data-end="1292">BruteEntry</strong> actúa como herramienta de exploración y explotación en <strong data-start="1348" data-end="1373">dispositivos de borde</strong>, como routers o firewalls, permitiendo detectar debilidades y facilitar el acceso inicial a la red objetivo.</p>
+<p data-start="1484" data-end="1937">Una vez dentro, los atacantes utilizan estas herramientas para <strong data-start="1547" data-end="1647">mantener persistencia, ejecutar comandos remotos y moverse lateralmente entre distintos sistemas</strong>, lo que les permite ampliar progresivamente su control dentro del entorno comprometido. Los investigadores destacan que la campaña no muestra características de ransomware o sabotaje directo, sino que está orientada principalmente a <strong data-start="1881" data-end="1936">espionaje y recopilación prolongada de inteligencia</strong>.</p>
+<p data-start="1939" data-end="2362">El interés en el sector de telecomunicaciones no es casual. Estas organizaciones gestionan <strong data-start="2030" data-end="2101">grandes volúmenes de datos y servicios esenciales de comunicaciones</strong>, por lo que una intrusión puede derivar en <strong data-start="2145" data-end="2251">filtración de información sensible, espionaje industrial o interrupciones en infraestructuras críticas</strong>. Además, el uso de malware multiplataforma incrementa la complejidad de detección y respuesta ante incidentes.</p>
+<h3 data-start="374" data-end="403">Aspectos más relevantes</h3>
+<ul>
+<li data-section-id="18skhbj" data-start="2397" data-end="2489">
+<p data-start="2399" data-end="2489"><strong data-start="2399" data-end="2456">Campaña de ciberespionaje atribuida al grupo UAT-9244</strong>, vinculado a intereses chinos.</p>
+</li>
+<li data-section-id="1sw7opa" data-start="2490" data-end="2606">
+<p data-start="2492" data-end="2606"><strong data-start="2492" data-end="2563">Ataques dirigidos a proveedores de telecomunicaciones en Sudamérica</strong>, considerados infraestructuras críticas.</p>
+</li>
+<li data-section-id="1trorzr" data-start="2607" data-end="2741">
+<p data-start="2609" data-end="2741"><strong data-start="2609" data-end="2665">Uso de malware especializado para distintos sistemas</strong>: TernDoor (Windows), PeerTime (Linux) y BruteEntry (dispositivos de red).</p>
+</li>
+<li data-section-id="12bi132" data-start="2742" data-end="2861">
+<p data-start="2744" data-end="2861"><strong data-start="2744" data-end="2784">Operación activa desde al menos 2024</strong>, orientada a mantener acceso prolongado dentro de las redes comprometidas.</p>
+</li>
+<li data-section-id="1vd0y2l" data-start="2862" data-end="3001">
+<p data-start="2864" data-end="3001"><strong data-start="2864" data-end="2927">Objetivo principal: espionaje y recopilación de información</strong>, mediante persistencia y movimiento lateral dentro de la infraestructura.</p>
+</li>
+</ul>
+<p data-start="3203" data-end="3611">Para mitigar el riesgo, se recomienda <strong data-start="3257" data-end="3385">reforzar las defensas perimetrales, aplicar segmentación de red y restringir servicios innecesarios en dispositivos críticos</strong>. También resulta fundamental mantener los sistemas <strong data-start="3437" data-end="3479">actualizados y correctamente parchados</strong>, así como desplegar <strong data-start="3500" data-end="3569">soluciones de monitorización y detección de intrusiones (EDR/XDR)</strong> capaces de identificar actividad anómala.</p>
+<p data-start="3613" data-end="3975" data-is-last-node="" data-is-only-node="">La campaña atribuida a <strong data-start="3636" data-end="3648">UAT-9244</strong> demuestra el nivel de <strong data-start="3671" data-end="3703">sofisticación y persistencia</strong> que pueden alcanzar los grupos patrocinados por estados. Frente a este escenario, las organizaciones que operan infraestructuras críticas deberán apostar por <strong data-start="3862" data-end="3925">estrategias de defensa en profundidad y vigilancia continua</strong> para reducir el impacto de intrusiones avanzadas.</p>
+</section>
+<section class="post-sources">
+<h3>Más información</h3>
+<ul>
+<li>UAT-9244 targets South American telecommunication providers with three new malware implants<br /><a href="https://blog.talosintelligence.com/uat-9244/" target="_blank" rel="noopener">https://blog.talosintelligence.com/uat-9244/</a></li>
+<li>China-linked UAT-9244 used TernDoor, PeerTime, and BruteEntry in South American telecom attacks<br /><a href="https://cyberwarzone.com/2026/03/16/china-linked-uat-9244-used-terndoor-peertime-and-bruteentry-in-south-american-telecom-attacks/" target="_blank" rel="noopener">https://cyberwarzone.com/2026/03/16/china-linked-uat-9244-used-terndoor-peertime-and-bruteentry-in-south-american-telecom-attacks/</a></li>
+</ul>
+</section>
+</article>
+
+
+<p></p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/uat-9244-ciberespionaje-chino-apunta-a-telecomunicaciones-en-sudamerica-con-backdoors-multiplataforma.html">UAT-9244: ciberespionaje chino apunta a telecomunicaciones en Sudamérica con backdoors multiplataforma</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://unaaldia.hispasec.com/2026/03/uat-9244-ciberespionaje-chino-apunta-a-telecomunicaciones-en-sudamerica-con-backdoors-multiplataforma.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">77941</post-id>	</item>
+		<item>
+		<title>Microsoft publica un hotpatch fuera de banda en Windows 11 para corregir fallos RCE en RRAS</title>
+		<link>https://unaaldia.hispasec.com/2026/03/microsoft-publica-un-hotpatch-fuera-de-banda-en-windows-11-para-corregir-fallos-rce-en-rras.html?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=microsoft-publica-un-hotpatch-fuera-de-banda-en-windows-11-para-corregir-fallos-rce-en-rras</link>
+					<comments>https://unaaldia.hispasec.com/2026/03/microsoft-publica-un-hotpatch-fuera-de-banda-en-windows-11-para-corregir-fallos-rce-en-rras.html#respond</comments>
+		
+		<dc:creator><![CDATA[Hispasec]]></dc:creator>
+		<pubDate>Mon, 16 Mar 2026 10:07:59 +0000</pubDate>
+				<category><![CDATA[General]]></category>
+		<category><![CDATA[parches]]></category>
+		<category><![CDATA[vulnerabilidades]]></category>
+		<guid isPermaLink="false">https://unaaldia.hispasec.com/?p=77937</guid>
+
+					<description><![CDATA[<p>Microsoft ha lanzado un hotpatch fuera de banda, KB5084597, para Windows 11 Enterprise en el canal de hotpatch. La actualización corrige tres CVE de Remote Code Execution (RCE) relacionadas con la herramienta de administración de RRAS, y se instala automáticamente sin reinicio en equipos inscritos en Windows Autopatch. El objetivo es corregir tres vulnerabilidades de [&#8230;]</p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/microsoft-publica-un-hotpatch-fuera-de-banda-en-windows-11-para-corregir-fallos-rce-en-rras.html">Microsoft publica un hotpatch fuera de banda en Windows 11 para corregir fallos RCE en RRAS</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[<p><strong>Microsoft</strong> ha lanzado un hotpatch fuera de banda, <strong>KB5084597</strong>, para <strong>Windows 11 Enterprise</strong> en el canal de <strong>hotpatch</strong>. La actualización corrige tres <strong>CVE</strong> de <strong>Remote Code Execution (RCE)</strong> relacionadas con la herramienta de administración de <strong>RRAS</strong>, y se instala automáticamente sin reinicio en equipos inscritos en <strong>Windows Autopatch</strong>.</p>
+<p><img data-recalc-dims="1" decoding="async" src="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/microsoft-hotpatch-fuera-de-banda-windows-11-corrige-rce-rras.png?ssl=1" alt="Entry image" /></p>
+<p>El objetivo es corregir tres vulnerabilidades de <strong>Remote Code Execution (RCE)</strong> asociadas a la herramienta de administración de <strong>Windows Routing and Remote Access Service (RRAS)</strong>, concretamente al uso del <strong>RRAS management tool / snap-in</strong> cuando un administrador o usuario con permisos se conecta a un servidor que resulta ser malicioso.</p>
+<p>Según la información disponible, los fallos están registrados como <a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2026-25172" target="_blank" rel="noopener"><strong>CVE-2026-25172</strong></a>, <a href="https://msrc.microsoft.com/update-guide/advisory/CVE-2026-25173" target="_blank" rel="noopener"><strong>CVE-2026-25173</strong></a> y <a href="https://nvd.nist.gov/vuln/detail/CVE-2026-26111" target="_blank" rel="noopener"><strong>CVE-2026-26111</strong></a>. El escenario de ataque descrito no es un &#8216;wormable&#8217; típico ni una explotación automática a gran escala: requiere que un atacante esté <strong>autenticado en el dominio</strong> y que consiga engañar a un usuario <strong>unido al dominio</strong> (por ejemplo, un administrador que gestione infraestructura) para que, desde la consola o el complemento de administración de <strong>RRAS</strong>, envíe una solicitud o inicie una conexión hacia un servidor controlado por el atacante. En ese contexto, la vulnerabilidad podría permitir la ejecución de código de forma remota en el equipo del usuario o en el flujo de administración, lo que incrementa el riesgo en entornos donde la gestión remota de servicios de red es habitual.</p>
+<p>Un punto relevante es que <strong>KB5084597</strong> se describe como un hotpatch <strong>acumulativo</strong> que incorpora todas las correcciones y mejoras incluidas en la actualización de seguridad de <strong>marzo de 2026</strong> (el <strong>Patch Tuesday</strong> del 10 de marzo). En otras palabras, para organizaciones que no estén en el programa de <strong>hotpatch</strong>, la ruta esperada sigue siendo aplicar las actualizaciones acumulativas estándar de marzo, que ya incluirían la corrección para estos <strong>CVE</strong>.</p>
+<p>En cambio, para quienes dependen de <strong>hotpatch</strong> (precisamente para reducir interrupciones y evitar reinicios frecuentes en endpoints), el valor del OOB es claro: se distribuye solo a dispositivos elegibles inscritos en <strong>Windows Autopatch/hotpatch</strong> y puede instalarse <strong>sin reinicio</strong>, reduciendo ventanas de mantenimiento y el impacto operativo. <strong>Microsoft</strong> también indica que se ha relanzado para &#8216;garantizar cobertura integral&#8217; en todos los escenarios afectados, lo que sugiere un ajuste de alcance o de implementación para cubrir casos que podrían no haber quedado plenamente mitigados.</p>
+<p>Como medidas prácticas, los equipos de IT y seguridad deberían verificar que los dispositivos <strong>Windows 11</strong> elegibles (incluyendo <strong>Windows 11 version 24H2</strong>, <strong>Windows 11 version 25H2</strong> y <strong>Windows 11 Enterprise LTSC 2024</strong> dentro del programa) hayan recibido <strong>KB5084597</strong>. Además, conviene reforzar controles operativos alrededor de la administración de <strong>RRAS</strong>: limitar conexiones administrativas a servidores conocidos y confiables, y endurecer los procedimientos para reducir la probabilidad de que personal con privilegios sea inducido a conectarse a infraestructura no autorizada.</p>
+<h3>Más información</h3>
+<ul>
+<li>BleepingComputer: <a href="https://www.bleepingcomputer.com/news/microsoft/microsoft-releases-windows-11-oob-hotpatch-to-fix-rras-rce-flaw/" target="_blank" rel="noopener">https://www.bleepingcomputer.com/news/microsoft/microsoft-releases-windows-11-oob-hotpatch-to-fix-rras-rce-flaw/</a></li>
+</ul>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/microsoft-publica-un-hotpatch-fuera-de-banda-en-windows-11-para-corregir-fallos-rce-en-rras.html">Microsoft publica un hotpatch fuera de banda en Windows 11 para corregir fallos RCE en RRAS</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://unaaldia.hispasec.com/2026/03/microsoft-publica-un-hotpatch-fuera-de-banda-en-windows-11-para-corregir-fallos-rce-en-rras.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">77937</post-id>	</item>
+		<item>
+		<title>Atacantes suplantan al soporte técnico en Microsoft Teams para desplegar el malware A0 Backdoor en empresas financieras y sanitarias</title>
+		<link>https://unaaldia.hispasec.com/2026/03/atacantes-suplantan-al-soporte-tecnico-en-microsoft-teams-para-desplegar-el-malware-a0-backdoor-en-empresas-financieras-y-sanitarias.html?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=atacantes-suplantan-al-soporte-tecnico-en-microsoft-teams-para-desplegar-el-malware-a0-backdoor-en-empresas-financieras-y-sanitarias</link>
+					<comments>https://unaaldia.hispasec.com/2026/03/atacantes-suplantan-al-soporte-tecnico-en-microsoft-teams-para-desplegar-el-malware-a0-backdoor-en-empresas-financieras-y-sanitarias.html#respond</comments>
+		
+		<dc:creator><![CDATA[Hugo Anguiano]]></dc:creator>
+		<pubDate>Sun, 15 Mar 2026 16:18:49 +0000</pubDate>
+				<category><![CDATA[General]]></category>
+		<category><![CDATA[backdoor]]></category>
+		<category><![CDATA[Microsoft]]></category>
+		<category><![CDATA[remoto]]></category>
+		<category><![CDATA[teams]]></category>
+		<guid isPermaLink="false">https://unaaldia.hispasec.com/?p=77925</guid>
+
+					<description><![CDATA[<p>Investigadores de Blue Voyant han descubierto que atacantes se hacen pasar por el departamento de informática a través de Microsoft Teams para conseguir acceso remoto a los equipos e instalar un malware llamado A0Backdoor.&#160; El ataque comienza enviando al correo electrónico del empleado mensajes de spam. Al rato, contactan con esa misma persona por Microsoft [&#8230;]</p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/atacantes-suplantan-al-soporte-tecnico-en-microsoft-teams-para-desplegar-el-malware-a0-backdoor-en-empresas-financieras-y-sanitarias.html">Atacantes suplantan al soporte técnico en Microsoft Teams para desplegar el malware A0 Backdoor en empresas financieras y sanitarias</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[
+<p>Investigadores de Blue Voyant han descubierto que atacantes se hacen pasar por el departamento de informática a través de Microsoft Teams para conseguir acceso remoto a los equipos e instalar un malware llamado <strong>A0Backdoor</strong>.&nbsp;</p>
+
+
+
+<figure class="wp-block-image size-large"><img data-recalc-dims="1" decoding="async" width="1024" height="572" src="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/image-2.png?resize=1024%2C572&#038;ssl=1" alt="" class="wp-image-77926" srcset="https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/image-2.png?resize=1024%2C572&amp;ssl=1 1024w, https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/image-2.png?resize=300%2C167&amp;ssl=1 300w, https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/image-2.png?resize=768%2C429&amp;ssl=1 768w, https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/image-2.png?resize=1536%2C857&amp;ssl=1 1536w, https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/image-2.png?resize=750%2C420&amp;ssl=1 750w, https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/image-2.png?resize=1200%2C670&amp;ssl=1 1200w, https://i0.wp.com/unaaldia.hispasec.com/wp-content/uploads/2026/03/image-2.png?w=1600&amp;ssl=1 1600w" sizes="(max-width: 1000px) 100vw, 1000px" /></figure>
+
+
+
+<p>El ataque comienza enviando al correo electrónico del empleado mensajes de spam. Al rato, contactan con esa misma persona por <strong>Microsoft Teams</strong> haciéndose pasar por el soporte técnico de la empresa, ofreciendo ayuda para resolver el problema de los correos.</p>
+
+
+
+<p>Una vez en contacto con el empleado, le piden que abra <strong>Quick Assist</strong> para tener acceso a su dispositivo por control remoto. Seguidamente, descargan el malware disfrazado de  componentes oficiales de <strong>Microsoft</strong> y de CrossDeviceService. Este camuflaje les permite omitir los análisis de seguridad.</p>
+
+
+
+<p>Este malware recoge información del equipo como el usuario y datos del dispositivo. Para devolver la información utiliza una técnica de tunelización DNS. En lugar de conectarse directamente a un servidor específico, envía los mensajes dentro de consultas DNS normales dirigidas a servidores públicos, lo que dificulta la detección.</p>
+
+
+
+<p>Entre las víctimas confirmadas hay una institución financiera en Canadá y una organización sanitaria. Los investigadores relacionan esta campaña con el grupo <strong>Storm-1811</strong>, anteriormente vinculado al ransomware <strong>BlackBasta</strong>. El uso de instaladores MSI, el payload <strong>A0Backdoor</strong> y la comunicación por DNS nunca se había visto antes por estos atacantes.</p>
+
+
+
+<h2 class="wp-block-heading" id="h-recomendaciones">Recomendaciones</h2>
+
+
+
+<p>Ante esta campaña, se recomienda tomar las siguientes medidas:</p>
+
+
+
+<ul class="wp-block-list">
+<li>Desconfiar de cualquier contacto no solicitado por Microsoft Teams que se identifique como soporte técnico interno, especialmente si coincide con una llegada repentina de spam al correo.</li>
+
+
+
+<li>Restringir o deshabilitar Quick Assist en equipos corporativos si no es necesario.</li>
+
+
+
+<li>Formar a los empleados para que reconozcan esta amenaza, conocida como vishing corporativo combinado con el inundado de mensajes de spam al correo electrónico.</li>
+</ul>
+
+
+
+<h2 class="wp-block-heading" id="h-mas-informacion">Más información</h2>
+
+
+
+<p><strong>Microsoft Teams phishing targets employees with A0Backdoor</strong>: <a href="https://www.bleepingcomputer.com/news/security/microsoft-teams-phishing-targets-employees-with-backdoors/"><strong>https://www.bleepingcomputer.com/news/security/microsoft-teams-phishing-targets-employees-with-backdoors/</strong></a></p>
+<p>La entrada <a href="https://unaaldia.hispasec.com/2026/03/atacantes-suplantan-al-soporte-tecnico-en-microsoft-teams-para-desplegar-el-malware-a0-backdoor-en-empresas-financieras-y-sanitarias.html">Atacantes suplantan al soporte técnico en Microsoft Teams para desplegar el malware A0 Backdoor en empresas financieras y sanitarias</a> se publicó primero en <a href="https://unaaldia.hispasec.com">Una Al Día</a>.</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://unaaldia.hispasec.com/2026/03/atacantes-suplantan-al-soporte-tecnico-en-microsoft-teams-para-desplegar-el-malware-a0-backdoor-en-empresas-financieras-y-sanitarias.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">77925</post-id>	</item>
+	</channel>
+</rss>

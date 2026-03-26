@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" version="2.0">
+  <Channel>
+    <title>CNMV - Información privilegiada.</title>
+    <link>https://www.cnmv.es/Portal/Informacion-privilegiada/AlDia-IP.aspx</link>
+    <description>Información privilegiada del día (Desde el cierre de la sesión anterior).</description>
+    <generator>CNMV RSS</generator>
+    <language>es</language>
+    <ttl>15</ttl>
+    <image>
+      <Title>Comisión nacional del mercado de valores</Title>
+      <Link>http://www.cnmv.es</Link>
+      <Url>http://www.cnmv.es/images/cnmv_logo.gif</Url>
+    </image>
+    <item>
+      <Title>REPSOL, S.A.</Title>
+      <link><![CDATA[https://www.cnmv.es/Portal/Informacion-Privilegiada/Resultado-IP.aspx?nreg=3150]]></link>
+      <guid isPermaLink="true"><![CDATA[https://www.cnmv.es/Portal/Informacion-Privilegiada/Resultado-IP.aspx?nreg=3150]]></guid>
+      <pubDate>Wed, 25 Mar 2026 17:41:20 GMT</pubDate>
+      <description><![CDATA[<p><b>18:41  25/03/2026  </b> Sobre instrumentos financieros<BR/><BR/>La Sociedad remite información sobre la convocatoria de la Junta General Ordinaria de Accionistas 2026, así como sobre las propuestas relativas a la retribución al accionista</p>]]></description>
+    </item>
+    <item>
+      <Title>MERLIN PROPERTIES, SOCIMI, S.A.</Title>
+      <link><![CDATA[https://www.cnmv.es/Portal/Informacion-Privilegiada/Resultado-IP.aspx?nreg=3149]]></link>
+      <guid isPermaLink="true"><![CDATA[https://www.cnmv.es/Portal/Informacion-Privilegiada/Resultado-IP.aspx?nreg=3149]]></guid>
+      <pubDate>Wed, 25 Mar 2026 17:29:49 GMT</pubDate>
+      <description><![CDATA[<p><b>18:29  25/03/2026  </b> Sobre colocaciones significativas de instrumentos financieros<BR/><BR/>MERLIN - Lanzamiento de colocación acelerada de acciones de nueva emisión</p>]]></description>
+    </item>
+    <item>
+      <Title>GRIFOLS, S.A.</Title>
+      <link><![CDATA[https://www.cnmv.es/Portal/Informacion-Privilegiada/Resultado-IP.aspx?nreg=3148]]></link>
+      <guid isPermaLink="true"><![CDATA[https://www.cnmv.es/Portal/Informacion-Privilegiada/Resultado-IP.aspx?nreg=3148]]></guid>
+      <pubDate>Tue, 24 Mar 2026 20:49:29 GMT</pubDate>
+      <description><![CDATA[<p><b>21:49  24/03/2026  </b> Sobre operaciones corporativas: fusiones, adquisiciones y otros<BR/><BR/>El Consejo ha decidido iniciar un proceso para evaluar una potencial oferta pública inicial en Estados Unidos de una parte de las acciones de su filial y sociedad matriz de su negocio de Biopharma en EE.UU.</p>]]></description>
+    </item>
+  </Channel>
+</rss>
