@@ -33,19 +33,6 @@ class RSSParser:
 
         return timegm(self._entrada.published_parsed)
 
-    def resumen(self) -> str:
-        html = self._entrada.description
-        from bs4 import BeautifulSoup
-
-        s = BeautifulSoup(html, "html.parser")
-        resumen = " \n".join(
-            [
-                p.get_text(separator=" ", strip=True)
-                for p in s.find_all("p") + s.find_all("li")
-            ]
-        )
-        return resumen
-
     def generar(self) -> RSSEntrada:
         return RSSEntrada(
             self.titulo(),
@@ -53,7 +40,6 @@ class RSSParser:
             self.link(),
             self.categorias(),
             self.fecha_publicacion(),
-            self.resumen(),
         )
 
 

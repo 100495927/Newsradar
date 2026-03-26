@@ -9,7 +9,6 @@ class RSSEntrada:
     link: str
     categorias: list[str]
     fecha_publicacion: int  # Unix timestamp
-    resumen: str
 
     def __str__(self) -> str:
         return f"""
@@ -18,8 +17,16 @@ class RSSEntrada:
         {self.link}
         {self.categorias}
         {datetime.fromtimestamp(self.fecha_publicacion).strftime('%H:%M %d/%m/%Y')}
-        {self.resumen}
         """
+
+    def __dict__(self) -> dict:
+        return {
+            "titulo": self.titulo,
+            "autores": self.autores,
+            "link": self.link,
+            "categorias": self.categorias,
+            "fecha_publicacion": self.fecha_publicacion,
+        }
 
 
 __all__ = ["RSSEntrada"]
