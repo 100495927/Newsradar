@@ -1,6 +1,7 @@
 from typing import Type
 from rss.parsers import RSSParser
 from rss.RSSFeed import RSSFeed
+import hashlib
 
 
 class RSSFeedSource:
@@ -27,6 +28,25 @@ class RSSFeedSource:
         feed = parse(self.url)
         objeto_feed = RSSFeed(self, feed.feed.title, feed.feed.link, feed.entries)
         return objeto_feed
+
+    def a_mongo(self) -> dict:
+        from datetime import datetime, timezone
+        from .parsers import mongo_parser_ids
+
+        return {
+            "_id": self.hash,
+            "medio": self.medio,
+            "rss": self.rss,
+            "url": self.url,
+            "parser_id": mongo_parser_ids.inv[self.parser],
+            "creado": datetime.now(timezone.utc),
+            "actualizado": datetime.now(timezone.utc),
+        }
+
+    @property
+    def hash(self):
+        h = (self.medio + self.rss + self.url).encode("utf-8")
+        return hashlib.sha256(h).hexdigest()
 
 
 __all__ = ["RSSFeedSource"]

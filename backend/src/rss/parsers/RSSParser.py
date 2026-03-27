@@ -9,14 +9,14 @@ class RSSParser:
     def titulo(self) -> str:
         return self._entrada.title
 
-    def autores(self) -> dict | None:
+    def autores(self) -> list[str] | None:
         if hasattr(self._entrada, "authors"):
-            a = self._entrada.authors
+            a: list[dict] = self._entrada.authors
             if len(a) == 0:
                 return None
             if len(a[0]) == 0:
                 return None
-            return a
+            return [autor["name"] for autor in a]
         return None
 
     def link(self) -> str:
@@ -33,8 +33,10 @@ class RSSParser:
 
         return timegm(self._entrada.published_parsed)
 
-    def generar(self) -> RSSEntrada:
+    def generar(self, fuente: RSSFeedSource) -> RSSEntrada:
+        from rss.RSSFeedSource import RSSFeedSource
         return RSSEntrada(
+            fuente,
             self.titulo(),
             self.autores(),
             self.link(),
