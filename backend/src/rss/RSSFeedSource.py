@@ -28,5 +28,18 @@ class RSSFeedSource:
         objeto_feed = RSSFeed(self, feed.feed.title, feed.feed.link, feed.entries)
         return objeto_feed
 
+    def a_mongo(self) -> dict:
+        from time import time
+        from .parsers import mongo_parser_ids
+
+        return {
+            "medio": self.medio,
+            "rss": self.rss,
+            "url": self.url,
+            "parser_id": mongo_parser_ids.inv[self.parser],
+            "creado": int(time()),
+            "actualizado": int(time()),
+        }
+
 
 __all__ = ["RSSFeedSource"]

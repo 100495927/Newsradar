@@ -19,14 +19,21 @@ class RSSEntrada:
         {datetime.fromtimestamp(self.fecha_publicacion).strftime('%H:%M %d/%m/%Y')}
         """
 
-    def __dict__(self) -> dict:
+    def a_mongo(self) -> dict:
+        from time import time
         return {
             "titulo": self.titulo,
             "autores": self.autores,
             "link": self.link,
             "categorias": self.categorias,
             "fecha_publicacion": self.fecha_publicacion,
+            "hash_deduplicado": self.hash,
+            "fecha_ingestion": int(time())
         }
+    
+    @property
+    def hash(self):
+        return hash(self.link + self.titulo)
 
 
 __all__ = ["RSSEntrada"]

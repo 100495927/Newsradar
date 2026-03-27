@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from os import environ
-from constantes.entorno import *
+from .constantes.entorno import *
 
 
 @dataclass
 class EntornoDB:
-    def __init__():
+    def __init__(self):
         self.__usuario = environ.get(VARENV_USUARIO_MONGODB_ROOT)
         if not self.__usuario:
             raise ValueError(f"Variable de entorno {VARENV_USUARIO_MONGODB_ROOT} no encontrada")
@@ -15,6 +15,11 @@ class EntornoDB:
         self.__puerto_local = environ.get(VARENV_PUERTO_LOCAL_MONGODB)
         if not self.__puerto_local:
             raise ValueError(ValueError(f"Variable de entorno {VARENV_PUERTO_LOCAL_MONGODB} no encontrada"))
+        self.__app_db_nombre = environ.get(VARENV_APP_DB)
+        if not self.__app_db_nombre:
+            raise ValueError(ValueError(f"Variable de entorno {VARENV_APP_DB} no encontrada"))
+
+
 
     @property
     def usuario(self):
@@ -32,5 +37,12 @@ class EntornoDB:
     def puerto_local(self):
         if not self.__puerto_local:
             raise ValueError("Puerto local no encontrado")
+        return self.__puerto_local
+        
+    @property
+    def app_db_nombre(self):
+        if not self.__app_db_nombre:
+            raise ValueError("Nombre de db no encontrado")
+        return self.__app_db_nombre
 
 __all__ = ["EntornoDB"]
