@@ -1,3 +1,5 @@
+
+
 class RSSFeed:
     # RSS
     def __init__(self, fuente, titulo, link, entradas):
@@ -8,7 +10,7 @@ class RSSFeed:
 
         for entrada in entradas:
             p = self._fuente.parser(entrada)
-            entrada_parseada = p.generar()
+            entrada_parseada = p.generar(self._fuente)
             self._entradas.append(entrada_parseada)
 
     def __str__(self):

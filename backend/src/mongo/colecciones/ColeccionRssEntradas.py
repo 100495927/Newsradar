@@ -1,5 +1,5 @@
 from .Coleccion import Coleccion
-from src.rss.RSSEntrada import RSSEntrada
+from rss.RSSEntrada import RSSEntrada
 
 
 class ColeccionRssEntradas(Coleccion):
@@ -11,14 +11,14 @@ class ColeccionRssEntradas(Coleccion):
             "required": [
                 "id_fuente",
                 "titulo",
-                "autores"
+                "autores",
                 "link",
                 "fecha_publicacion",
                 "hash_deduplicado",
                 "fecha_ingestion",
             ],
             "properties": {
-                "id_fuente": {"bsonType": "objectId"},
+                "id_fuente": {"bsonType": "string"},
                 "titulo": {"bsonType": "string"},
                 "autores": {"bsonType": ["array", "null"]},
                 "link": {"bsonType": "string"},

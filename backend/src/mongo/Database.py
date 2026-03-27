@@ -25,7 +25,7 @@ class Database:
             )
 
     def iniciar_colecciones(self):
-        import colecciones
+        from . import colecciones
 
         self.col_rss_entradas = colecciones.ColeccionRssEntradas(self.__db)
         self.col_rss_fuentes = colecciones.ColeccionRssFuentes(self.__db)

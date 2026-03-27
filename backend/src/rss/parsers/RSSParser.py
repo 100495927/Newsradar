@@ -33,8 +33,10 @@ class RSSParser:
 
         return timegm(self._entrada.published_parsed)
 
-    def generar(self) -> RSSEntrada:
+    def generar(self, fuente: RSSFeedSource) -> RSSEntrada:
+        from rss.RSSFeedSource import RSSFeedSource
         return RSSEntrada(
+            fuente,
             self.titulo(),
             self.autores(),
             self.link(),
