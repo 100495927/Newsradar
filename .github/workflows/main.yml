@@ -10,41 +10,31 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      # TC-06: Seguridad (Verificar que no se subió el .env real)
       - name: Verificar ausencia de .env real
         run: |
           if [ -f .env ]; then echo "Error: .env detectado en el repo"; exit 1; fi
 
-      # Preparar un .env temporal para que Docker arranque en el robot
+      # Usamos las contraseñas del .env.example para que todo sea coherente
       - name: Crear .env temporal
         run: |
           cp .env.example .env
-          echo "SMTP_PASSWORD=dummy_pwd" >> .env
-          echo "MONGO_ROOT_PASSWORD=pwd" >> .env
-          echo "MONGO_APP_PASSWORD=pwd" >> .env
+          # No añadimos "echo >> .env" adicionales que pisen las claves de .env.example
+          # a menos que quieras cambiarlas todas a "pwd"
 
-      # TC-05: Levantar Infraestructura
       - name: Build y Up de Docker
         run: docker compose up -d --build
 
       - name: Esperar a que los servicios estén listos
         run: sleep 60
 
-      # TC-08 y TC-07: Health Checks (Backend y Frontend)
       - name: Check Health Endpoints
         run: |
-          echo "=== ESTADO DE LOS CONTENEDORES ==="
           docker ps
-          echo "=== LOGS DEL BACKEND ==="
-          docker logs newsradar-backend
-          echo "=== INTENTANDO CONEXIÓN ==="
-          # Intentamos localhost y también la IP de la red de docker por si acaso
-          curl -v http://127.0.0.1:8000/health || (sleep 5 && curl -v http://localhost:8000/health)
+          curl -f http://localhost:8000/health || exit 1
 
-      # Ejecutar los tests de Python
-      # Ajustado a tu estructura: backend/test/test_sprint1.py
       - name: Ejecutar Tests Unitarios e Integración (Pytest)
         run: |
           docker exec \
             -e MONGODB_URI="mongodb://newsradar_root:change_me_root_pwd@mongodb:27017/admin?authSource=admin" \
+            -e SMTP_PASSWORD="mwli wwhx oioe bhte" \
             newsradar-backend pytest -s test/test_sprint1.py
