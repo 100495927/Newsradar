@@ -44,4 +44,4 @@ jobs:
       # Ejecutar los tests de Python
       # Ajustado a tu estructura: backend/test/test_sprint1.py
       - name: Ejecutar Tests Unitarios e Integración (Pytest)
-        run: docker exec newsradar-backend pytest app/test/test_sprint1.py
+        run: docker exec newsradar-backend pytest test/test_sprint1.py
