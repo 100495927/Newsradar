@@ -18,9 +18,6 @@ jobs:
       - name: Crear .env temporal
         run: |
           cp .env.example .env
-          # Forzamos las contraseñas para que Docker NO use las del .env.example que pueden fallar
-          sed -i 's/MONGO_ROOT_PASSWORD=.*/MONGO_ROOT_PASSWORD=change_me_root_pwd/' .env
-          sed -i 's/SMTP_PASSWORD=.*/SMTP_PASSWORD=mwliwwhxoioebhte/' .env
 
       - name: Build y Up de Docker
         run: docker compose up -d --build
@@ -36,6 +33,6 @@ jobs:
       - name: Ejecutar Tests Unitarios e Integración (Pytest)
         run: |
           docker exec \
-            -e MONGODB_URI="mongodb://newsradar_root:change_me_root_pwd@mongodb:27017/admin?authSource=admin" \
+            -e MONGODB_URI="mongodb://newsradar_root:change_me_root_pwd@newsradar-mongodb:27017/admin?authSource=admin" \
             -e SMTP_PASSWORD="mwliwwhxoioebhte" \
             newsradar-backend pytest -s test/test_sprint1.py
