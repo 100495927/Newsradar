@@ -44,4 +44,9 @@ jobs:
       # Ejecutar los tests de Python
       # Ajustado a tu estructura: backend/test/test_sprint1.py
       - name: Ejecutar Tests Unitarios e Integración (Pytest)
-        run: docker exec newsradar-backend pytest test/test_sprint1.py
+        run: |
+          docker exec \
+            -e MONGODB_URI="mongodb://newsradar_root:change_me_root_pwd@mongodb:27017/admin" \
+            -e SMTP_SERVER="smtp.gmail.com" \
+            -e SMTP_USER="newsradar.uc3m.gr5@gmail.com" \
+            newsradar-backend pytest test/test_sprint1.py
