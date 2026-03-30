@@ -36,5 +36,5 @@ jobs:
         run: |
           docker exec \
             -e MONGODB_URI="mongodb://newsradar_root:change_me_root_pwd@mongodb:27017/admin?authSource=admin" \
-            -e SMTP_PASSWORD="mwli wwhx oioe bhte" \
+            -e SMTP_PASSWORD="mwliwwhxoioebhte" \
             newsradar-backend pytest -s test/test_sprint1.py
