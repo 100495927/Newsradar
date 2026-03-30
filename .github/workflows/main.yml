@@ -28,7 +28,7 @@ jobs:
         run: docker compose up -d --build
 
       - name: Esperar a que los servicios estén listos
-        run: sleep 30
+        run: sleep 60
 
       # TC-08 y TC-07: Health Checks (Backend y Frontend)
       - name: Check Health Endpoints
