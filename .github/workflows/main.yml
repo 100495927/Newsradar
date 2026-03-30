@@ -1,0 +1,42 @@
+name: NewsRadar Sprint 1 CI
+
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # TC-06: Seguridad (Verificar que no se subió el .env real)
+      - name: Verificar ausencia de .env real
+        run: |
+          if [ -f .env ]; then echo "Error: .env detectado en el repo"; exit 1; fi
+
+      # Preparar un .env temporal para que Docker arranque en el robot
+      - name: Crear .env temporal
+        run: |
+          cp backend/.env.example .env
+          echo "SMTP_PASSWORD=dummy_pwd" >> .env
+          echo "MONGO_ROOT_PASSWORD=pwd" >> .env
+          echo "MONGO_APP_PASSWORD=pwd" >> .env
+
+      # TC-05: Levantar Infraestructura
+      - name: Build y Up de Docker
+        run: docker-compose up -d --build
+
+      - name: Esperar a que los servicios estén listos
+        run: sleep 30
+
+      # TC-08 y TC-07: Health Checks (Backend y Frontend)
+      - name: Check Health Endpoints
+        run: |
+          curl -f http://localhost:8000/health || exit 1
+          curl -f http://localhost:5173 || exit 1
+
+      # Ejecutar los tests de Python
+      # Ajustado a tu estructura: backend/test/test_sprint1.py
+      - name: Ejecutar Tests Unitarios e Integración (Pytest)
+        run: docker exec newsradar-backend pytest test/test_sprint1.py
