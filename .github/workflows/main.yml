@@ -18,8 +18,9 @@ jobs:
       - name: Crear .env temporal
         run: |
           cp .env.example .env
-          # No añadimos "echo >> .env" adicionales que pisen las claves de .env.example
-          # a menos que quieras cambiarlas todas a "pwd"
+          # Forzamos las contraseñas para que Docker NO use las del .env.example que pueden fallar
+          sed -i 's/MONGO_ROOT_PASSWORD=.*/MONGO_ROOT_PASSWORD=change_me_root_pwd/' .env
+          sed -i 's/SMTP_PASSWORD=.*/SMTP_PASSWORD=mwliwwhxoioebhte/' .env
 
       - name: Build y Up de Docker
         run: docker compose up -d --build
