@@ -43,7 +43,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       PYTHONUNBUFFERED: "1"
       # URI usada por el backend para conectar con Mongo usando el usuario de aplicacion.
-      MONGODB_URI: "mongodb://${MONGO_ROOT_USERNAME:-newsradar_root}:${MONGO_ROOT_PASSWORD:-change_me_root_pwd}@mongodb:27017/admin?authSource=admin"
+      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_INITDB_DATABASE:-admin}
       MONGO_DB_NAME: ${MONGO_APP_DB:-newsradar}
       SMTP_SERVER: ${SMTP_SERVER:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
