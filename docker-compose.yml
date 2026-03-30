@@ -14,8 +14,7 @@ services:
     ports:
       - "${FRONTEND_EXPOSE_PORT:-5173}:5173"
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     healthcheck:
       test:
         [
@@ -54,8 +53,7 @@ services:
     ports:
       - "${BACKEND_EXPOSE_PORT:-8000}:8000"
     depends_on:
-      mongodb:
-        condition: service_healthy
+      - mongodb
     healthcheck:
       test:
         [
