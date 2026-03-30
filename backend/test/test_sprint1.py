@@ -16,11 +16,20 @@ def test_email_format_validation():
 
 # TC-04: Conexión a MongoDB
 def test_mongodb_connection():
-    uri = os.getenv("MONGODB_URI")
-    client = pymongo.MongoClient(uri, serverSelectionTimeoutMS=2000)
+    # Buscamos la URI, si no existe usamos la de root por defecto para el test
+    uri = os.getenv("MONGODB_URI", "mongodb://newsradar_root:change_me_root_pwd@mongodb:27017/admin?authSource=admin")
+    
+    # IMPORTANTE: Añadimos direct_connection=True para evitar líos de réplicas en Docker
+    client = pymongo.MongoClient(uri, serverSelectionTimeoutMS=5000, directConnection=True)
+    
     try:
+        # Intentamos el ping en la base de datos que viene en la URI o en 'admin'
         client.admin.command('ping')
         connected = True
-    except Exception:
+    except Exception as e:
+        print(f"\nDEBUG Error Mongo: {e}")
         connected = False
+    finally:
+        client.close()
+        
     assert connected is True
