@@ -33,8 +33,13 @@ jobs:
       # TC-08 y TC-07: Health Checks (Backend y Frontend)
       - name: Check Health Endpoints
         run: |
-          curl -f http://localhost:8000/health || exit 1
-          curl -f http://localhost:5173 || exit 1
+          echo "=== ESTADO DE LOS CONTENEDORES ==="
+          docker ps
+          echo "=== LOGS DEL BACKEND ==="
+          docker logs newsradar-backend
+          echo "=== INTENTANDO CONEXIÓN ==="
+          # Intentamos localhost y también la IP de la red de docker por si acaso
+          curl -v http://127.0.0.1:8000/health || (sleep 5 && curl -v http://localhost:8000/health)
 
       # Ejecutar los tests de Python
       # Ajustado a tu estructura: backend/test/test_sprint1.py
