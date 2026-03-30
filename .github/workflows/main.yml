@@ -18,7 +18,7 @@ jobs:
       # Preparar un .env temporal para que Docker arranque en el robot
       - name: Crear .env temporal
         run: |
-          cp backend/.env.example .env
+          cp .env.example .env
           echo "SMTP_PASSWORD=dummy_pwd" >> .env
           echo "MONGO_ROOT_PASSWORD=pwd" >> .env
           echo "MONGO_APP_PASSWORD=pwd" >> .env
