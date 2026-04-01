@@ -94,9 +94,9 @@ Se actualizo la ejecucion del frontend para usar `npm run start`:
 ### B) Renombrado del informe
 Este documento reemplaza al antiguo nombre de informe del Sprint 2 para reflejar explicitamente Sprint + Base de Datos, evitando la palabra "estado".
 
-### C) Guia de conexiones Docker y MongoDB
-Se creo la guia operativa [docs/guia-conexiones-docker-mongodb.md](docs/guia-conexiones-docker-mongodb.md) con:
+### C) Guia de conexiones Docker y servicios
+Se creo la guia operativa [docs/informes_ia/guia-conexiones-docker-servicios.md](docs/informes_ia/guia-conexiones-docker-servicios.md) con:
 - Puertos y servicios.
-- Comandos de arranque (incluyendo perfil frontend).
+- Comandos de arranque.
 - Metodos de conexion a Mongo (host, contenedor, URI de app y root).
 - Recomendaciones de configuracion base para siguiente sprint backend.

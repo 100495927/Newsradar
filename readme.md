@@ -15,4 +15,10 @@ Actualmente, el proyecto cuenta con un sistema de **Integración Continua (CI)**
 > Para ejecutar los tests localmente: `docker exec -e MONGODB_URI="mongodb://newsradar_root:change_me_root_pwd@mongodb:27017/admin?authSource=admin" newsradar-backend pytest -s test/test_sprint1.py`
 > Para ejecutar los tests localmente con todas las variables locales: `docker exec newsradar-backend pytest test/test_sprint1.py`
 
+## Guia de conexiones Docker
+
+La documentacion operativa de servicios y accesos (MongoDB, Elasticsearch y Kibana) esta en:
+
+- `docs/informes_ia/guia-conexiones-docker-servicios.md`
+
 > **Nota:** Los logs detallados de la ejecución de las pruebas se encuentran en la pestaña **Actions** del repositorio (requiere acceso de colaborador).

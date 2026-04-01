@@ -36,7 +36,7 @@ Preparar una infraestructura Docker lista para desplegar el backend de NewsRadar
 4. Se implementó script de inicialización init-mongo.sh para crear usuario de aplicación con rol readWrite.
 5. Se añadieron healthchecks para backend y MongoDB.
 6. Se configuró dependencia por estado saludable: backend espera a MongoDB.
-7. Se incorporó un servicio frontend React (Node.js) en perfil opcional frontend para no arrancar por defecto.
+7. Se incorporó un servicio frontend React (Node.js) que arranca junto al resto de servicios en el `docker compose up` estándar.
 
 ## Variables de entorno y configuración
 Todas las variables se declaran en .env.example para revisión:
@@ -84,8 +84,8 @@ Conclusión práctica: por ahora es opcional y prescindible; recomendable en fas
 5. Verificar estado:
    - docker compose ps
    - backend health: http://localhost:8000/health
-6. Cuando se quiera probar frontend, arrancar también su perfil:
-   - docker compose --profile frontend up -d --build
+6. El frontend queda incluido en el arranque estándar:
+   - docker compose up -d --build
 7. En producción, cerrar el puerto publicado de MongoDB y mantener acceso solo por red interna Docker.
 
 ## Observaciones
