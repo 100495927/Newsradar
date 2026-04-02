@@ -5,3 +5,14 @@ __pycache__
 .env
 *.code-workspace
 
+# Persistencia local de BBDD en carpeta del repo (no versionar datos reales)
+data/mongodb/data/*
+!data/mongodb/data/.gitkeep
+data/mongodb/configdb/*
+!data/mongodb/configdb/.gitkeep
+data/elasticsearch/data/*
+!data/elasticsearch/data/.gitkeep
+data/elasticsearch/config/*
+!data/elasticsearch/config/.gitkeep
+!data/elasticsearch/config/elasticsearch.yml
+

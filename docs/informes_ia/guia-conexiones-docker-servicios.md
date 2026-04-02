@@ -149,19 +149,22 @@ Invoke-WebRequest http://localhost:5601/api/status
 
 Kibana esta configurado para conectarse a Elasticsearch por red interna con `http://elasticsearch:9200`.
 
-## 8. Persistencia y reinicio de volumenes
+## 8. Persistencia y reinicio de datos
 
-Persistencia declarada:
+Persistencia declarada en carpetas del proyecto (bind mounts):
 
-- MongoDB: volumen `newsradar_mongodb_data`
-- Elasticsearch: volumen `newsradar_elasticsearch_data`
+- MongoDB datos: `./data/mongodb/data`
+- MongoDB configdb: `./data/mongodb/configdb`
+- Elasticsearch datos: `./data/elasticsearch/data`
+- Elasticsearch config: `./data/elasticsearch/config/elasticsearch.yml`
 
 Si se necesita resetear datos en local (destructivo):
 
 ```powershell
 docker compose down
-docker volume rm newsradar_mongodb_data
-docker volume rm newsradar_elasticsearch_data
+Remove-Item -Recurse -Force .\data\mongodb\data\*
+Remove-Item -Recurse -Force .\data\mongodb\configdb\*
+Remove-Item -Recurse -Force .\data\elasticsearch\data\*
 docker compose up -d --build
 ```
 

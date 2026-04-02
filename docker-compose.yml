@@ -82,7 +82,8 @@ services:
     ports:
       - "${MONGO_EXPOSE_PORT:-27017}:27017"
     volumes:
-      - mongodb_data:/data/db
+      - ./data/mongodb/data:/data/db
+      - ./data/mongodb/configdb:/data/configdb
       - ./docker/mongo/init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
     healthcheck:
       test:
@@ -108,7 +109,8 @@ services:
     ports:
       - "${ELASTIC_EXPOSE_PORT:-9200}:9200"
     volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./data/elasticsearch/data:/usr/share/elasticsearch/data
+      - ./data/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
     healthcheck:
       test:
         [
@@ -151,9 +153,3 @@ services:
 networks:
   newsradar_net:
     driver: bridge
-
-volumes:
-  mongodb_data:
-    name: newsradar_mongodb_data
-  elasticsearch_data:
-    name: newsradar_elasticsearch_data
