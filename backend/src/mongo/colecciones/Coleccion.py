@@ -11,6 +11,12 @@ class Coleccion(ABC):
         self._db = db
         self._collection = self._db[self.NOMBRE_COLECCION]
         self._inicializar_esquema()
+        self.crear_indices()
+
+    @abstractmethod
+    def esquema(self):
+        """Define el esquema/validador de la coleccion."""
+        pass
 
     @abstractmethod
     def crear_indices(self):

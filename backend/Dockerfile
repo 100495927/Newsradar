@@ -11,6 +11,7 @@ RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
 
 COPY app /app/app
 COPY src /app/src
+COPY scripts /app/scripts
 
 ENV PYTHONPATH="/app/src"
 

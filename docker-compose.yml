@@ -12,7 +12,8 @@ services:
     ports:
       - "${FRONTEND_EXPOSE_PORT:-5173}:5173"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     healthcheck:
       test:
         [
@@ -43,6 +44,9 @@ services:
       # URI usada por el backend para conectar con Mongo usando el usuario de aplicacion.
       MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_INITDB_DATABASE:-admin}
       MONGO_DB_NAME: ${MONGO_APP_DB:-newsradar}
+      ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://elasticsearch:9200}
+      ELASTICSEARCH_INDEX_ENTRADAS: ${ELASTICSEARCH_INDEX_ENTRADAS:-rss_entradas_idx}
+      ELASTICSEARCH_INDEX_FUENTES: ${ELASTICSEARCH_INDEX_FUENTES:-rss_fuentes_idx}
       SMTP_SERVER: ${SMTP_SERVER:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER}
@@ -51,7 +55,12 @@ services:
     ports:
       - "${BACKEND_EXPOSE_PORT:-8000}:8000"
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      elasticsearch-setup:
+        condition: service_completed_successfully
     healthcheck:
       test:
         [
@@ -67,10 +76,37 @@ services:
     networks:
       - newsradar_net
 
+  rss-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: newsradar-rss-worker
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_INITDB_DATABASE:-admin}
+      MONGO_DB_NAME: ${MONGO_APP_DB:-newsradar}
+      ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://elasticsearch:9200}
+      ELASTICSEARCH_INDEX_ENTRADAS: ${ELASTICSEARCH_INDEX_ENTRADAS:-rss_entradas_idx}
+      ELASTICSEARCH_INDEX_FUENTES: ${ELASTICSEARCH_INDEX_FUENTES:-rss_fuentes_idx}
+      RSS_WORKER_INTERVAL_SECONDS: ${RSS_WORKER_INTERVAL_SECONDS:-300}
+      RSS_WORKER_RUN_ONCE: ${RSS_WORKER_RUN_ONCE:-false}
+    command: ["python", "/app/scripts/rss_worker.py"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      elasticsearch-setup:
+        condition: service_completed_successfully
+    networks:
+      - newsradar_net
+
   mongodb:
     image: mongo:7.0
     container_name: newsradar-mongodb
     restart: unless-stopped
+    command: ["mongod", "--auth"]
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-newsradar_root}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-change_me_root_pwd}
@@ -121,6 +157,19 @@ services:
       timeout: 10s
       retries: 8
       start_period: 30s
+    networks:
+      - newsradar_net
+
+  elasticsearch-setup:
+    image: curlimages/curl:8.11.1
+    container_name: newsradar-elasticsearch-setup
+    restart: "no"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./docker/elasticsearch/init-elasticsearch.sh:/init-elasticsearch.sh:ro
+    entrypoint: ["sh", "/init-elasticsearch.sh"]
     networks:
       - newsradar_net
 

@@ -10,6 +10,7 @@ class RSSEntrada:
     link: str
     categorias: list[str]
     fecha_publicacion: int  # Unix timestamp
+    resumen: str | None = None
 
     def __str__(self) -> str:
         return f"""
@@ -21,14 +22,17 @@ class RSSEntrada:
         """
 
     def a_mongo(self) -> dict:
-        from time import time
         from datetime import datetime, timezone
+        if not getattr(self.fuente, "mongo_id", None):
+            raise ValueError("La fuente RSS debe persistirse antes de insertar entradas (mongo_id requerido)")
+
         return {
-            "id_fuente": self.fuente.hash,
+            "id_fuente": self.fuente.mongo_id,
             "titulo": self.titulo,
             "autores": self.autores,
             "link": self.link,
             "categorias": self.categorias,
+            "resumen": self.resumen,
             "fecha_publicacion": datetime.fromtimestamp(self.fecha_publicacion, tz=timezone.utc),
             "hash_deduplicado": self.hash,
             "fecha_ingestion": datetime.now(timezone.utc)

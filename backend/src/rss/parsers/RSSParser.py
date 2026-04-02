@@ -22,6 +22,12 @@ class RSSParser:
     def link(self) -> str:
         return self._entrada.link
 
+    def resumen(self) -> str | None:
+        texto = self._entrada.get("summary") or self._entrada.get("description")
+        if not texto:
+            return None
+        return str(texto)
+
     def categorias(self) -> list[str]:
         cat = [tag.term for tag in self._entrada.get("tags", [])]
         if len(cat) == 0:
@@ -42,6 +48,7 @@ class RSSParser:
             self.link(),
             self.categorias(),
             self.fecha_publicacion(),
+            self.resumen(),
         )
 
 

@@ -16,11 +16,15 @@ class RSSFeedSource:
         rss: str,
         url: str,
         parser: Type[RSSParser],
+        activo: bool = True,
     ):
         self.medio = medio
         self.rss = rss
         self.url = url
         self.parser = parser
+        self.activo = activo
+        # Se rellena al persistir en Mongo para referenciar entradas con ObjectId.
+        self.mongo_id = None
 
     def obtener_entradas(self) -> RSSFeed:
         from feedparser import parse
@@ -34,11 +38,12 @@ class RSSFeedSource:
         from .parsers import mongo_parser_ids
 
         return {
-            "_id": self.hash,
+            "hash_fuente": self.hash,
             "medio": self.medio,
             "rss": self.rss,
             "url": self.url,
             "parser_id": mongo_parser_ids.inv[self.parser],
+            "activo": self.activo,
             "creado": datetime.now(timezone.utc),
             "actualizado": datetime.now(timezone.utc),
         }

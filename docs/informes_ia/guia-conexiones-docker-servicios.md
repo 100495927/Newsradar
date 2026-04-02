@@ -15,6 +15,13 @@ Definidos en [docker-compose.yml](docker-compose.yml):
   - Puerto contenedor: 8000
   - Puerto host: ${BACKEND_EXPOSE_PORT:-8000}
   - Health endpoint: [http://localhost:8000/health](http://localhost:8000/health)
+- rss-worker
+  - Contenedor: newsradar-rss-worker
+  - Tipo: proceso de ingesta continua RSS (sin puerto HTTP)
+  - Comando: `python /app/scripts/rss_worker.py`
+  - Variables clave:
+    - `RSS_WORKER_INTERVAL_SECONDS` (frecuencia de ciclo)
+    - `RSS_WORKER_RUN_ONCE` (modo una sola ejecucion)
 - frontend
   - Contenedor: newsradar-frontend
   - Puerto contenedor: 5173
@@ -30,6 +37,9 @@ Definidos en [docker-compose.yml](docker-compose.yml):
   - Puerto contenedor: 5601
   - Puerto host: ${KIBANA_EXPOSE_PORT:-5601}
   - URL local: [http://localhost:5601](http://localhost:5601)
+- elasticsearch-setup
+  - Contenedor: newsradar-elasticsearch-setup
+  - Tipo: job one-shot (crea indices RSS en Elasticsearch si no existen)
 
 ## 2. Archivo .env para el equipo
 
@@ -70,6 +80,19 @@ docker logs -f newsradar-backend
 docker logs -f newsradar-elasticsearch
 docker logs -f newsradar-kibana
 docker logs -f newsradar-frontend
+docker logs -f newsradar-rss-worker
+```
+
+1. Arrancar solo el worker RSS:
+
+```powershell
+docker compose up -d --build rss-worker
+```
+
+1. Ver estado del worker RSS:
+
+```powershell
+docker compose ps rss-worker
 ```
 
 ## 4. Puntos de acceso y verificacion rapida
@@ -135,6 +158,18 @@ Invoke-RestMethod http://localhost:9200
 Invoke-RestMethod http://localhost:9200/_cat/indices?v
 ```
 
+Indices RSS esperados tras `elasticsearch-setup`:
+
+- `rss_entradas_idx`
+- `rss_fuentes_idx`
+
+Comprobar mappings:
+
+```powershell
+Invoke-RestMethod http://localhost:9200/rss_entradas_idx/_mapping
+Invoke-RestMethod http://localhost:9200/rss_fuentes_idx/_mapping
+```
+
 ## 7. Metodos de acceso a Kibana
 
 ### Metodo A: navegador local
@@ -168,6 +203,24 @@ Remove-Item -Recurse -Force .\data\elasticsearch\data\*
 docker compose up -d --build
 ```
 
+Alternativa recomendada (script de limpieza de datos, solo borrado):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\reset_datastores_and_rebootstrap.ps1
+```
+
+Alternativa shell (Linux/macOS, o Git Bash/WSL en Windows):
+
+```bash
+sh ./scripts/reset_datastores_and_rebootstrap.sh
+```
+
+Estos scripts:
+
+1. Borran los ficheros persistidos de MongoDB y Elasticsearch (conservando `.gitkeep`).
+2. No paran ni arrancan contenedores.
+3. No ejecutan build.
+
 ## 9. Troubleshooting rapido
 
 1. Si Kibana no levanta, comprobar primero Elasticsearch:
@@ -177,10 +230,22 @@ docker logs newsradar-elasticsearch
 Invoke-RestMethod http://localhost:9200/_cluster/health
 ```
 
+1. Si no aparecen los indices RSS en Elasticsearch, ejecutar de nuevo el setup:
+
+```powershell
+docker compose run --rm elasticsearch-setup
+```
+
 1. Si el backend no conecta con Mongo, revisar URI y credenciales del `.env` y reiniciar:
 
 ```powershell
 docker compose up -d --build backend mongodb
+```
+
+1. Para sincronizar datos RSS de Mongo a Elasticsearch manualmente:
+
+```powershell
+docker exec newsradar-backend python /app/scripts/rss_mongo_to_elasticsearch.py
 ```
 
 1. Si hay cambios en variables y no se reflejan, recrear contenedores:
