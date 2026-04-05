@@ -71,6 +71,7 @@ class User(UserBase):
 
 class UserInDB(User):
     password: str
+    ## Añadido por Alberto Barrios
     is_verified: bool = False  # Requisito: verificación de cuenta 
     verification_token: Optional[str] = None
     token_created_at: Optional[datetime] = None # Para controlar las 24 horas
@@ -215,6 +216,7 @@ stats_store: Dict[int, Stats] = {}
 
 active_tokens: Dict[str, int] = {}
 
+## Añadido por Alberto Barrios
 # Conexion a la base de datos
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:password@mongodb:27017/")
 client = MongoClient(MONGO_URI)
@@ -322,6 +324,7 @@ def get_current_user(
     return user
 
 
+## Añadido por Alberto Barrios
 def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
     """Valida el requisito de caducidad de 24 horas."""
     if not fecha_creacion:
@@ -330,6 +333,7 @@ def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
     # Comparamos el tiempo actual con el de creación 
     return (datetime.now(timezone.utc) - fecha_creacion) <= limite
 
+## Añadido por Alberto Barrios
 def ensure_gestor_role(user: UserInDB = Depends(get_current_user)):
     """Verifica que el usuario no sea solo un 'Lector'."""
     # Buscamos si el usuario tiene el rol de admin/gestor [cite: 45, 81]
@@ -399,6 +403,7 @@ def register(payload: UserCreate) -> User:
     ensure_role_ids_exist(payload.role_ids)
 
     user_id = next_id("users")
+    ## Añadido por Alberto Barrios
     # Añadimos la lógica de verificación al crear el objeto 
     user_db = UserInDB(
         id=user_id, 
@@ -412,6 +417,7 @@ def register(payload: UserCreate) -> User:
     return sanitize_user(user_db)
 
 
+## Añadido por Alberto Barrios
 @app.get(f"{API_PREFIX}/auth/verify/{{token}}", tags=["auth"])
 def verify_email(token: str):
     """Verifica la cuenta si el token no ha expirado."""
@@ -427,6 +433,7 @@ def verify_email(token: str):
     user.verification_token = None 
     return {"message": "Cuenta verificada correctamente "}
 
+## Añadido por Alberto Barrios
 @app.post(f"{API_PREFIX}/auth/forgot-password", tags=["auth"])
 def forgot_password(payload: LoginRequest):
     # Buscamos al usuario en la colección de MongoDB que definimos antes
@@ -448,6 +455,7 @@ def forgot_password(payload: LoginRequest):
     return {"message": "Si el email está registrado, recibirá instrucciones de recuperación"}
 
 
+## Añadido por Alberto Barrios
 @app.post(f"{API_PREFIX}/auth/reset-password", tags=["auth"])
 def reset_password(token: str, new_password: str):
     # Buscamos al usuario que posee ese token de reseteo
@@ -499,6 +507,7 @@ def get_user(user_id: int, _: UserInDB = Depends(get_current_user)) -> User:
     return sanitize_user(user)
 
 
+## Actualizado por Alberto Barrios
 @app.put(f"{API_PREFIX}/users/{{user_id}}", response_model=User, tags=["users"])
 def update_user(user_id: int, payload: UserUpdate, current_user: UserInDB = Depends(get_current_user)) -> User:
     """Actualiza el perfil en MongoDB con restricciones de seguridad."""
@@ -628,7 +637,9 @@ def list_user_alerts(user_id: int, _: UserInDB = Depends(get_current_user)) -> L
     response_model=Alert,
     status_code=201,
     tags=["alerts"],
+    ## Añadido por Alberto Barrios
     dependencies=[Depends(ensure_gestor_role)]
+    # Solo esta linea
 )
 def create_user_alert(user_id: int, payload: AlertCreate, _: UserInDB = Depends(get_current_user)) -> Alert:
     """Crea una alerta para un usuario."""
