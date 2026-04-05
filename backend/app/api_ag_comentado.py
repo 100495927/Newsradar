@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional
 from uuid import uuid4
+from pymongo import MongoClient
+import os
+import hashlib
 
 from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -68,6 +71,9 @@ class User(UserBase):
 
 class UserInDB(User):
     password: str
+    is_verified: bool = False  # Requisito: verificación de cuenta 
+    verification_token: Optional[str] = None
+    token_created_at: Optional[datetime] = None # Para controlar las 24 horas
 
 
 class AlertCategoryItem(BaseModel):
@@ -209,6 +215,12 @@ stats_store: Dict[int, Stats] = {}
 
 active_tokens: Dict[str, int] = {}
 
+# Conexion a la base de datos
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:password@mongodb:27017/")
+client = MongoClient(MONGO_URI)
+db = client["newsradar_db"]
+users_col = db["users"] # Esta será tu colección principal de usuarios
+
 counters = {
     "roles": 1,
     "users": 1,
@@ -310,6 +322,27 @@ def get_current_user(
     return user
 
 
+def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
+    """Valida el requisito de caducidad de 24 horas."""
+    if not fecha_creacion:
+        return False
+    limite = timedelta(hours=24)
+    # Comparamos el tiempo actual con el de creación 
+    return (datetime.now(timezone.utc) - fecha_creacion) <= limite
+
+def ensure_gestor_role(user: UserInDB = Depends(get_current_user)):
+    """Verifica que el usuario no sea solo un 'Lector'."""
+    # Buscamos si el usuario tiene el rol de admin/gestor [cite: 45, 81]
+    is_gestor = any(roles_store[r_id].name == "admin" for r_id in user.role_ids)
+    if not is_gestor:
+        raise HTTPException(
+            status_code=403, 
+            detail="Acceso denegado: Se requiere rol de Gestor de NewsRadar "
+        )
+    return user
+
+
+
 def create_seed_data() -> None:
     """Carga datos semilla (roles y admin) en el arranque si no existen."""
     if roles_store:
@@ -366,9 +399,76 @@ def register(payload: UserCreate) -> User:
     ensure_role_ids_exist(payload.role_ids)
 
     user_id = next_id("users")
-    user_db = UserInDB(id=user_id, **payload.model_dump())
+    # Añadimos la lógica de verificación al crear el objeto 
+    user_db = UserInDB(
+        id=user_id, 
+        verification_token=str(uuid4()), 
+        token_created_at=datetime.now(timezone.utc),
+        **payload.model_dump()
+    )
     users_store[user_id] = user_db
+    # IMPORTANTE: Aquí deberías imprimir el token en el log para simular el envío de email [cite: 69]
+    print(f"DEBUG: Token para {user_db.email}: {user_db.verification_token}")
     return sanitize_user(user_db)
+
+
+@app.get(f"{API_PREFIX}/auth/verify/{{token}}", tags=["auth"])
+def verify_email(token: str):
+    """Verifica la cuenta si el token no ha expirado."""
+    user = next((u for u in users_store.values() if u.verification_token == token), None)
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="Token no válido")
+    
+    if not es_token_valido(user.token_created_at):
+        raise HTTPException(status_code=400, detail="El enlace ha caducado (máximo 24h) ")
+    
+    user.is_verified = True
+    user.verification_token = None 
+    return {"message": "Cuenta verificada correctamente "}
+
+@app.post(f"{API_PREFIX}/auth/forgot-password", tags=["auth"])
+def forgot_password(payload: LoginRequest):
+    # Buscamos al usuario en la colección de MongoDB que definimos antes
+    user = users_col.find_one({"email": payload.email})
+    
+    if user:
+        reset_token = str(uuid4())
+        # Guardamos el token y la hora actual (UTC) para la validación de 24h
+        users_col.update_one(
+            {"email": payload.email},
+            {"$set": {
+                "reset_token": reset_token, 
+                "reset_token_at": datetime.now(timezone.utc)
+            }}
+        )
+        # Importante para el "combate": mostrarlo en logs para que el profesor lo vea
+        print(f"DEBUG: Token de recuperación para {payload.email}: {reset_token}")
+    
+    return {"message": "Si el email está registrado, recibirá instrucciones de recuperación"}
+
+
+@app.post(f"{API_PREFIX}/auth/reset-password", tags=["auth"])
+def reset_password(token: str, new_password: str):
+    # Buscamos al usuario que posee ese token de reseteo
+    user_data = users_col.find_one({"reset_token": token})
+    
+    # Validamos existencia y la caducidad de 24 horas (Requisito funcional ID 2)
+    if not user_data or not es_token_valido(user_data.get("reset_token_at")):
+        raise HTTPException(status_code=400, detail="El enlace es inválido o ha caducado (máximo 24h)")
+
+    # Hasheamos la nueva contraseña (Seguridad obligatoria)
+    hashed_pw = hashlib.sha256(new_password.encode()).hexdigest()
+    
+    # Actualizamos y limpiamos los tokens de la base de datos
+    users_col.update_one(
+        {"id": user_data["id"]},
+        {
+            "$set": {"password": hashed_pw}, 
+            "$unset": {"reset_token": "", "reset_token_at": ""}
+        }
+    )
+    return {"message": "Contraseña actualizada correctamente"}
 
 
 @app.get(f"{API_PREFIX}/users", response_model=List[User], tags=["users"])
@@ -400,21 +500,37 @@ def get_user(user_id: int, _: UserInDB = Depends(get_current_user)) -> User:
 
 
 @app.put(f"{API_PREFIX}/users/{{user_id}}", response_model=User, tags=["users"])
-def update_user(user_id: int, payload: UserUpdate, _: UserInDB = Depends(get_current_user)) -> User:
-    """Actualiza parcialmente un usuario, con control de email duplicado."""
-    user = users_store.get(user_id)
-    if not user:
+def update_user(user_id: int, payload: UserUpdate, current_user: UserInDB = Depends(get_current_user)) -> User:
+    """Actualiza el perfil en MongoDB con restricciones de seguridad."""
+    
+    # 1. SEGURIDAD: Solo el propio usuario o un admin puede editar
+    is_admin = any(roles_store[r_id].name == "admin" for r_id in current_user.role_ids)
+    if current_user.id != user_id and not is_admin:
+        raise HTTPException(status_code=403, detail="No tienes permiso para editar este perfil")
+
+    # 2. BÚSQUEDA: Buscamos en MongoDB en lugar de users_store
+    user_data = users_col.find_one({"id": user_id})
+    if not user_data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
+    # 3. FILTRADO: Preparamos los datos enviados
     data = payload.model_dump(exclude_unset=True)
-    if "email" in data and any(u.email == data["email"] and u.id != user_id for u in users_store.values()):
-        raise HTTPException(status_code=409, detail="El email ya está registrado")
-    if "role_ids" in data:
-        ensure_role_ids_exist(data["role_ids"])
+    
+    # PROTECCIÓN: Si no es admin, eliminamos campos sensibles del payload
+    if not is_admin:
+        data.pop("role_ids", None) # Un usuario no puede subirse el rango solo 
+        data.pop("email", None)    # El email suele ser el ID, mejor no cambiarlo aquí 
 
-    updated = user.model_copy(update=data)
-    users_store[user_id] = updated
-    return sanitize_user(updated)
+    # 4. PERSISTENCIA: Actualizamos en la base de datos real
+    if data:
+        users_col.update_one({"id": user_id}, {"$set": data})
+
+    # 5. RETORNO: Obtenemos el objeto actualizado para devolverlo
+    updated_user_data = users_col.find_one({"id": user_id})
+    # Convertimos el diccionario de Mongo a nuestro objeto Pydantic
+    updated_user_obj = UserInDB(**updated_user_data)
+    
+    return sanitize_user(updated_user_obj)
 
 
 @app.delete(
@@ -512,6 +628,7 @@ def list_user_alerts(user_id: int, _: UserInDB = Depends(get_current_user)) -> L
     response_model=Alert,
     status_code=201,
     tags=["alerts"],
+    dependencies=[Depends(ensure_gestor_role)]
 )
 def create_user_alert(user_id: int, payload: AlertCreate, _: UserInDB = Depends(get_current_user)) -> Alert:
     """Crea una alerta para un usuario."""
