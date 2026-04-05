@@ -1,5 +1,6 @@
 from .Coleccion import Coleccion
 from rss.RSSEntrada import RSSEntrada
+from datetime import datetime, timezone
 
 
 class ColeccionRssEntradas(Coleccion):
@@ -18,25 +19,41 @@ class ColeccionRssEntradas(Coleccion):
                 "fecha_ingestion",
             ],
             "properties": {
-                "id_fuente": {"bsonType": "string"},
+                "_id": {"bsonType": "objectId"},
+                "id_fuente": {"bsonType": "objectId"},
                 "titulo": {"bsonType": "string"},
                 "autores": {"bsonType": ["array", "null"]},
                 "link": {"bsonType": "string"},
+                "categorias": {"bsonType": ["array", "null"]},
+                "resumen": {"bsonType": ["string", "null"]},
                 "fecha_publicacion": {"bsonType": "date"},
                 "hash_deduplicado": {"bsonType": "string"},
                 "fecha_ingestion": {"bsonType": "date"},
-                "categories": {"bsonType": ["array", "null"]},
             },
         }
 
     def crear_indices(self):
         self._collection.create_index(
-            "hash_deduplicado", unique=True, name="idx_rss_items_dedup_unique"
+            "hash_deduplicado", unique=True, name="idx_rss_entradas_hash_deduplicado_unique"
         )
         self._collection.create_index(
-            [("source_id", 1), ("published_at", -1)], name="idx_rss_items_source_date"
+            [("id_fuente", 1), ("fecha_publicacion", -1)], name="idx_rss_entradas_fuente_fecha"
+        )
+        self._collection.create_index(
+            "fecha_publicacion", name="idx_rss_entradas_fecha_publicacion"
+        )
+        self._collection.create_index(
+            "categorias", name="idx_rss_entradas_categorias"
         )
 
     def insertar(self, entrada: RSSEntrada):
         datos = entrada.a_mongo()
-        self._collection.insert_one(datos)
+        resultado = self._collection.update_one(
+            {"hash_deduplicado": datos["hash_deduplicado"]},
+            {
+                "$setOnInsert": datos,
+                "$set": {"fecha_ingestion": datetime.now(timezone.utc)},
+            },
+            upsert=True,
+        )
+        return resultado.upserted_id

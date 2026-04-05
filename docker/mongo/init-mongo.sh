@@ -1,12 +1,33 @@
-#!/bin/bash
-set -euo pipefail
+#!/bin/sh
+# Bootstrap inicial de MongoDB para NewsRadar.
+# Resultado esperado: usuario de aplicacion, colecciones RSS/usuarios y sus indices
+# quedan creados al primer arranque cuando /data/db esta vacio.
+
+set -eu
+
+log() {
+  printf '[init-mongo] %s\n' "$1"
+}
+
+fail() {
+  printf '[init-mongo] ERROR: %s\n' "$1" >&2
+  exit 1
+}
+
+log "Inicio de bootstrap de MongoDB"
 
 if [ -z "${MONGO_APP_USER:-}" ] || [ -z "${MONGO_APP_PASSWORD:-}" ] || [ -z "${MONGO_APP_DB:-}" ]; then
-  echo "[init-mongo] Faltan variables MONGO_APP_USER, MONGO_APP_PASSWORD o MONGO_APP_DB" >&2
-  exit 1
+  fail "Faltan variables MONGO_APP_USER, MONGO_APP_PASSWORD o MONGO_APP_DB"
 fi
 
-mongosh --authenticationDatabase "$MONGO_INITDB_DATABASE" \
+if [ -z "${MONGO_INITDB_ROOT_USERNAME:-}" ] || [ -z "${MONGO_INITDB_ROOT_PASSWORD:-}" ] || [ -z "${MONGO_INITDB_DATABASE:-}" ]; then
+  fail "Faltan variables de root para bootstrap (MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD o MONGO_INITDB_DATABASE)"
+fi
+
+log "Variables de entorno validadas"
+log "Conectando a mongosh para crear usuario y estructura inicial"
+
+if ! mongosh --authenticationDatabase "$MONGO_INITDB_DATABASE" \
   -u "$MONGO_INITDB_ROOT_USERNAME" \
   -p "$MONGO_INITDB_ROOT_PASSWORD" <<EOF
 use $MONGO_APP_DB
@@ -35,58 +56,61 @@ function ensureCollection(name, validator) {
   }
 }
 
-ensureCollection("rss_sources", {
-  $jsonSchema: {
+ensureCollection("rss_fuentes", {
+  \$jsonSchema: {
     bsonType: "object",
-    required: ["medio", "url", "active", "created_at", "updated_at"],
+    required: ["hash_fuente", "medio", "url", "activo", "creado", "actualizado"],
     properties: {
+      _id: { bsonType: "objectId" },
+      hash_fuente: { bsonType: "string" },
       medio: { bsonType: "string" },
       rss: { bsonType: ["string", "null"] },
       url: { bsonType: "string" },
-      parser_hint: { bsonType: ["string", "null"] },
-      active: { bsonType: "bool" },
-      created_at: { bsonType: "date" },
-      updated_at: { bsonType: "date" }
+      parser_id: { bsonType: ["string", "null"] },
+      activo: { bsonType: "bool" },
+      creado: { bsonType: "date" },
+      actualizado: { bsonType: "date" }
     }
   }
 });
 
-ensureCollection("rss_items", {
-  $jsonSchema: {
+ensureCollection("rss_entradas", {
+  \$jsonSchema: {
     bsonType: "object",
-    required: ["source_id", "title", "link", "published_at", "dedup_key", "ingested_at"],
+    required: ["id_fuente", "titulo", "autores", "link", "fecha_publicacion", "hash_deduplicado", "fecha_ingestion"],
     properties: {
-      source_id: { bsonType: "objectId" },
-      title: { bsonType: "string" },
+      _id: { bsonType: "objectId" },
+      id_fuente: { bsonType: "objectId" },
+      titulo: { bsonType: "string" },
       link: { bsonType: "string" },
-      summary: { bsonType: ["string", "null"] },
-      authors: { bsonType: ["array", "null"] },
-      categories: { bsonType: ["array", "null"] },
-      published_at: { bsonType: "date" },
-      dedup_key: { bsonType: "string" },
-      ingested_at: { bsonType: "date" },
-      updated_at: { bsonType: ["date", "null"] },
+      resumen: { bsonType: ["string", "null"] },
+      autores: { bsonType: ["array", "null"] },
+      categorias: { bsonType: ["array", "null"] },
+      fecha_publicacion: { bsonType: "date" },
+      hash_deduplicado: { bsonType: "string" },
+      fecha_ingestion: { bsonType: "date" },
       meta: { bsonType: ["object", "null"] }
     }
   }
 });
 
-ensureCollection("rss_items_raw", {
-  $jsonSchema: {
+ensureCollection("rss_entradas_raw", {
+  \$jsonSchema: {
     bsonType: "object",
-    required: ["item_id", "source_id", "raw_payload", "captured_at"],
+    required: ["id_entrada", "id_fuente", "payload_raw", "fecha_captura"],
     properties: {
-      item_id: { bsonType: "objectId" },
-      source_id: { bsonType: "objectId" },
-      raw_payload: { bsonType: "string" },
-      payload_format: { bsonType: ["string", "null"] },
-      captured_at: { bsonType: "date" }
+      _id: { bsonType: "objectId" },
+      id_entrada: { bsonType: "objectId" },
+      id_fuente: { bsonType: "objectId" },
+      payload_raw: { bsonType: "string" },
+      formato_payload: { bsonType: ["string", "null"] },
+      fecha_captura: { bsonType: "date" }
     }
   }
 });
 
 ensureCollection("users", {
-  $jsonSchema: {
+  \$jsonSchema: {
     bsonType: "object",
     required: ["email", "first_name", "last_name", "organization", "role", "status", "created_at", "updated_at"],
     properties: {
@@ -106,7 +130,7 @@ ensureCollection("users", {
 
 // JWT future support only: persistence layer without auth endpoint implementation.
 ensureCollection("user_sessions", {
-  $jsonSchema: {
+  \$jsonSchema: {
     bsonType: "object",
     required: ["user_id", "jti", "token_type", "issued_at", "expires_at", "status"],
     properties: {
@@ -125,17 +149,18 @@ ensureCollection("user_sessions", {
   }
 });
 
-db.rss_sources.createIndex({ url: 1 }, { unique: true, name: "idx_rss_sources_url_unique" });
-db.rss_sources.createIndex({ medio: 1, rss: 1 }, { name: "idx_rss_sources_medio_rss" });
-db.rss_sources.createIndex({ active: 1 }, { name: "idx_rss_sources_active" });
+db.rss_fuentes.createIndex({ hash_fuente: 1 }, { unique: true, name: "idx_rss_fuentes_hash_fuente_unique" });
+db.rss_fuentes.createIndex({ url: 1 }, { unique: true, name: "idx_rss_fuentes_url_unique" });
+db.rss_fuentes.createIndex({ medio: 1, rss: 1 }, { name: "idx_rss_fuentes_medio_rss" });
+db.rss_fuentes.createIndex({ activo: 1 }, { name: "idx_rss_fuentes_activo" });
 
-db.rss_items.createIndex({ dedup_key: 1 }, { unique: true, name: "idx_rss_items_dedup_unique" });
-db.rss_items.createIndex({ source_id: 1, published_at: -1 }, { name: "idx_rss_items_source_date" });
-db.rss_items.createIndex({ published_at: -1 }, { name: "idx_rss_items_published_at" });
-db.rss_items.createIndex({ categories: 1 }, { name: "idx_rss_items_categories" });
+db.rss_entradas.createIndex({ hash_deduplicado: 1 }, { unique: true, name: "idx_rss_entradas_hash_deduplicado_unique" });
+db.rss_entradas.createIndex({ id_fuente: 1, fecha_publicacion: -1 }, { name: "idx_rss_entradas_fuente_fecha" });
+db.rss_entradas.createIndex({ fecha_publicacion: -1 }, { name: "idx_rss_entradas_fecha_publicacion" });
+db.rss_entradas.createIndex({ categorias: 1 }, { name: "idx_rss_entradas_categorias" });
 
-db.rss_items_raw.createIndex({ item_id: 1 }, { unique: true, name: "idx_rss_items_raw_item_unique" });
-db.rss_items_raw.createIndex({ source_id: 1, captured_at: -1 }, { name: "idx_rss_items_raw_source_captured" });
+db.rss_entradas_raw.createIndex({ id_entrada: 1 }, { unique: true, name: "idx_rss_entradas_raw_id_entrada_unique" });
+db.rss_entradas_raw.createIndex({ id_fuente: 1, fecha_captura: -1 }, { name: "idx_rss_entradas_raw_fuente_fecha" });
 
 db.users.createIndex({ email: 1 }, { unique: true, name: "idx_users_email_unique" });
 db.users.createIndex({ role: 1, status: 1 }, { name: "idx_users_role_status" });
@@ -146,3 +171,8 @@ db.user_sessions.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0, name: "
 
 print("[init-mongo] Inicializacion de colecciones e indices completada");
 EOF
+then
+  fail "Fallo la inicializacion de usuarios o colecciones"
+fi
+
+log "Bootstrap finalizado correctamente"
