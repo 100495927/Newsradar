@@ -116,7 +116,7 @@ Invoke-WebRequest http://localhost:5601/api/status
 ### Metodo A: desde host con URI de aplicacion
 
 ```text
-mongodb://newsradar_app:<MONGO_APP_PASSWORD>@localhost:27017/newsradar?authSource=admin
+mongodb://newsradar_app:<MONGO_APP_PASSWORD>@localhost:27017/newsradar?authSource=newsradar
 ```
 
 ### Metodo B: desde host con usuario root
@@ -128,7 +128,7 @@ mongodb://newsradar_root:<MONGO_ROOT_PASSWORD>@localhost:27017/admin
 ### Metodo C: desde el contenedor backend (red interna docker)
 
 ```text
-mongodb://newsradar_app:<MONGO_APP_PASSWORD>@mongodb:27017/newsradar?authSource=admin
+mongodb://newsradar_app:<MONGO_APP_PASSWORD>@mongodb:27017/newsradar?authSource=newsradar
 ```
 
 ### Metodo D: shell interactiva dentro del contenedor Mongo

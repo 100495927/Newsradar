@@ -42,7 +42,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       PYTHONUNBUFFERED: "1"
       # URI usada por el backend para conectar con Mongo usando el usuario de aplicacion.
-      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_INITDB_DATABASE:-admin}
+      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_APP_DB:-newsradar}
       MONGO_DB_NAME: ${MONGO_APP_DB:-newsradar}
       ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://elasticsearch:9200}
       ELASTICSEARCH_INDEX_ENTRADAS: ${ELASTICSEARCH_INDEX_ENTRADAS:-rss_entradas_idx}
@@ -84,7 +84,7 @@ services:
     restart: unless-stopped
     environment:
       PYTHONUNBUFFERED: "1"
-      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_INITDB_DATABASE:-admin}
+      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_APP_DB:-newsradar}
       MONGO_DB_NAME: ${MONGO_APP_DB:-newsradar}
       ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://elasticsearch:9200}
       ELASTICSEARCH_INDEX_ENTRADAS: ${ELASTICSEARCH_INDEX_ENTRADAS:-rss_entradas_idx}
@@ -103,10 +103,10 @@ services:
       - newsradar_net
 
   mongodb:
-    image: mongo:7.0
+    image: mongo:8.2
     container_name: newsradar-mongodb
     restart: unless-stopped
-    command: ["mongod", "--auth"]
+    command: ["mongod", "--auth", "--bind_ip_all"]
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-newsradar_root}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-change_me_root_pwd}
@@ -125,7 +125,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "echo 'db.runCommand({ ping: 1 })' | mongosh mongodb://localhost:27017/admin --quiet",
+          "mongosh --host localhost --port 27017 -u \"$MONGO_APP_USER\" -p \"$MONGO_APP_PASSWORD\" --authenticationDatabase \"$MONGO_APP_DB\" --quiet --eval \"db.runCommand({ ping: 1 })\"",
         ]
       interval: 20s
       timeout: 10s

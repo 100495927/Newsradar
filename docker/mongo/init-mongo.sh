@@ -1,15 +1,33 @@
-#!/bin/bash
+#!/bin/sh
 # Bootstrap inicial de MongoDB para NewsRadar.
 # Resultado esperado: usuario de aplicacion, colecciones RSS/usuarios y sus indices
 # quedan creados al primer arranque cuando /data/db esta vacio.
-set -euo pipefail
+
+set -eu
+
+log() {
+  printf '[init-mongo] %s\n' "$1"
+}
+
+fail() {
+  printf '[init-mongo] ERROR: %s\n' "$1" >&2
+  exit 1
+}
+
+log "Inicio de bootstrap de MongoDB"
 
 if [ -z "${MONGO_APP_USER:-}" ] || [ -z "${MONGO_APP_PASSWORD:-}" ] || [ -z "${MONGO_APP_DB:-}" ]; then
-  echo "[init-mongo] Faltan variables MONGO_APP_USER, MONGO_APP_PASSWORD o MONGO_APP_DB" >&2
-  exit 1
+  fail "Faltan variables MONGO_APP_USER, MONGO_APP_PASSWORD o MONGO_APP_DB"
 fi
 
-mongosh --authenticationDatabase "$MONGO_INITDB_DATABASE" \
+if [ -z "${MONGO_INITDB_ROOT_USERNAME:-}" ] || [ -z "${MONGO_INITDB_ROOT_PASSWORD:-}" ] || [ -z "${MONGO_INITDB_DATABASE:-}" ]; then
+  fail "Faltan variables de root para bootstrap (MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD o MONGO_INITDB_DATABASE)"
+fi
+
+log "Variables de entorno validadas"
+log "Conectando a mongosh para crear usuario y estructura inicial"
+
+if ! mongosh --authenticationDatabase "$MONGO_INITDB_DATABASE" \
   -u "$MONGO_INITDB_ROOT_USERNAME" \
   -p "$MONGO_INITDB_ROOT_PASSWORD" <<EOF
 use $MONGO_APP_DB
@@ -39,7 +57,7 @@ function ensureCollection(name, validator) {
 }
 
 ensureCollection("rss_fuentes", {
-  $jsonSchema: {
+  \$jsonSchema: {
     bsonType: "object",
     required: ["hash_fuente", "medio", "url", "activo", "creado", "actualizado"],
     properties: {
@@ -57,7 +75,7 @@ ensureCollection("rss_fuentes", {
 });
 
 ensureCollection("rss_entradas", {
-  $jsonSchema: {
+  \$jsonSchema: {
     bsonType: "object",
     required: ["id_fuente", "titulo", "autores", "link", "fecha_publicacion", "hash_deduplicado", "fecha_ingestion"],
     properties: {
@@ -77,7 +95,7 @@ ensureCollection("rss_entradas", {
 });
 
 ensureCollection("rss_entradas_raw", {
-  $jsonSchema: {
+  \$jsonSchema: {
     bsonType: "object",
     required: ["id_entrada", "id_fuente", "payload_raw", "fecha_captura"],
     properties: {
@@ -92,7 +110,7 @@ ensureCollection("rss_entradas_raw", {
 });
 
 ensureCollection("users", {
-  $jsonSchema: {
+  \$jsonSchema: {
     bsonType: "object",
     required: ["email", "first_name", "last_name", "organization", "role", "status", "created_at", "updated_at"],
     properties: {
@@ -112,7 +130,7 @@ ensureCollection("users", {
 
 // JWT future support only: persistence layer without auth endpoint implementation.
 ensureCollection("user_sessions", {
-  $jsonSchema: {
+  \$jsonSchema: {
     bsonType: "object",
     required: ["user_id", "jti", "token_type", "issued_at", "expires_at", "status"],
     properties: {
@@ -153,3 +171,8 @@ db.user_sessions.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0, name: "
 
 print("[init-mongo] Inicializacion de colecciones e indices completada");
 EOF
+then
+  fail "Fallo la inicializacion de usuarios o colecciones"
+fi
+
+log "Bootstrap finalizado correctamente"

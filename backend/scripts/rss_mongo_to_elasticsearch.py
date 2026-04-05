@@ -46,7 +46,7 @@ def build_bulk_lines(index_name: str, docs: list[dict], id_field: str) -> str:
 
 
 def sync() -> None:
-    mongo_uri = _get_env("MONGODB_URI", "mongodb://newsradar_app:change_me_app_pwd@localhost:27017/newsradar?authSource=admin")
+    mongo_uri = _get_env("MONGODB_URI", "mongodb://newsradar_app:change_me_app_pwd@localhost:27017/newsradar?authSource=newsradar")
     mongo_db_name = _get_env("MONGO_DB_NAME", "newsradar")
     es_url = _get_env("ELASTICSEARCH_URL", "http://localhost:9200")
     idx_entradas = _get_env("ELASTICSEARCH_INDEX_ENTRADAS", "rss_entradas_idx")
