@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  rss-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: newsradar-rss-worker
+    restart: unless-stopped
+    env_file:
+      .env
+    environment:
+      PYTHONUNBUFFERED: "1"
+    command: ["python", "/app/scripts/rss_worker/main.py"]
+    depends_on:
+      mongo-handler:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - newsradar_net

@@ -1,5 +1,6 @@
 from .Coleccion import Coleccion
 from rss.RSSFeedSource import RSSFeedSource
+from rss.RSSFeedList import RSSFeedList
 from datetime import datetime, timezone
 
 
@@ -67,3 +68,14 @@ class ColeccionRssFuentes(Coleccion):
 
         fuente.mongo_id = doc["_id"]
         return doc["_id"]
+
+    def lista_fuentes(self) -> RSSFeedList:
+        """
+        Recupera todos los documentos de la colección rss_fuentes y los 
+        devuelve como un objeto RSSFeedList.
+        """
+        documentos = self._collection.find()
+        fuentes = [RSSFeedSource.de_mongo(doc) for doc in documentos]
+        feedlist = RSSFeedList()
+        for fuente in fuentes:
+            feedlist.añadir_rssfeed(fuente)

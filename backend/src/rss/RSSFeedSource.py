@@ -6,9 +6,6 @@ import hashlib
 
 class RSSFeedSource:
     # Fuente RSS
-    nombre: str
-    url: str
-    parser: Type[RSSParser]
 
     def __init__(
         self,
@@ -47,6 +44,28 @@ class RSSFeedSource:
             "creado": datetime.now(timezone.utc),
             "actualizado": datetime.now(timezone.utc),
         }
+
+    @classmethod
+    def de_mongo(mongo_dict: dict) -> RSSFeedSource:
+        from .parsers.mongo_ids import mongo_parser_ids
+        try:
+            hash_fuente = mongo_dict["hash_fuente"]
+            medio = mongo_dict["medio"]
+            rss = mongo_dict["rss"]
+            url = mongo_dict["url"]
+            parser_id = mongo_dict["parser_id"]
+            activo = mongo_dict["activo"]
+            creado = mongo_dict["creado"]
+            actualizado = mongo_dict["actualizado"]
+        except KeyError:
+            raise KeyError("Dicionario de mongo no contiene los campos adecuados")
+        return RSSFeed(
+            medio=medio,
+            rss=rss,
+            url=url,
+            parser=mongo_parser_ids[parser_id],
+            activo=activo
+        )
 
     @property
     def hash(self):
