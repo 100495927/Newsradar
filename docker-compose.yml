@@ -140,8 +140,15 @@ services:
     restart: unless-stopped
     environment:
       discovery.type: single-node
-      xpack.security.enabled: ${ELASTIC_SECURITY_ENABLED:-false}
-      ES_JAVA_OPTS: ${ELASTIC_ES_JAVA_OPTS:--Xms512m -Xmx512m}
+      xpack.security.enabled: false
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ulimits: 
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     ports:
       - "${ELASTIC_EXPOSE_PORT:-9200}:9200"
     volumes:

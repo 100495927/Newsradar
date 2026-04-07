@@ -17,18 +17,24 @@ jobs:
       # Usamos las contraseñas del .env.example para que todo sea coherente
       - name: Crear .env temporal
         run: |
-          cp .env.example .env
+          cp .env.example .env´
+
+      - name: Configurar memoria virtual para Elasticsearch
+        run: sudo sysctl -w vm.max_map_count=262144
 
       - name: Build y Up de Docker
         run: docker compose up -d --build
 
       - name: Esperar a que los servicios estén listos
-        run: sleep 60
+        run: sleep 120
 
       - name: Check Health Endpoints
         run: |
           docker ps
+          #Verificamos el backend
           curl -f http://localhost:8000/health || exit 1
+          # Verificamos Elasticsearch directamente
+          curl -f http://localhost:9200/_cluster/health || exit 1
 
       - name: Ejecutar Tests Unitarios e Integración (Pytest)
         run: |
