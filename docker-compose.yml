@@ -118,7 +118,8 @@ services:
     ports:
       - "${MONGO_EXPOSE_PORT:-27017}:27017"
     volumes:
-      - ./data/mongodb/data:/data/db
+      - mongodb_data:/data/db
+      #- ./data/mongodb/data:/data/db
       - ./data/mongodb/configdb:/data/configdb
       - ./docker/mongo/init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
     healthcheck:
@@ -152,18 +153,19 @@ services:
     ports:
       - "${ELASTIC_EXPOSE_PORT:-9200}:9200"
     volumes:
-      - ./data/elasticsearch/data:/usr/share/elasticsearch/data
-      - ./data/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      #- ./data/elasticsearch/data:/usr/share/elasticsearch/data
+      #- ./data/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null || exit 1",
+          "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'",
         ]
       interval: 20s
       timeout: 10s
-      retries: 8
-      start_period: 30s
+      retries: 10
+      start_period: 40s
     networks:
       - newsradar_net
 
@@ -209,3 +211,9 @@ services:
 networks:
   newsradar_net:
     driver: bridge
+
+volumes: 
+  mongodb_data:
+    name: newsradar_mongodb_data
+  elasticsearch_data:
+    name: newsradar_elasticsearch_data
