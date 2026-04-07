@@ -45,6 +45,9 @@ jobs:
           # Verificar el backend
           curl -f http://localhost:8000/health || exit 1
 
+          echo "Índices actuales en Elasticsearch:"
+          curl -s http://localhost:9200/_cat/indices?v
+
       - name: Ejecutar Tests Unitarios e Integración (Pytest)
         run: |
           docker exec \
