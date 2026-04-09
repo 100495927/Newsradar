@@ -2,9 +2,11 @@ services:
   mongodb:
     image: mongo:8.2
     container_name: newsradar-mongodb
+    hostname: mongo
     env_file: .env
     volumes:
       - ./data/mongodb/data:/data/db
+      - ./backend/scripts/mongo/init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ping:1})'"]
       interval: 5s
@@ -16,11 +18,12 @@ services:
       dockerfile: Dockerfile
     container_name: newsradar-mongo-handler
     env_file: .env
-    command: ["python", "/app/scripts/mongo/init.py"]
+    command: ["python", "/app/scripts/mongo/main.py"]
     healthcheck:
-      test: ["CMD-SHELL", "python /app/scripts/mongo/test.py"]
+      test: ["CMD", "python", "/app/scripts/mongo/test.py"]
       interval: 30s
       retries: 5
+      start_period: 10s
     depends_on:
       mongodb:
         condition: service_healthy

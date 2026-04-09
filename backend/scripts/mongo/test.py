@@ -4,8 +4,8 @@ from rss.mongo.Database import Database
 def main() -> None:
     try:
         db_wrapper = Database()
-        
-        db_wrapper.cliente.admin.command('ping')
+        sleep(0.2)
+        db_wrapper.db.command('ping')
         
         colecciones_en_mongo = db_wrapper.db.list_collection_names()
         

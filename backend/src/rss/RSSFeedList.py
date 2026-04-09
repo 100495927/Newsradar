@@ -10,7 +10,7 @@ class RSSFeedList:
         self._feeds: list[RSSFeedSource] = []
 
     def añadir(self, medio, rss, url, parser: Type[RSSParser]):
-        feed = RSSFeedSource(medio, rss, url, parser, activo)
+        feed = RSSFeedSource(medio, rss, url, parser, True)
         self._feeds.append(feed)
 
     def añadir_rssfeed(self, feed: RSSFeed) -> None:
