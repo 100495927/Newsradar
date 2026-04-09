@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 from datetime import datetime
-from rss.RSSFeedSource import RSSFeedSource
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from rss.RSSFuente import RSSFuente
 
 @dataclass
 class RSSEntrada:
-    fuente: RSSFeedSource
+    fuente: 'RSSFuente'
     titulo: str
     autores: list[str]
     link: str
@@ -25,13 +27,7 @@ class RSSEntrada:
     def a_mongo(self) -> dict:
         from datetime import datetime, timezone
 
-        if not getattr(self.fuente, "mongo_id", None):
-            raise ValueError(
-                "La fuente RSS debe persistirse antes de insertar entradas (mongo_id requerido)"
-            )
-
         return {
-            "id_fuente": self.fuente.mongo_id,
             "titulo": self.titulo,
             "autores": self.autores,
             "link": self.link,

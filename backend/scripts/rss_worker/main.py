@@ -12,23 +12,27 @@ def main() -> None:
     feeds = generar_lista_estandar_feeds()
     for feed in feeds:
         db.col_rss_fuentes.insertar(feed)
-
+    print("2")
     if entorno.run_once == "true":
+        print("3")
         fetch_de_entradas(db)
     else:
         while True:
+            print("4")
             fetch_de_entradas(db)
-            sleep(entorno.intervalo_rss)
+            sleep(float(entorno.intervalo_rss))
 
 
 def fetch_de_entradas(db: Database):
-    fuentes: RSSFeedList = db.col_rss_fuentes.lista_fuentes()
-    for fuente in fuentes.feeds:
-        entradas = feed.obtener_entradas()
-        db.col_rss_fuentes.insertar(feed)
-        for entrada in entradas.entradas:
+    fuentes: list[RSSEntrada] = db.col_rss_fuentes.lista_fuentes()
+    print(fuentes)
+    for fuente in fuentes:
+        entradas = fuente.obtener_entradas()
+        for entrada in entradas:
+            print(entrada)
             db.col_rss_entradas.insertar(entrada)
 
 
 if __name__ == "__main__":
+    print("1")
     main()

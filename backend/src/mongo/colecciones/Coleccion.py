@@ -46,5 +46,9 @@ class Coleccion(ABC):
     @property
     def __pym_db_app(self):
         return self.__db_padre.db_app
+    
+    @property
+    def _db_padre(self):
+        return self.__db_padre
 
     

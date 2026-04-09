@@ -74,7 +74,8 @@ class ColeccionRssFuentes(Coleccion):
         devuelve como un objeto RSSFeedList.
         """
         documentos = self._collection.find()
-        fuentes = [RSSFeedSource.de_mongo(doc) for doc in documentos]
-        feedlist = RSSFeedList()
+        fuentes = [RSSFuente.de_mongo(doc) for doc in documentos]
+        feedlist = []
         for fuente in fuentes:
-            feedlist.añadir_rssfeed(fuente)
+            feedlist.append(fuente)
+        return feedlist

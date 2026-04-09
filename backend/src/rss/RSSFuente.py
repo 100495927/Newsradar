@@ -14,26 +14,25 @@ class RSSFuente:
         url: str,
         parser: Type[RSSParser],
         activo: bool = True,
+        mongo_id: str | None = None
     ):
         self.medio = medio
         self.rss = rss
         self.url = url
         self.parser = parser
         self.activo = activo
-        # Se rellena al persistir en Mongo para referenciar entradas con ObjectId.
-        self.mongo_id = None
 
     def obtener_entradas(self) -> list[RSSEntrada]:
         from feedparser import parse
 
-        entradas = []
-
+        entradas = parse(self.url).entries
+        entradas_parseadas = []
         for entrada in entradas:
             p = self.parser(entrada)
-            entrada_parseada = p.generar(self._fuente)
-            entradas.append(entrada_parseada)
+            entrada_parseada = p.generar(self)
+            entradas_parseadas.append(entrada_parseada)
 
-        return objeto_feed
+        return entradas_parseadas
 
     def a_mongo(self) -> dict:
         from datetime import datetime, timezone
@@ -51,7 +50,7 @@ class RSSFuente:
         }
 
     @classmethod
-    def de_mongo(cls, mongo_dict: dict) -> RSSFuente:
+    def de_mongo(cls, mongo_dict: dict) -> 'RSSFuente':
         from .parsers.mongo_ids import mongo_parser_ids
 
         try:
@@ -70,7 +69,7 @@ class RSSFuente:
             rss=rss,
             url=url,
             parser=mongo_parser_ids[parser_id],
-            activo=activo,
+            activo=activo
         )
 
     @property
@@ -79,4 +78,4 @@ class RSSFuente:
         return hashlib.sha256(h).hexdigest()
 
 
-__all__ = ["RSSFeedSource"]
+__all__ = ["RSSFuente"]
