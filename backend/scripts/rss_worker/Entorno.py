@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from os import environ
-from .constantes.entorno import *
 
 
 @dataclass
@@ -9,14 +8,14 @@ class Entorno:
     VARENV_RUN_ONCE = "RSS_WORKER_RUN_ONCE"
 
     def __init__(self):
-        self.__intervalo_rss = environ.get(VARENV_INTERVALO_RSS)
+        self.__intervalo_rss = environ.get(self.VARENV_INTERVALO_RSS)
         if not self.__intervalo_rss:
             raise ValueError(
-                f"Variable de entorno {VARENV_INTERVALO_RSS} no encontrada"
+                f"Variable de entorno {self.VARENV_INTERVALO_RSS} no encontrada"
             )
-        self.__run_once = environ.get(VARENV_RUN_ONCE)
+        self.__run_once = environ.get(self.VARENV_RUN_ONCE)
         if not self.__run_once:
-            raise ValueError(f"Variable de entorno {VARENV_RUN_ONCE} no encontrada")
+            raise ValueError(f"Variable de entorno {self.VARENV_RUN_ONCE} no encontrada")
 
     @property
     def intervalo_rss(self):

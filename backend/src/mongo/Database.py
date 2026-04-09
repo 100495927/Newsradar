@@ -7,6 +7,12 @@ from urllib.parse import quote_plus
 class Database:
     def __init__(self):
         self.__entorno = EntornoDB()
+        self.login_como_admin()
+        self.login_como_app()
+        
+        self.iniciar_colecciones()
+
+    def login_como_admin(self):
         usuario_root = quote_plus(self.__entorno.root_usuario)
         contraseña_root = quote_plus(self.__entorno.root_contraseña)
         uri = (
@@ -14,10 +20,19 @@ class Database:
             f"@{self.__entorno.host}:{self.__entorno.puerto}/{self.__entorno.root_db_name}"
             f"?authSource={self.__entorno.root_db_name}"
         )
-        self.__cliente: pymongo.MongoClient = pymongo.MongoClient(uri)
-        self.__db: pymongo.Database = self.__cliente[self.__entorno.app_db_name]
-        self.iniciar_colecciones()
-        self.relogin_en_app()
+        self.__cliente_admin: pymongo.MongoClient = pymongo.MongoClient(uri)
+        self.__db__admin: pymongo.Database = self.__cliente_admin[self.__entorno.app_db_name]
+
+    def login_como_app(self):
+        usuario_app = quote_plus(self.__entorno.app_usuario)
+        contraseña_app = quote_plus(self.__entorno.app_contraseña)
+        uri = (
+            f"mongodb://{usuario_app}:{contraseña_app}"
+            f"@{self.__entorno.host}:{self.__entorno.puerto}/{self.__entorno.app_db_name}"
+            f"?authSource={self.__entorno.app_db_name}"
+        )
+        self.__cliente_app: pymongo.MongoClient = pymongo.MongoClient(uri)
+        self.__db_app: pymongo.Database = self.__cliente_app[self.__entorno.app_db_name]
 
     def iniciar_colecciones(self):
         from . import colecciones
@@ -28,22 +43,15 @@ class Database:
         self.col_users = colecciones.ColeccionUsers(self)
         self.col_user_sesions = colecciones.ColeccionUserSessions(self)
 
-    def relogin_en_app(self):
-        """Se reloguea en la aplicacion con permisos de app"""
-        usuario_app = quote_plus(self.__entorno.app_usuario)
-        contraseña_app = quote_plus(self.__entorno.app_contraseña)
-        uri = (
-            f"mongodb://{usuario_app}:{contraseña_app}"
-            f"@{self.__entorno.host}:{self.__entorno.puerto}/{self.__entorno.app_db_name}"
-            f"?authSource={self.__entorno.app_db_name}"
-        )
-        self.__cliente: pymongo.MongoClient = pymongo.MongoClient(uri)
-        self.__db: pymongo.Database = self.__cliente[self.__entorno.app_db_name]
+    @property
+    def cliente_admin(self):
+        return self.__cliente_admin
 
     @property
-    def cliente(self):
-        return self.__cliente
+    def db_admin(self):
+        return self.__db__admin
 
     @property
-    def db(self):
-        return self.__db
+    def db_app(self):
+        return self.__db_app
+

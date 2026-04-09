@@ -13,9 +13,9 @@ class RSSFeedList:
         feed = RSSFeedSource(medio, rss, url, parser, True)
         self._feeds.append(feed)
 
-    def añadir_rssfeed(self, feed: RSSFeed) -> None:
-        if not isinstance(feed, RSSFeed):
-            raise ValueError("Objeto a insertar debe ser RSSFeed")
+    def añadir_rssfeed(self, feed: RSSFeedSource) -> None:
+        if not isinstance(feed, RSSFeedSource):
+            raise ValueError("Objeto a insertar debe ser RSSFeedSource")
         self._feeds.append(feed)
 
     @property

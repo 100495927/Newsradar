@@ -12,7 +12,7 @@ class Coleccion(ABC):
 
         self.__db_padre = db_padre_objeto
         self.__db_padre: Database = db_padre_objeto
-        self._collection = self.__pym_db[self.NOMBRE_COLECCION]
+        self._collection = self.__pym_db_app[self.NOMBRE_COLECCION]
         self._inicializar_esquema()
         self.crear_indices()
 
@@ -32,14 +32,19 @@ class Coleccion(ABC):
     def _inicializar_esquema(self):
         """Aplica o crea la colección con el validador definido."""
         validador = {"$jsonSchema": self.esquema()}
-        db = self.__db_padre.db
-        if self.NOMBRE_COLECCION in db.list_collection_names():
+        if self.NOMBRE_COLECCION in self.__pym_db_admin.list_collection_names():
             # Existe ya la coleccion (actualizar)
-            db.command("collMod", self.NOMBRE_COLECCION, validator=validador)
+            self.__pym_db_admin.command("collMod", self.NOMBRE_COLECCION, validator=validador)
         else:
             # No existe la collecion (crear)
-            db.create_collection(self.NOMBRE_COLECCION, validator=validador)
+            self.__pym_db_admin.create_collection(self.NOMBRE_COLECCION, validator=validador)
 
     @property
-    def __pym_db(self):
-        return self.__db_padre.db
+    def __pym_db_admin(self):
+        return self.__db_padre.db_admin
+
+    @property
+    def __pym_db_app(self):
+        return self.__db_padre.db_app
+
+    

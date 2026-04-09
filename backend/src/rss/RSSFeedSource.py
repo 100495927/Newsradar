@@ -46,7 +46,7 @@ class RSSFeedSource:
         }
 
     @classmethod
-    def de_mongo(mongo_dict: dict) -> RSSFeedSource:
+    def de_mongo(cls, mongo_dict: dict) -> RSSFeedSource:
         from .parsers.mongo_ids import mongo_parser_ids
         try:
             hash_fuente = mongo_dict["hash_fuente"]
@@ -59,7 +59,7 @@ class RSSFeedSource:
             actualizado = mongo_dict["actualizado"]
         except KeyError:
             raise KeyError("Dicionario de mongo no contiene los campos adecuados")
-        return RSSFeed(
+        return RSSFeedSource(
             medio=medio,
             rss=rss,
             url=url,

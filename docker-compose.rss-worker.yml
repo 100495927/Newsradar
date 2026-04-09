@@ -6,7 +6,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: newsradar-rss-worker
-    restart: unless-stopped
     env_file:
       .env
     environment:
@@ -17,5 +16,10 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "/app/scripts/rss_worker/test.py"]
+      interval: 10s
+      retries: 1
+      start_period: 2s
     networks:
       - newsradar_net
