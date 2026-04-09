@@ -38,7 +38,6 @@ class Database:
         from . import colecciones
 
         self.col_rss_entradas = colecciones.ColeccionRssEntradas(self)
-        self.col_rss_entradas_raw = colecciones.ColeccionRssEntradasRaw(self)
         self.col_rss_fuentes = colecciones.ColeccionRssFuentes(self)
         self.col_users = colecciones.ColeccionUsers(self)
         self.col_user_sesions = colecciones.ColeccionUserSessions(self)

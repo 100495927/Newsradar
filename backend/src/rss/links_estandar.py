@@ -3,7 +3,9 @@ from .parsers import *
 
 
 def generar_lista_estandar_feeds() -> RSSFeedList:
-    feeds = RSSFeedList()
+    feeds = [
+        
+    ]
     feeds.añadir(
         "el_pais",
         "",

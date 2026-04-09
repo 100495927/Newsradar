@@ -1,10 +1,10 @@
 from typing import Type
 from rss.parsers import RSSParser
-from rss.RSSFeed import RSSFeed
+from rss.RSSEntrada import RSSEntrada
 import hashlib
 
 
-class RSSFeedSource:
+class RSSFuente:
     # Fuente RSS
 
     def __init__(
@@ -23,11 +23,16 @@ class RSSFeedSource:
         # Se rellena al persistir en Mongo para referenciar entradas con ObjectId.
         self.mongo_id = None
 
-    def obtener_entradas(self) -> RSSFeed:
+    def obtener_entradas(self) -> list[RSSEntrada]:
         from feedparser import parse
 
-        feed = parse(self.url)
-        objeto_feed = RSSFeed(self, feed.feed.title, feed.feed.link, feed.entries)
+        entradas = []
+
+        for entrada in entradas:
+            p = self.parser(entrada)
+            entrada_parseada = p.generar(self._fuente)
+            entradas.append(entrada_parseada)
+
         return objeto_feed
 
     def a_mongo(self) -> dict:
@@ -46,8 +51,9 @@ class RSSFeedSource:
         }
 
     @classmethod
-    def de_mongo(cls, mongo_dict: dict) -> RSSFeedSource:
+    def de_mongo(cls, mongo_dict: dict) -> RSSFuente:
         from .parsers.mongo_ids import mongo_parser_ids
+
         try:
             hash_fuente = mongo_dict["hash_fuente"]
             medio = mongo_dict["medio"]
@@ -59,12 +65,12 @@ class RSSFeedSource:
             actualizado = mongo_dict["actualizado"]
         except KeyError:
             raise KeyError("Dicionario de mongo no contiene los campos adecuados")
-        return RSSFeedSource(
+        return RSSFuente(
             medio=medio,
             rss=rss,
             url=url,
             parser=mongo_parser_ids[parser_id],
-            activo=activo
+            activo=activo,
         )
 
     @property

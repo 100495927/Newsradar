@@ -2,14 +2,15 @@ from mongo import Database
 from Entorno import Entorno
 from time import sleep
 from rss.links_estandar import generar_lista_estandar_feeds
-from rss.RSSFeedList import RSSFeedList
+from rss.RSSFuente import RSSFuente
+from rss.RSSEntrada import RSSEntrada
 
 
 def main() -> None:
     entorno = Entorno()
     db = Database()
     feeds = generar_lista_estandar_feeds()
-    for feed in feeds.feeds:
+    for feed in feeds:
         db.col_rss_fuentes.insertar(feed)
 
     if entorno.run_once == "true":
