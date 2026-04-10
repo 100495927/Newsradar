@@ -84,23 +84,31 @@ services:
     restart: unless-stopped
     environment:
       discovery.type: single-node
-      xpack.security.enabled: ${ELASTIC_SECURITY_ENABLED:-false}
-      ES_JAVA_OPTS: ${ELASTIC_ES_JAVA_OPTS:--Xms512m -Xmx512m}
+      xpack.security.enabled: false
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ulimits: 
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     ports:
       - "${ELASTIC_EXPOSE_PORT:-9200}:9200"
     volumes:
-      - ./data/elasticsearch/data:/usr/share/elasticsearch/data
-      - ./data/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      #- ./data/elasticsearch/data:/usr/share/elasticsearch/data
+      #- ./data/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null || exit 1",
+          "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'",
         ]
       interval: 20s
       timeout: 10s
-      retries: 8
-      start_period: 30s
+      retries: 10
+      start_period: 40s
     networks:
       - newsradar_net
 
@@ -146,3 +154,9 @@ services:
 networks:
   newsradar_net:
     driver: bridge
+
+volumes: 
+  mongodb_data:
+    name: newsradar_mongodb_data
+  elasticsearch_data:
+    name: newsradar_elasticsearch_data
