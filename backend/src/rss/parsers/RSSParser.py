@@ -1,5 +1,6 @@
 from rss.RSSEntrada import RSSEntrada
 from feedparser import FeedParserDict
+from rss.RSSFuente import RSSFuente
 
 
 class RSSParser:
@@ -39,8 +40,7 @@ class RSSParser:
 
         return timegm(self._entrada.published_parsed)
 
-    def generar(self, fuente: RSSFeedSource) -> RSSEntrada:
-        from rss.RSSFeedSource import RSSFeedSource
+    def generar(self, fuente: RSSFuente) -> RSSEntrada:
         return RSSEntrada(
             fuente,
             self.titulo(),

@@ -55,7 +55,9 @@ services:
     ports:
       - "${BACKEND_EXPOSE_PORT:-8000}:8000"
     depends_on:
-      mongodb:
+      mongo-handler:
+        condition: service_healthy
+      rss-worker:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
@@ -73,65 +75,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 25s
-    networks:
-      - newsradar_net
-
-  rss-worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: newsradar-rss-worker
-    restart: unless-stopped
-    environment:
-      PYTHONUNBUFFERED: "1"
-      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_APP_DB:-newsradar}
-      MONGO_DB_NAME: ${MONGO_APP_DB:-newsradar}
-      ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://elasticsearch:9200}
-      ELASTICSEARCH_INDEX_ENTRADAS: ${ELASTICSEARCH_INDEX_ENTRADAS:-rss_entradas_idx}
-      ELASTICSEARCH_INDEX_FUENTES: ${ELASTICSEARCH_INDEX_FUENTES:-rss_fuentes_idx}
-      RSS_WORKER_INTERVAL_SECONDS: ${RSS_WORKER_INTERVAL_SECONDS:-300}
-      RSS_WORKER_RUN_ONCE: ${RSS_WORKER_RUN_ONCE:-false}
-    command: ["python", "/app/scripts/rss_worker.py"]
-    depends_on:
-      mongodb:
-        condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
-      elasticsearch-setup:
-        condition: service_completed_successfully
-    networks:
-      - newsradar_net
-
-  mongodb:
-    image: mongo:8.2
-    container_name: newsradar-mongodb
-    restart: unless-stopped
-    command: ["mongod", "--auth", "--bind_ip_all"]
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-newsradar_root}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-change_me_root_pwd}
-      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-admin}
-      MONGO_APP_USER: ${MONGO_APP_USER:-newsradar_app}
-      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-change_me_app_pwd}
-      MONGO_APP_DB: ${MONGO_APP_DB:-newsradar}
-    # Mantener mapeo solo para depuracion local. En despliegue real se recomienda cerrar este puerto.
-    ports:
-      - "${MONGO_EXPOSE_PORT:-27017}:27017"
-    volumes:
-      - mongodb_data:/data/db
-      #- ./data/mongodb/data:/data/db
-      - ./data/mongodb/configdb:/data/configdb
-      - ./docker/mongo/init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mongosh --host localhost --port 27017 -u \"$MONGO_APP_USER\" -p \"$MONGO_APP_PASSWORD\" --authenticationDatabase \"$MONGO_APP_DB\" --quiet --eval \"db.runCommand({ ping: 1 })\"",
-        ]
-      interval: 20s
-      timeout: 10s
-      retries: 8
-      start_period: 30s
     networks:
       - newsradar_net
 

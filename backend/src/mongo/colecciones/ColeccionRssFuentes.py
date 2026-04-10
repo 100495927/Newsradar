@@ -1,5 +1,5 @@
 from .Coleccion import Coleccion
-from rss.RSSFeedSource import RSSFeedSource
+from rss.RSSFuente import RSSFuente
 from datetime import datetime, timezone
 
 
@@ -37,7 +37,7 @@ class ColeccionRssFuentes(Coleccion):
             "activo", name="idx_rss_fuentes_activo"
         )
 
-    def insertar(self, fuente: RSSFeedSource):
+    def insertar(self, fuente: RSSFuente):
         datos = fuente.a_mongo()
         ahora = datetime.now(timezone.utc)
         # Upsert idempotente por hash lógico de fuente.
@@ -67,3 +67,15 @@ class ColeccionRssFuentes(Coleccion):
 
         fuente.mongo_id = doc["_id"]
         return doc["_id"]
+
+    def lista_fuentes(self) -> list[RSSFuente]:
+        """
+        Recupera todos los documentos de la colección rss_fuentes y los 
+        devuelve como un objeto RSSFeedList.
+        """
+        documentos = self._collection.find()
+        fuentes = [RSSFuente.de_mongo(doc) for doc in documentos]
+        feedlist = []
+        for fuente in fuentes:
+            feedlist.append(fuente)
+        return feedlist

@@ -1,28 +1,56 @@
-from pymongo import MongoClient
+import pymongo
 from mongo.EntornoDB import EntornoDB
 from os import environ
+from urllib.parse import quote_plus
 
 
 class Database:
     def __init__(self):
         self.__entorno = EntornoDB()
-        uri = environ.get("MONGODB_URI")
-        if not uri:
-            uri = (
-                f"mongodb://{self.__entorno.usuario}:{self.__entorno.contraseña}"
-                f"@localhost:{self.__entorno.puerto_local}/{self.__entorno.app_db_nombre}?authSource=admin"
-            )
-        self.__cliente: MongoClient = MongoClient(
-            uri
-        )
-        self.__db = self.__cliente[self.__entorno.app_db_nombre]
+        self.login_como_admin()
+        self.login_como_app()
+        
         self.iniciar_colecciones()
+
+    def login_como_admin(self):
+        usuario_root = quote_plus(self.__entorno.root_usuario)
+        contraseña_root = quote_plus(self.__entorno.root_contraseña)
+        uri = (
+            f"mongodb://{usuario_root}:{contraseña_root}"
+            f"@{self.__entorno.host}:{self.__entorno.puerto}/{self.__entorno.root_db_name}"
+            f"?authSource={self.__entorno.root_db_name}"
+        )
+        self.__cliente_admin: pymongo.MongoClient = pymongo.MongoClient(uri)
+        self.__db__admin: pymongo.Database = self.__cliente_admin[self.__entorno.app_db_name]
+
+    def login_como_app(self):
+        usuario_app = quote_plus(self.__entorno.app_usuario)
+        contraseña_app = quote_plus(self.__entorno.app_contraseña)
+        uri = (
+            f"mongodb://{usuario_app}:{contraseña_app}"
+            f"@{self.__entorno.host}:{self.__entorno.puerto}/{self.__entorno.app_db_name}"
+            f"?authSource={self.__entorno.app_db_name}"
+        )
+        self.__cliente_app: pymongo.MongoClient = pymongo.MongoClient(uri)
+        self.__db_app: pymongo.Database = self.__cliente_app[self.__entorno.app_db_name]
 
     def iniciar_colecciones(self):
         from . import colecciones
 
-        self.col_rss_entradas = colecciones.ColeccionRssEntradas(self.__db)
-        self.col_rss_entradas_raw = colecciones.ColeccionRssEntradasRaw(self.__db)
-        self.col_rss_fuentes = colecciones.ColeccionRssFuentes(self.__db)
-        self.col_users = colecciones.ColeccionUsers(self.__db)
-        self.col_user_sesions = colecciones.ColeccionUserSessions(self.__db)
+        self.col_rss_entradas = colecciones.ColeccionRssEntradas(self)
+        self.col_rss_fuentes = colecciones.ColeccionRssFuentes(self)
+        self.col_users = colecciones.ColeccionUsers(self)
+        self.col_user_sesions = colecciones.ColeccionUserSessions(self)
+
+    @property
+    def cliente_admin(self):
+        return self.__cliente_admin
+
+    @property
+    def db_admin(self):
+        return self.__db__admin
+
+    @property
+    def db_app(self):
+        return self.__db_app
+

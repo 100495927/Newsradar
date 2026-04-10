@@ -1,0 +1,37 @@
+services:
+  mongodb:
+    image: mongo:8.2
+    container_name: newsradar-mongodb
+    hostname: mongo
+    env_file: .env
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongodb/data:/data/db
+      - ./backend/scripts/mongo/init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ping:1})'"]
+      interval: 5s
+      retries: 5
+    networks:
+        - newsradar_net
+
+  mongo-handler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: newsradar-mongo-handler
+    env_file: .env
+    environment:
+      PYTHONUNBUFFERED: "1"
+    command: ["python", "/app/scripts/mongo/main.py"]
+    healthcheck:
+      test: ["CMD", "python", "/app/scripts/mongo/test.py"]
+      interval: 5s
+      retries: 1
+      start_period: 2s
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - newsradar_net

@@ -1,10 +1,13 @@
 from dataclasses import dataclass
 from datetime import datetime
-from rss.RSSFeedSource import RSSFeedSource
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from rss.RSSFuente import RSSFuente
 
 @dataclass
 class RSSEntrada:
-    fuente: RSSFeedSource
+    fuente: 'RSSFuente'
     titulo: str
     autores: list[str]
     link: str
@@ -23,25 +26,25 @@ class RSSEntrada:
 
     def a_mongo(self) -> dict:
         from datetime import datetime, timezone
-        if not getattr(self.fuente, "mongo_id", None):
-            raise ValueError("La fuente RSS debe persistirse antes de insertar entradas (mongo_id requerido)")
 
         return {
-            "id_fuente": self.fuente.mongo_id,
             "titulo": self.titulo,
             "autores": self.autores,
             "link": self.link,
             "categorias": self.categorias,
             "resumen": self.resumen,
-            "fecha_publicacion": datetime.fromtimestamp(self.fecha_publicacion, tz=timezone.utc),
+            "fecha_publicacion": datetime.fromtimestamp(
+                self.fecha_publicacion, tz=timezone.utc
+            ),
             "hash_deduplicado": self.hash,
-            "fecha_ingestion": datetime.now(timezone.utc)
+            "fecha_ingestion": datetime.now(timezone.utc),
         }
-    
+
     @property
     def hash(self):
         import hashlib
-        h = (self.link + self.titulo).encode('utf-8')
+
+        h = (self.link + self.titulo).encode("utf-8")
         return hashlib.sha256(h).hexdigest()
 
 

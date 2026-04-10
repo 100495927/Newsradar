@@ -48,6 +48,13 @@ class ColeccionRssEntradas(Coleccion):
 
     def insertar(self, entrada: RSSEntrada):
         datos = entrada.a_mongo()
+        url_fuente = entrada.fuente.url
+
+        id_fuente = self._db_padre.col_rss_fuentes._collection.find_one({"url": url_fuente})
+        if not id_fuente:
+            raise ValueError(f"No se encontró la fuente en la BD para la URL: {url_fuente}")
+        datos["id_fuente"] = id_fuente["_id"]
+        datos.pop("fecha_ingestion")
         resultado = self._collection.update_one(
             {"hash_deduplicado": datos["hash_deduplicado"]},
             {
