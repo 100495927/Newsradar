@@ -9,7 +9,7 @@ Definidos en [docker-compose.yml](docker-compose.yml):
 - mongodb
   - Contenedor: newsradar-mongodb
   - Puerto contenedor: 27017
-  - Puerto host: ${MONGO_EXPOSE_PORT:-27017}
+  - Puerto host: ${MONGO_EXPOSED_PORT:-27017}
 - backend
   - Contenedor: newsradar-backend
   - Puerto contenedor: 8000
@@ -18,7 +18,7 @@ Definidos en [docker-compose.yml](docker-compose.yml):
 - rss-worker
   - Contenedor: newsradar-rss-worker
   - Tipo: proceso de ingesta continua RSS (sin puerto HTTP)
-  - Comando: `python /app/scripts/rss_worker.py`
+  - Comando: `python /app/rss-worker/worker/main.py`
   - Variables clave:
     - `RSS_WORKER_INTERVAL_SECONDS` (frecuencia de ciclo)
     - `RSS_WORKER_RUN_ONCE` (modo una sola ejecucion)
@@ -242,10 +242,10 @@ docker compose run --rm elasticsearch-setup
 docker compose up -d --build backend mongodb
 ```
 
-1. Para sincronizar datos RSS de Mongo a Elasticsearch manualmente:
+1. Para verificar el worker RSS manualmente:
 
 ```powershell
-docker exec newsradar-backend python /app/scripts/rss_mongo_to_elasticsearch.py
+docker exec newsradar-rss-worker python /app/rss-worker/worker/test.py
 ```
 
 1. Si hay cambios en variables y no se reflejan, recrear contenedores:

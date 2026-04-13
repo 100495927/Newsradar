@@ -6,17 +6,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requirements.txt /tmp/requirements.txt
+COPY backend/requirements.txt /tmp/requirements.txt
 RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
 
-COPY app /app/app
-COPY src /app/src
+COPY backend /app/backend
+COPY shared /app/shared
 COPY scripts /app/scripts
 
-ENV PYTHONPATH="/app/src"
-
-COPY test /app/test
+ENV PYTHONPATH="/app:/app/backend"
 
 EXPOSE 8000
+
+WORKDIR /app/backend
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

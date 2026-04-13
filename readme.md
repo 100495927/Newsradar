@@ -2,6 +2,13 @@
 **Estado de la CI:** ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 **Arquitectura:** Sistema distribuido de 7 servicios orquestados con Docker.
 
+### Estructura actual
+La estructura operativa del repo queda separada en:
+* `backend/`: API FastAPI.
+* `rss-worker/`: worker de ingesta RSS.
+* `shared/`: utilidades y acceso compartido a MongoDB.
+* `scripts/mongo/`: bootstrap y healthchecks de Mongo.
+
 ### Validaciones Automatizadas en CI
 En este Sprint hemos consolidado la integración de los siguientes componentes:
 * **Motor de Búsqueda:** Health check de **Elasticsearch 9.3.2** y autoconfiguración de índices mediante *setup-worker*.
@@ -17,6 +24,10 @@ Para arrancar todos los servicios (Frontend, Backend, Worker, Mongo, Elastic, Ki
 
 `docker compose up -d --build`
 
+O con el wrapper del repo:
+
+`./run-docker-compose.sh`
+
 ## Guia de conexiones Docker
 
 La documentacion operativa de servicios y accesos (MongoDB, Elasticsearch y Kibana) esta en:
@@ -29,15 +40,14 @@ La documentacion operativa de servicios y accesos (MongoDB, Elasticsearch y Kiba
 
 Este es el comando que garantiza que el contrato entre servicios se cumple
 
-`docker exec newsradar-backend pytest -s test/test_sprint1.py`
+`docker exec newsradar-backend pytest -s tests/api/test_sprint1.py`
 
 ### 3. Scripts de pruebas manuales (Utilidades de equipo)
 
 Si se necesita probar funcionalidades específicas de extracción o de persistencia:
 
-  * **Poblar la base de datos con noticias reales:** `docker exec newsradar-backend python test/test_mongo_rss.py`
-
-  * **Ver lectura de feeds por consola (Debug):** `docker exec newsradar-backend python test/test_rss.py`
+  * **Verificar el handler de Mongo:** `docker exec newsradar-mongo-handler python /app/scripts/mongo/test.py`
+  * **Verificar el worker RSS:** `docker exec newsradar-rss-worker python /app/rss-worker/worker/test.py`
 
 ## Accesos Directos (Entorno Local)
 
@@ -47,6 +57,7 @@ Si se necesita probar funcionalidades específicas de extracción o de persisten
 | **API Backend (Swagger)** | [http://localhost:8000/docs](http://localhost:8000/docs) |
 | **Kibana (Dashboard BI)** | [http://localhost:5601](http://localhost:5601) |
 | **Elasticsearch API** | [http://localhost:9200](http://localhost:9200) |
+| **MongoDB** | `localhost:27017` |
 
 ## Información del Sprint 1
 

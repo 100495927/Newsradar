@@ -31,10 +31,12 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: newsradar-backend
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       APP_ENV: ${APP_ENV:-production}
       APP_HOST: ${APP_HOST:-0.0.0.0}
@@ -78,6 +80,83 @@ services:
     networks:
       - newsradar_net
 
+  mongodb:
+    image: mongo:8.2
+    container_name: newsradar-mongodb
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-newsradar_root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-change_me_root_pwd}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-admin}
+    ports:
+      - "${MONGO_EXPOSED_PORT:-27017}:27017"
+    volumes:
+      - ./data/mongodb/data:/data/db
+      - ./data/mongodb/configdb:/data/configdb
+      - ./scripts/mongo/init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ping:1})'"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - newsradar_net
+
+  mongo-handler:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: newsradar-mongo-handler
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PYTHONUNBUFFERED: "1"
+      MONGO_HOST: mongodb
+      MONGO_EXPOSED_PORT: 27017
+    command: ["python", "/app/scripts/mongo/main.py"]
+    healthcheck:
+      test: ["CMD", "python", "/app/scripts/mongo/test.py"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - newsradar_net
+
+  rss-worker:
+    build:
+      context: .
+      dockerfile: rss-worker/Dockerfile
+    container_name: newsradar-rss-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PYTHONUNBUFFERED: "1"
+      MONGO_HOST: mongodb
+      MONGO_EXPOSED_PORT: 27017
+    command: ["python", "/app/rss-worker/worker/main.py"]
+    healthcheck:
+      test: ["CMD", "python", "/app/rss-worker/worker/test.py"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    depends_on:
+      mongo-handler:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - newsradar_net
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-9.3.2}
     container_name: newsradar-elasticsearch
@@ -96,9 +175,8 @@ services:
     ports:
       - "${ELASTIC_EXPOSE_PORT:-9200}:9200"
     volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-      #- ./data/elasticsearch/data:/usr/share/elasticsearch/data
-      #- ./data/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - ./data/elasticsearch/data:/usr/share/elasticsearch/data
+      - ./data/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
     healthcheck:
       test:
         [
@@ -154,9 +232,3 @@ services:
 networks:
   newsradar_net:
     driver: bridge
-
-volumes: 
-  mongodb_data:
-    name: newsradar_mongodb_data
-  elasticsearch_data:
-    name: newsradar_elasticsearch_data
