@@ -1,11 +1,13 @@
 import sys
 
 from shared.mongo import Database
+from worker.main import run_preflight
 
 
 def main() -> int:
     try:
         db = Database()
+        run_preflight(db)
         fuentes = db.col_rss_fuentes.lista_fuentes()
         if not fuentes:
             print("Healthcheck Fail: no hay fuentes RSS registradas.", file=sys.stderr)

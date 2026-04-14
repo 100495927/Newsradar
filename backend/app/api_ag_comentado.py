@@ -218,9 +218,18 @@ active_tokens: Dict[str, int] = {}
 
 ## Añadido por Alberto Barrios
 # Conexion a la base de datos
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:password@mongodb:27017/")
-client = MongoClient(MONGO_URI)
-db = client["newsradar_db"]
+MONGODB_URI = os.getenv(
+    "MONGODB_URI",
+    (
+        f"mongodb://{os.getenv('MONGO_APP_USER', 'newsradar_app')}"
+        f":{os.getenv('MONGO_APP_PASSWORD', 'change_me_app_pwd')}"
+        f"@{os.getenv('MONGO_HOST', 'mongodb')}:{os.getenv('MONGO_PORT', '27017')}"
+        f"/{os.getenv('MONGO_APP_DB', 'newsradar')}"
+        f"?authSource={os.getenv('MONGO_APP_DB', 'newsradar')}"
+    ),
+)
+client = MongoClient(MONGODB_URI)
+db = client[os.getenv("MONGO_APP_DB", "newsradar")]
 users_col = db["users"] # Esta será tu colección principal de usuarios
 
 counters = {

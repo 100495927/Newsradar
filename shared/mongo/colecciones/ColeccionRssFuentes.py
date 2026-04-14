@@ -12,37 +12,6 @@ if TYPE_CHECKING:
 class ColeccionRssFuentes(Coleccion):
     NOMBRE_COLECCION = "rss_fuentes"
 
-    def esquema(self):
-        return {
-            "bsonType": "object",
-            "required": ["hash_fuente", "medio", "url", "activo", "creado", "actualizado"],
-            "properties": {
-                "_id": {"bsonType": "objectId"},
-                "hash_fuente": {"bsonType": "string"},
-                "medio": {"bsonType": "string"},
-                "rss": {"bsonType": ["string", "null"]},
-                "url": {"bsonType": "string"},
-                "parser_id": {"bsonType": ["string", "null"]},
-                "activo": {"bsonType": "bool"},
-                "creado": {"bsonType": "date"},
-                "actualizado": {"bsonType": "date"},
-            },
-        }
-
-    def crear_indices(self):
-        self._collection.create_index(
-            "hash_fuente", unique=True, name="idx_rss_fuentes_hash_fuente_unique"
-        )
-        self._collection.create_index(
-            "url", unique=True, name="idx_rss_fuentes_url_unique"
-        )
-        self._collection.create_index(
-            [("medio", 1), ("rss", 1)], name="idx_rss_fuentes_medio_rss"
-        )
-        self._collection.create_index(
-            "activo", name="idx_rss_fuentes_activo"
-        )
-
     def insertar(self, fuente: "RSSFuente"):
         datos = fuente.a_mongo()
         ahora = datetime.now(timezone.utc)

@@ -1,5 +1,21 @@
 from .Database import Database
 from .EntornoDB import EntornoDB
+from .bootstrap_spec import (
+    COLLECTION_SPECS,
+    EXPECTED_COLLECTION_NAMES,
+    EXPECTED_INDEX_NAMES,
+    RUNTIME_REQUIRED_COLLECTIONS,
+    RUNTIME_REQUIRED_INDEXES,
+)
 from . import constantes
 
-__all__ = ["Database", "EntornoDB", "constantes"]
+__all__ = [
+    "Database",
+    "EntornoDB",
+    "COLLECTION_SPECS",
+    "EXPECTED_COLLECTION_NAMES",
+    "EXPECTED_INDEX_NAMES",
+    "RUNTIME_REQUIRED_COLLECTIONS",
+    "RUNTIME_REQUIRED_INDEXES",
+    "constantes",
+]

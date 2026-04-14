@@ -7,7 +7,7 @@ La estructura operativa del repo queda separada en:
 * `backend/`: API FastAPI.
 * `rss-worker/`: worker de ingesta RSS.
 * `shared/`: utilidades y acceso compartido a MongoDB.
-* `scripts/mongo/`: bootstrap y healthchecks de Mongo.
+* `scripts/mongo/`: bootstrap inicial y utilidades administrativas de Mongo.
 
 ### Validaciones Automatizadas en CI
 En este Sprint hemos consolidado la integración de los siguientes componentes:
@@ -46,8 +46,21 @@ Este es el comando que garantiza que el contrato entre servicios se cumple
 
 Si se necesita probar funcionalidades específicas de extracción o de persistencia:
 
-  * **Verificar el handler de Mongo:** `docker exec newsradar-mongo-handler python /app/scripts/mongo/test.py`
   * **Verificar el worker RSS:** `docker exec newsradar-rss-worker python /app/rss-worker/worker/test.py`
+  * **Reaplicar bootstrap de Mongo sobre una BD existente:** `docker exec newsradar-backend python /app/scripts/mongo/admin/apply_bootstrap.py`
+
+### Bootstrap de MongoDB
+
+MongoDB se inicializa desde `scripts/mongo/init-mongo.sh` en el primer arranque del contenedor cuando `data/mongodb/data` esta vacio. Ese bootstrap crea el usuario de aplicacion, las colecciones necesarias, sus validadores y los indices requeridos.
+
+Si una base persistida ya existe pero necesita reconciliar su estructura, se puede usar el script administrativo `scripts/mongo/admin/apply_bootstrap.py`.
+
+### Reset y rebootstrap
+
+Para limpiar los datastores persistidos y forzar un nuevo bootstrap:
+
+* Linux/macOS: `./scripts/reset_datastores_and_rebootstrap.sh`
+* PowerShell: `./scripts/reset_datastores_and_rebootstrap.ps1`
 
 ## Accesos Directos (Entorno Local)
 

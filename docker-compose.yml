@@ -44,7 +44,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       PYTHONUNBUFFERED: "1"
       # URI usada por el backend para conectar con Mongo usando el usuario de aplicacion.
-      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_APP_DB:-newsradar}
+      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@${MONGO_HOST:-mongodb}:${MONGO_PORT:-27017}/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_APP_DB:-newsradar}
       MONGO_DB_NAME: ${MONGO_APP_DB:-newsradar}
       ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://elasticsearch:9200}
       ELASTICSEARCH_INDEX_ENTRADAS: ${ELASTICSEARCH_INDEX_ENTRADAS:-rss_entradas_idx}
@@ -57,7 +57,7 @@ services:
     ports:
       - "${BACKEND_EXPOSE_PORT:-8000}:8000"
     depends_on:
-      mongo-handler:
+      mongodb:
         condition: service_healthy
       rss-worker:
         condition: service_healthy
@@ -87,46 +87,25 @@ services:
     env_file:
       - .env
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-newsradar_root}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-change_me_root_pwd}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-newsradar_root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-change_me_root_pwd}
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-admin}
+      MONGO_APP_USER: ${MONGO_APP_USER:-newsradar_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-change_me_app_pwd}
+      MONGO_APP_DB: ${MONGO_APP_DB:-newsradar}
     ports:
-      - "${MONGO_EXPOSED_PORT:-27017}:27017"
+      - "${MONGO_PORT:-27017}:27017"
     volumes:
       - ./data/mongodb/data:/data/db
       - ./data/mongodb/configdb:/data/configdb
       - ./scripts/mongo/init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
+      - ./scripts/mongo/init-mongo.js:/opt/newsradar/init-mongo.js:ro
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ping:1})'"]
       interval: 5s
       timeout: 5s
       retries: 5
       start_period: 10s
-    networks:
-      - newsradar_net
-
-  mongo-handler:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    container_name: newsradar-mongo-handler
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      PYTHONUNBUFFERED: "1"
-      MONGO_HOST: mongodb
-      MONGO_EXPOSED_PORT: 27017
-    command: ["python", "/app/scripts/mongo/main.py"]
-    healthcheck:
-      test: ["CMD", "python", "/app/scripts/mongo/test.py"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    depends_on:
-      mongodb:
-        condition: service_healthy
     networks:
       - newsradar_net
 
@@ -141,7 +120,7 @@ services:
     environment:
       PYTHONUNBUFFERED: "1"
       MONGO_HOST: mongodb
-      MONGO_EXPOSED_PORT: 27017
+      MONGO_PORT: 27017
     command: ["python", "/app/rss-worker/worker/main.py"]
     healthcheck:
       test: ["CMD", "python", "/app/rss-worker/worker/test.py"]
@@ -150,7 +129,7 @@ services:
       retries: 5
       start_period: 15s
     depends_on:
-      mongo-handler:
+      mongodb:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy

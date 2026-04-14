@@ -9,7 +9,7 @@ Definidos en [docker-compose.yml](docker-compose.yml):
 - mongodb
   - Contenedor: newsradar-mongodb
   - Puerto contenedor: 27017
-  - Puerto host: ${MONGO_EXPOSED_PORT:-27017}
+  - Puerto host: ${MONGO_PORT:-27017}
 - backend
   - Contenedor: newsradar-backend
   - Puerto contenedor: 8000
@@ -22,6 +22,7 @@ Definidos en [docker-compose.yml](docker-compose.yml):
   - Variables clave:
     - `RSS_WORKER_INTERVAL_SECONDS` (frecuencia de ciclo)
     - `RSS_WORKER_RUN_ONCE` (modo una sola ejecucion)
+    - `MONGO_HOST` y `MONGO_PORT` (conexion runtime a MongoDB)
 - frontend
   - Contenedor: newsradar-frontend
   - Puerto contenedor: 5173
@@ -122,7 +123,7 @@ mongodb://newsradar_app:<MONGO_APP_PASSWORD>@localhost:27017/newsradar?authSourc
 ### Metodo B: desde host con usuario root
 
 ```text
-mongodb://newsradar_root:<MONGO_ROOT_PASSWORD>@localhost:27017/admin
+mongodb://newsradar_root:<MONGO_INITDB_ROOT_PASSWORD>@localhost:27017/admin
 ```
 
 ### Metodo C: desde el contenedor backend (red interna docker)
@@ -246,6 +247,12 @@ docker compose up -d --build backend mongodb
 
 ```powershell
 docker exec newsradar-rss-worker python /app/rss-worker/worker/test.py
+```
+
+1. Para reaplicar bootstrap de Mongo sobre una BD persistida:
+
+```powershell
+docker exec newsradar-backend python /app/scripts/mongo/admin/apply_bootstrap.py
 ```
 
 1. Si hay cambios en variables y no se reflejan, recrear contenedores:
