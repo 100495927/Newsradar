@@ -20,17 +20,14 @@ client = MongoClient(MONGODB_URI)
 db = client[os.getenv("MONGO_APP_DB", "newsradar")]
 users_col = db["users"]
 
-# -- In-memory stores --
+# -- In-memory stores (usuarios migrados a MongoDB) --
 roles_store: Dict[int, Any] = {}
-users_store: Dict[int, Any] = {}
 alerts_store: Dict[int, Any] = {}
 categories_store: Dict[int, Any] = {}
 notifications_store: Dict[int, Any] = {}
 information_sources_store: Dict[int, Any] = {}
 rss_channels_store: Dict[int, Any] = {}
 stats_store: Dict[int, Any] = {}
-
-active_tokens: Dict[str, int] = {}
 
 counters: Dict[str, int] = {
     "roles": 1,

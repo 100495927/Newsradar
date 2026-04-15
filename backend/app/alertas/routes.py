@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 
 from ..dependencies import ensure_gestor_role, get_current_user
 from ..auth.user import UserInDB
-from ..store import alerts_store, next_id, notifications_store, users_store
+from ..store import alerts_store, next_id, notifications_store, users_col
 from .models import Alert, AlertCreate, AlertUpdate
 
 router = APIRouter(tags=["alerts"])
@@ -18,7 +18,7 @@ router = APIRouter(tags=["alerts"])
 
 def ensure_user_exists(user_id: int) -> None:
     """Lanza 404 si el usuario no existe."""
-    if user_id not in users_store:
+    if not users_col.find_one({"id": user_id}):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
 

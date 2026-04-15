@@ -5,9 +5,11 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError
 
+from .auth.jwt_utils import decode_access_token
 from .auth.user import User, UserInDB
-from .store import active_tokens, roles_store, users_store
+from .store import users_col
 
 security = HTTPBearer(auto_error=False)
 
@@ -15,30 +17,32 @@ security = HTTPBearer(auto_error=False)
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> UserInDB:
-    """Resuelve el usuario autenticado desde un token Bearer en memoria."""
+    """Resuelve el usuario autenticado validando el JWT y consultando MongoDB."""
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code=401, detail="Token inválido o ausente")
 
-    user_id = active_tokens.get(credentials.credentials)
-    if not user_id:
+    try:
+        user_id = decode_access_token(credentials.credentials)
+    except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
-    user = users_store.get(user_id)
-    if not user:
+    doc = users_col.find_one({"id": user_id})
+    if not doc:
         raise HTTPException(status_code=401, detail="Usuario inválido")
 
-    return user
+    doc = {k: v for k, v in doc.items() if k != "_id"}
+    return UserInDB(**doc)
 
 
 def sanitize_user(user: UserInDB) -> User:
     """Devuelve la vista pública del usuario sin password."""
     return User(
-        id=user.id,
         email=user.email,
         first_name=user.first_name,
         last_name=user.last_name,
         organization=user.organization,
-        role_ids=user.role_ids,
+        role=user.role,
+        status=user.status,
     )
 
 
@@ -50,13 +54,8 @@ def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
 
 
 def ensure_gestor_role(user: UserInDB = Depends(get_current_user)) -> UserInDB:
-    """Verifica que el usuario tenga rol de admin/gestor."""
-    is_gestor = any(
-        roles_store[r_id].name == "admin"
-        for r_id in user.role_ids
-        if r_id in roles_store
-    )
-    if not is_gestor:
+    """Verifica que el usuario tenga rol de admin o manager."""
+    if user.role not in ("admin", "manager"):
         raise HTTPException(
             status_code=403,
             detail="Acceso denegado: Se requiere rol de Gestor de NewsRadar",

@@ -1,18 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
-from typing import List, Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 # -- Roles --
-
-class UserRole(str, Enum):
-    GESTOR = "gestor"
-    LECTOR = "lector"
-
 
 class RoleBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
@@ -32,12 +26,15 @@ class Role(RoleBase):
 
 # -- Users --
 
+UserRole = Literal["admin", "manager", "reader"]
+UserStatus = Literal["pending_verification", "active", "disabled"]
+
+
 class UserBase(BaseModel):
     email: EmailStr
     first_name: str = Field(..., min_length=1, max_length=120)
     last_name: str = Field(..., min_length=1, max_length=120)
-    organization: str = Field(..., min_length=1, max_length=180)
-    role_ids: List[int] = Field(default_factory=list)
+    organization: Optional[str] = Field(None, max_length=180)
 
 
 class UserCreate(UserBase):
@@ -48,28 +45,28 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     first_name: Optional[str] = Field(None, min_length=1, max_length=120)
     last_name: Optional[str] = Field(None, min_length=1, max_length=120)
-    organization: Optional[str] = Field(None, min_length=1, max_length=180)
-    role_ids: Optional[List[int]] = None
+    organization: Optional[str] = Field(None, max_length=180)
     password: Optional[str] = Field(None, min_length=6, max_length=128)
 
 
 class User(UserBase):
-    id: int
+    """Vista pública sin contraseña."""
+    role: UserRole = "reader"
+    status: UserStatus = "active"
 
 
-class UserInDB(User):
-    password: str
-    is_verified: bool = False
+class UserInDB(UserBase):
+    """Documento tal como se almacena en MongoDB."""
+    model_config = ConfigDict(extra="ignore")
+
+    password_hash: Optional[str] = None
+    role: UserRole = "reader"
+    status: UserStatus = "active"
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    # Campos auxiliares internos (no en el schema de Mongo pero permitidos)
     verification_token: Optional[str] = None
     token_created_at: Optional[datetime] = None
-
-
-class UserResponse(UserBase):
-    """Vista pública devuelta al frontend."""
-    is_verified: bool
-
-    class Config:
-        from_attributes = True
 
 
 # -- Auth --

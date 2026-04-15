@@ -1,11 +1,27 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 function LoginPage() {
   const navigate = useNavigate()
+  const { login } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    navigate('/dashboard')
+    setError('')
+    setLoading(true)
+    try {
+      await login(email, password)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -41,7 +57,10 @@ function LoginPage() {
                 <input
                   className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-5 py-4 text-sm font-medium"
                   placeholder="nombre@newsradar.com"
-                  type="text"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2.5">
@@ -54,13 +73,25 @@ function LoginPage() {
                   className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-5 py-4 text-sm font-medium"
                   placeholder="••••••••"
                   type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
               </div>
-              <button className="w-full bg-primary-container text-on-primary font-bold py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-black active:scale-[0.98] transition-all flex justify-center items-center gap-2.5 group h-14">
-                <span>Iniciar Sesión</span>
-                <span className="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">
-                  arrow_forward
-                </span>
+              {error && (
+                <p className="text-red-500 text-sm font-medium">{error}</p>
+              )}
+              <button
+                className="w-full bg-primary-container text-on-primary font-bold py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-black active:scale-[0.98] transition-all flex justify-center items-center gap-2.5 group h-14 disabled:opacity-60"
+                type="submit"
+                disabled={loading}
+              >
+                <span>{loading ? 'Iniciando...' : 'Iniciar Sesión'}</span>
+                {!loading && (
+                  <span className="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">
+                    arrow_forward
+                  </span>
+                )}
               </button>
             </form>
             <div className="mt-10 pt-8 border-t border-outline-variant/20 text-center">

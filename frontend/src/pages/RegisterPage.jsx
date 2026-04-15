@@ -1,11 +1,36 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 function RegisterPage() {
   const navigate = useNavigate()
+  const { register } = useAuth()
+  const [form, setForm] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    organization: '',
+    password: '',
+  })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    navigate('/login')
+    setError('')
+    setLoading(true)
+    try {
+      await register(form)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -86,6 +111,10 @@ function RegisterPage() {
                     className="w-full px-4 py-3 rounded-lg bg-surface-container-low border-none focus:ring-2 focus:ring-surface-tint font-medium"
                     placeholder="Jane"
                     type="text"
+                    name="first_name"
+                    value={form.first_name}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -96,6 +125,10 @@ function RegisterPage() {
                     className="w-full px-4 py-3 rounded-lg bg-surface-container-low border-none focus:ring-2 focus:ring-surface-tint font-medium"
                     placeholder="Doe"
                     type="text"
+                    name="last_name"
+                    value={form.last_name}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
               </div>
@@ -107,14 +140,56 @@ function RegisterPage() {
                   className="w-full px-4 py-3 rounded-lg bg-surface-container-low border-none focus:ring-2 focus:ring-surface-tint font-medium"
                   placeholder="jane.doe@organizacion.com"
                   type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
                 />
               </div>
-              <div className="pt-4">
-                <button className="w-full py-4 bg-primary-container text-on-primary font-headline font-bold rounded-lg shadow-lg hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                  Registrarse{' '}
-                  <span className="material-symbols-outlined text-[18px]">
-                    arrow_forward
-                  </span>
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant px-1">
+                  Organización
+                </label>
+                <input
+                  className="w-full px-4 py-3 rounded-lg bg-surface-container-low border-none focus:ring-2 focus:ring-surface-tint font-medium"
+                  placeholder="Nombre de tu organización"
+                  type="text"
+                  name="organization"
+                  value={form.organization}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant px-1">
+                  Contraseña
+                </label>
+                <input
+                  className="w-full px-4 py-3 rounded-lg bg-surface-container-low border-none focus:ring-2 focus:ring-surface-tint font-medium"
+                  placeholder="Mínimo 6 caracteres"
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  minLength={6}
+                  required
+                />
+              </div>
+              {error && (
+                <p className="text-red-500 text-sm font-medium">{error}</p>
+              )}
+              <div className="pt-2">
+                <button
+                  className="w-full py-4 bg-primary-container text-on-primary font-headline font-bold rounded-lg shadow-lg hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading ? 'Registrando...' : 'Registrarse'}
+                  {!loading && (
+                    <span className="material-symbols-outlined text-[18px]">
+                      arrow_forward
+                    </span>
+                  )}
                 </button>
               </div>
             </form>

@@ -13,14 +13,13 @@ from ..dependencies import (
     sanitize_user,
 )
 from ..store import (
-    active_tokens,
     alerts_store,
     next_id,
     notifications_store,
     roles_store,
     users_col,
-    users_store,
 )
+from .jwt_utils import create_access_token, hash_password, verify_password
 from .user import (
     LoginRequest,
     Role,
@@ -40,6 +39,12 @@ router = APIRouter()
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _doc_to_userindb(doc: dict) -> UserInDB:
+    """Convierte un documento MongoDB en UserInDB eliminando el _id de Mongo."""
+    doc = {k: v for k, v in doc.items() if k != "_id"}
+    return UserInDB(**doc)
+
+
 def ensure_role_ids_exist(role_ids: List[int]) -> None:
     """Valida que los IDs de rol enviados existan en el store de roles."""
     missing = [r for r in role_ids if r not in roles_store]
@@ -56,58 +61,64 @@ def ensure_role_ids_exist(role_ids: List[int]) -> None:
 
 @router.post("/auth/login", response_model=TokenResponse, tags=["auth"])
 def login(payload: LoginRequest) -> TokenResponse:
-    """Autentica por email/password y devuelve token Bearer temporal."""
-    user = next((u for u in users_store.values() if u.email == payload.email), None)
-    if user is None or user.password != payload.password:
+    """Autentica por email/password y devuelve JWT Bearer."""
+    doc = users_col.find_one({"email": payload.email})
+    if not doc or not verify_password(payload.password, doc.get("password_hash") or ""):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
-    token = str(uuid4())
-    active_tokens[token] = user.id
+    token = create_access_token(doc["id"])
     return TokenResponse(access_token=token)
 
 
-@router.post("/auth/register", response_model=User, status_code=201, tags=["auth"])
-def register(payload: UserCreate) -> User:
-    """Registra un usuario nuevo validando email único y roles existentes."""
-    if any(u.email == payload.email for u in users_store.values()):
+@router.post("/auth/register", response_model=TokenResponse, status_code=201, tags=["auth"])
+def register(payload: UserCreate) -> TokenResponse:
+    """Registra un usuario nuevo en MongoDB y devuelve JWT."""
+    if users_col.find_one({"email": payload.email}):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
-    ensure_role_ids_exist(payload.role_ids)
-
+    now = datetime.now(timezone.utc)
     user_id = next_id("users")
-    user_db = UserInDB(
-        id=user_id,
-        verification_token=str(uuid4()),
-        token_created_at=datetime.now(timezone.utc),
-        **payload.model_dump(),
-    )
-    users_store[user_id] = user_db
-    print(f"DEBUG: Token para {user_db.email}: {user_db.verification_token}")
-    return sanitize_user(user_db)
+    users_col.insert_one({
+        "id": user_id,
+        "email": payload.email,
+        "first_name": payload.first_name,
+        "last_name": payload.last_name,
+        "organization": payload.organization,
+        "password_hash": hash_password(payload.password),
+        "role": "reader",
+        "status": "active",
+        "created_at": now,
+        "updated_at": now,
+        "verification_token": str(uuid4()),
+        "token_created_at": now,
+    })
+
+    token = create_access_token(user_id)
+    return TokenResponse(access_token=token)
 
 
 @router.get("/auth/verify/{token}", tags=["auth"])
 def verify_email(token: str):
     """Verifica la cuenta si el token no ha expirado."""
-    user = next((u for u in users_store.values() if u.verification_token == token), None)
-
-    if not user:
+    doc = users_col.find_one({"verification_token": token})
+    if not doc:
         raise HTTPException(status_code=404, detail="Token no válido")
 
-    if not es_token_valido(user.token_created_at):
+    if not es_token_valido(doc.get("token_created_at")):
         raise HTTPException(status_code=400, detail="El enlace ha caducado (máximo 24h)")
 
-    user.is_verified = True
-    user.verification_token = None
+    users_col.update_one(
+        {"_id": doc["_id"]},
+        {"$set": {"is_verified": True}, "$unset": {"verification_token": ""}},
+    )
     return {"message": "Cuenta verificada correctamente"}
 
 
 @router.post("/auth/forgot-password", tags=["auth"])
 def forgot_password(payload: LoginRequest):
     """Genera token de recuperación de contraseña y lo almacena en MongoDB."""
-    user = users_col.find_one({"email": payload.email})
-
-    if user:
+    doc = users_col.find_one({"email": payload.email})
+    if doc:
         reset_token = str(uuid4())
         users_col.update_one(
             {"email": payload.email},
@@ -124,9 +135,9 @@ def forgot_password(payload: LoginRequest):
 @router.post("/auth/reset-password", tags=["auth"])
 def reset_password(token: str, new_password: str):
     """Restablece la contraseña validando el token y su caducidad de 24h."""
-    user_data = users_col.find_one({"reset_token": token})
+    doc = users_col.find_one({"reset_token": token})
 
-    if not user_data or not es_token_valido(user_data.get("reset_token_at")):
+    if not doc or not es_token_valido(doc.get("reset_token_at")):
         raise HTTPException(
             status_code=400,
             detail="El enlace es inválido o ha caducado (máximo 24h)",
@@ -134,7 +145,7 @@ def reset_password(token: str, new_password: str):
 
     hashed_pw = hashlib.sha256(new_password.encode()).hexdigest()
     users_col.update_one(
-        {"id": user_data["id"]},
+        {"_id": doc["_id"]},
         {
             "$set": {"password": hashed_pw},
             "$unset": {"reset_token": "", "reset_token_at": ""},
@@ -150,29 +161,29 @@ def reset_password(token: str, new_password: str):
 @router.get("/users", response_model=List[User], tags=["users"])
 def list_users(_: UserInDB = Depends(get_current_user)) -> List[User]:
     """Lista usuarios sin exponer contraseñas."""
-    return [sanitize_user(u) for u in users_store.values()]
+    return [sanitize_user(_doc_to_userindb(doc)) for doc in users_col.find()]
 
 
 @router.post("/users", response_model=User, status_code=201, tags=["users"])
 def create_user(payload: UserCreate, _: UserInDB = Depends(get_current_user)) -> User:
     """Crea usuario administrativo autenticado por token."""
-    if any(u.email == payload.email for u in users_store.values()):
+    if users_col.find_one({"email": payload.email}):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
     ensure_role_ids_exist(payload.role_ids)
     user_id = next_id("users")
-    user_db = UserInDB(id=user_id, **payload.model_dump())
-    users_store[user_id] = user_db
-    return sanitize_user(user_db)
+    users_col.insert_one({"id": user_id, **payload.model_dump(), "is_verified": False})
+    doc = users_col.find_one({"id": user_id})
+    return sanitize_user(_doc_to_userindb(doc))
 
 
 @router.get("/users/{user_id}", response_model=User, tags=["users"])
 def get_user(user_id: int, _: UserInDB = Depends(get_current_user)) -> User:
     """Recupera un usuario por ID."""
-    user = users_store.get(user_id)
-    if not user:
+    doc = users_col.find_one({"id": user_id})
+    if not doc:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return sanitize_user(user)
+    return sanitize_user(_doc_to_userindb(doc))
 
 
 @router.put("/users/{user_id}", response_model=User, tags=["users"])
@@ -190,8 +201,7 @@ def update_user(
     if current_user.id != user_id and not is_admin:
         raise HTTPException(status_code=403, detail="No tienes permiso para editar este perfil")
 
-    user_data = users_col.find_one({"id": user_id})
-    if not user_data:
+    if not users_col.find_one({"id": user_id}):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     data = payload.model_dump(exclude_unset=True)
@@ -203,7 +213,7 @@ def update_user(
         users_col.update_one({"id": user_id}, {"$set": data})
 
     updated = users_col.find_one({"id": user_id})
-    return sanitize_user(UserInDB(**updated))
+    return sanitize_user(_doc_to_userindb(updated))
 
 
 @router.delete(
@@ -215,7 +225,7 @@ def update_user(
 )
 def delete_user(user_id: int, _: UserInDB = Depends(get_current_user)) -> None:
     """Elimina usuario y borra en cascada alertas y notificaciones asociadas."""
-    if user_id not in users_store:
+    if not users_col.find_one({"id": user_id}):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     alert_ids = [a.id for a in alerts_store.values() if a.user_id == user_id]
@@ -225,7 +235,7 @@ def delete_user(user_id: int, _: UserInDB = Depends(get_current_user)) -> None:
             notifications_store.pop(nid, None)
         alerts_store.pop(alert_id, None)
 
-    users_store.pop(user_id, None)
+    users_col.delete_one({"id": user_id})
 
 
 # ---------------------------------------------------------------------------
@@ -283,11 +293,11 @@ def delete_role(role_id: int, _: UserInDB = Depends(get_current_user)) -> None:
     if role_id not in roles_store:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
 
-    for user in users_store.values():
-        if role_id in user.role_ids:
-            raise HTTPException(
-                status_code=409,
-                detail="No se puede eliminar un rol asignado a usuarios",
-            )
+    assigned = users_col.find_one({"role_ids": role_id})
+    if assigned:
+        raise HTTPException(
+            status_code=409,
+            detail="No se puede eliminar un rol asignado a usuarios",
+        )
 
     roles_store.pop(role_id, None)
