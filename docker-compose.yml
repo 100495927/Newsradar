@@ -8,6 +8,7 @@ services:
     environment:
       NODE_ENV: ${FRONTEND_NODE_ENV:-development}
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+      BACKEND_URL: http://backend:8000
       FRONTEND_PORT: ${FRONTEND_PORT:-5173}
     ports:
       - "${FRONTEND_EXPOSE_PORT:-5173}:5173"
@@ -71,7 +72,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=2)",
         ]
       interval: 20s
       timeout: 5s
@@ -144,6 +145,7 @@ services:
       discovery.type: single-node
       xpack.security.enabled: false
       ES_JAVA_OPTS: -Xms512m -Xmx512m
+      cluster.routing.allocation.disk.threshold_enabled: false
     ulimits: 
       memlock:
         soft: -1
