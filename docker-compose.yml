@@ -177,7 +177,7 @@ services:
       elasticsearch:
         condition: service_healthy
     volumes:
-      - ./docker/elasticsearch/init-elasticsearch.sh:/init-elasticsearch.sh:ro
+      - ./scripts/elasticsearch/init-elasticsearch.sh:/init-elasticsearch.sh:ro
     entrypoint: ["sh", "/init-elasticsearch.sh"]
     networks:
       - newsradar_net
