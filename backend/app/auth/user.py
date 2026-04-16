@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -26,10 +26,6 @@ class Role(RoleBase):
 
 # -- Users --
 
-UserRole = Literal["admin", "manager", "reader"]
-UserStatus = Literal["pending_verification", "active", "disabled"]
-
-
 class UserBase(BaseModel):
     email: EmailStr
     first_name: str = Field(..., min_length=1, max_length=120)
@@ -38,6 +34,7 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
+    role_ids: List[int] = []
     password: str = Field(..., min_length=6, max_length=128)
 
 
@@ -46,22 +43,23 @@ class UserUpdate(BaseModel):
     first_name: Optional[str] = Field(None, min_length=1, max_length=120)
     last_name: Optional[str] = Field(None, min_length=1, max_length=120)
     organization: Optional[str] = Field(None, max_length=180)
+    role_ids: Optional[List[int]] = None
     password: Optional[str] = Field(None, min_length=6, max_length=128)
 
 
 class User(UserBase):
     """Vista pública sin contraseña."""
-    role: UserRole = "reader"
-    status: UserStatus = "active"
+    id: int
+    role_ids: List[int] = []
 
 
 class UserInDB(UserBase):
     """Documento tal como se almacena en MongoDB."""
     model_config = ConfigDict(extra="ignore")
 
+    id: int = 0
+    role_ids: List[int] = []
     password_hash: Optional[str] = None
-    role: UserRole = "reader"
-    status: UserStatus = "active"
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     # Campos auxiliares internos (no en el schema de Mongo pero permitidos)

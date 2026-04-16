@@ -9,7 +9,7 @@ from jose import JWTError
 
 from .auth.jwt_utils import decode_access_token
 from .auth.user import User, UserInDB
-from .store import users_col
+from .store import roles_store, users_col
 
 security = HTTPBearer(auto_error=False)
 
@@ -37,12 +37,12 @@ def get_current_user(
 def sanitize_user(user: UserInDB) -> User:
     """Devuelve la vista pública del usuario sin password."""
     return User(
+        id=user.id,
         email=user.email,
         first_name=user.first_name,
         last_name=user.last_name,
         organization=user.organization,
-        role=user.role,
-        status=user.status,
+        role_ids=user.role_ids,
     )
 
 
@@ -55,7 +55,8 @@ def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
 
 def ensure_gestor_role(user: UserInDB = Depends(get_current_user)) -> UserInDB:
     """Verifica que el usuario tenga rol de admin o manager."""
-    if user.role not in ("admin", "manager"):
+    user_role_names = {roles_store[r_id].name for r_id in user.role_ids if r_id in roles_store}
+    if not user_role_names.intersection({"admin", "manager"}):
         raise HTTPException(
             status_code=403,
             detail="Acceso denegado: Se requiere rol de Gestor de NewsRadar",

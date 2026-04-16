@@ -70,11 +70,14 @@ def login(payload: LoginRequest) -> TokenResponse:
     return TokenResponse(access_token=token)
 
 
-@router.post("/auth/register", response_model=TokenResponse, status_code=201, tags=["auth"])
-def register(payload: UserCreate) -> TokenResponse:
-    """Registra un usuario nuevo en MongoDB y devuelve JWT."""
+@router.post("/auth/register", response_model=User, status_code=201, tags=["auth"])
+def register(payload: UserCreate) -> User:
+    """Registra un usuario nuevo en MongoDB y devuelve el usuario creado."""
     if users_col.find_one({"email": payload.email}):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
+
+    if payload.role_ids:
+        ensure_role_ids_exist(payload.role_ids)
 
     now = datetime.now(timezone.utc)
     user_id = next_id("users")
@@ -84,17 +87,16 @@ def register(payload: UserCreate) -> TokenResponse:
         "first_name": payload.first_name,
         "last_name": payload.last_name,
         "organization": payload.organization,
+        "role_ids": payload.role_ids,
         "password_hash": hash_password(payload.password),
-        "role": "reader",
-        "status": "active",
         "created_at": now,
         "updated_at": now,
         "verification_token": str(uuid4()),
         "token_created_at": now,
     })
 
-    token = create_access_token(user_id)
-    return TokenResponse(access_token=token)
+    doc = users_col.find_one({"id": user_id})
+    return sanitize_user(_doc_to_userindb(doc))
 
 
 @router.get("/auth/verify/{token}", tags=["auth"])

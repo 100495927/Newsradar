@@ -64,8 +64,7 @@ def create_seed_data() -> None:
             "last_name": "NewsRadar",
             "organization": "NewsRadar",
             "password_hash": hash_password("admin123"),
-            "role": "admin",
-            "status": "active",
+            "role_ids": [admin_role_id],
             "created_at": now,
             "updated_at": now,
         })
