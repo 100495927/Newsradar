@@ -67,17 +67,20 @@ def create_seed_data() -> None:
             "role_ids": [admin_role_id],
             "created_at": now,
             "updated_at": now,
+            "role": "admin",
+            "status": "active",
         })
 
 
 @app.on_event("startup")
 def on_startup() -> None:
     # Sincronizar el counter de usuarios con el max id en MongoDB
-    max_doc = users_col.find_one(sort=[("id", pymongo.DESCENDING)])
-    if max_doc:
-        counters["users"] = max_doc["id"] + 1
+    #max_doc = users_col.find_one(sort=[("id", pymongo.DESCENDING)])
+    #if max_doc:
+        #counters["users"] = max_doc["id"] + 1
 
-    create_seed_data()
+    #create_seed_data()
+    print("Bypass temporal")
 
 
 @app.get(f"{API_PREFIX}/health", tags=["system"])

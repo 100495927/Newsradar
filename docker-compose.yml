@@ -74,12 +74,15 @@ services:
           "-c",
           "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=2)",
         ]
-      interval: 20s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
       start_period: 25s
     networks:
       - newsradar_net
+    volumes:
+      - ./backend:/app/backend        # Sincroniza lógica
+      - ./shared:/app/shared  
 
   mongodb:
     image: mongo:8.2
@@ -122,6 +125,8 @@ services:
       PYTHONUNBUFFERED: "1"
       MONGO_HOST: mongodb
       MONGO_PORT: 27017
+      RSS_WORKER_INTERVAL_SECONDS: "60"
+      RSS_WORKER_RUN_ONCE: "false"
     command: ["python", "/app/rss-worker/worker/main.py"]
     healthcheck:
       test: ["CMD", "python", "/app/rss-worker/worker/test.py"]

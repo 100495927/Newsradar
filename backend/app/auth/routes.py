@@ -93,6 +93,8 @@ def register(payload: UserCreate) -> User:
         "updated_at": now,
         "verification_token": str(uuid4()),
         "token_created_at": now,
+        "role": "reader",      
+        "status": "active"
     })
 
     doc = users_col.find_one({"id": user_id})

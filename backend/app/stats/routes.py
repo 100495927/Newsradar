@@ -1,16 +1,13 @@
 from __future__ import annotations
-
 from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, Response
 
 from ..dependencies import get_current_user
 from ..auth.user import UserInDB
-from ..store import next_id, stats_store
+from ..store import next_id, stats_col  # Usamos stats_col de Mongo
 from .models import Stats, StatsCreate, StatsUpdate
 
 router = APIRouter(tags=["stats"])
-
 
 # ---------------------------------------------------------------------------
 # Routes
@@ -18,8 +15,9 @@ router = APIRouter(tags=["stats"])
 
 @router.get("/stats", response_model=List[Stats])
 def list_stats(_: UserInDB = Depends(get_current_user)) -> List[Stats]:
-    """Lista registros de estadísticas."""
-    return list(stats_store.values())
+    """Lista registros de estadísticas desde MongoDB."""
+    cursor = stats_col.find({}, {"_id": 0})
+    return [Stats(**doc) for doc in cursor]
 
 
 @router.post("/stats", response_model=Stats, status_code=201)
@@ -27,11 +25,15 @@ def create_stats(
     payload: StatsCreate,
     _: UserInDB = Depends(get_current_user),
 ) -> Stats:
-    """Crea un registro de estadísticas."""
+    """Crea un registro de estadísticas en MongoDB."""
     stats_id = next_id("stats")
-    stats = Stats(id=stats_id, **payload.model_dump())
-    stats_store[stats_id] = stats
-    return stats
+    # Convertimos las métricas a diccionarios para que Mongo las entienda bien
+    new_stats = {
+        "id": stats_id,
+        "metrics": [m.model_dump() for m in payload.metrics]
+    }
+    stats_col.insert_one(new_stats)
+    return Stats(**new_stats)
 
 
 @router.get("/stats/{stats_id}", response_model=Stats)
@@ -40,10 +42,10 @@ def get_stats(
     _: UserInDB = Depends(get_current_user),
 ) -> Stats:
     """Obtiene un registro de estadísticas por ID."""
-    stats = stats_store.get(stats_id)
+    stats = stats_col.find_one({"id": stats_id}, {"_id": 0})
     if not stats:
         raise HTTPException(status_code=404, detail="Stats no encontrados")
-    return stats
+    return Stats(**stats)
 
 
 @router.put("/stats/{stats_id}", response_model=Stats)
@@ -52,26 +54,28 @@ def update_stats(
     payload: StatsUpdate,
     _: UserInDB = Depends(get_current_user),
 ) -> Stats:
-    """Actualiza un registro de estadísticas."""
-    stats = stats_store.get(stats_id)
-    if not stats:
+    """Actualiza un registro de estadísticas en MongoDB."""
+    stats_exists = stats_col.find_one({"id": stats_id})
+    if not stats_exists:
         raise HTTPException(status_code=404, detail="Stats no encontrados")
-    updated = stats.model_copy(update=payload.model_dump(exclude_unset=True))
-    stats_store[stats_id] = updated
-    return updated
+    
+    update_data = payload.model_dump(exclude_unset=True)
+    if "metrics" in update_data:
+        # Aseguramos que las métricas se guarden como lista de dicts
+        update_data["metrics"] = [m.model_dump() if hasattr(m, 'model_dump') else m for m in update_data["metrics"]]
+
+    stats_col.update_one({"id": stats_id}, {"$set": update_data})
+    updated_doc = stats_col.find_one({"id": stats_id}, {"_id": 0})
+    return Stats(**updated_doc)
 
 
-@router.delete(
-    "/stats/{stats_id}",
-    status_code=204,
-    response_model=None,
-    response_class=Response,
-)
+@router.delete("/stats/{stats_id}", status_code=204)
 def delete_stats(
     stats_id: int,
     _: UserInDB = Depends(get_current_user),
-) -> None:
-    """Elimina un registro de estadísticas."""
-    if stats_id not in stats_store:
+) -> Response:
+    """Elimina un registro de estadísticas de MongoDB."""
+    result = stats_col.delete_one({"id": stats_id})
+    if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Stats no encontrados")
-    stats_store.pop(stats_id, None)
+    return Response(status_code=204)

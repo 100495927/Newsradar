@@ -19,6 +19,9 @@ MONGODB_URI = os.getenv(
 client = MongoClient(MONGODB_URI)
 db = client[os.getenv("MONGO_APP_DB", "newsradar")]
 users_col = db["users"]
+sources_col = db["information_sources"]
+channels_col = db["rss_channels"]
+stats_col = db["stats"]
 
 # -- In-memory stores (usuarios migrados a MongoDB) --
 roles_store: Dict[int, Any] = {}
