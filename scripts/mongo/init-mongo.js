@@ -62,7 +62,6 @@ ensureCollection("rss_fuentes", {
       medio: { bsonType: "string" },
       rss: { bsonType: ["string", "null"] },
       url: { bsonType: "string" },
-      parser_id: { bsonType: ["string", "null"] },
       activo: { bsonType: "bool" },
       creado: { bsonType: "date" },
       actualizado: { bsonType: "date" },
@@ -111,7 +110,6 @@ ensureCollection("rss_entradas", {
       fecha_publicacion: { bsonType: "date" },
       hash_deduplicado: { bsonType: "string" },
       fecha_ingestion: { bsonType: "date" },
-      meta: { bsonType: ["object", "null"] },
     },
   },
 });
@@ -131,31 +129,6 @@ ensureIndexes("rss_entradas", [
   {
     keys: { categorias: 1 },
     options: { name: "idx_rss_entradas_categorias" },
-  },
-]);
-
-ensureCollection("rss_entradas_raw", {
-  $jsonSchema: {
-    bsonType: "object",
-    required: ["id_entrada", "id_fuente", "payload_raw", "fecha_captura"],
-    properties: {
-      _id: { bsonType: "objectId" },
-      id_entrada: { bsonType: "objectId" },
-      id_fuente: { bsonType: "objectId" },
-      payload_raw: { bsonType: "string" },
-      formato_payload: { bsonType: ["string", "null"] },
-      fecha_captura: { bsonType: "date" },
-    },
-  },
-});
-ensureIndexes("rss_entradas_raw", [
-  {
-    keys: { id_entrada: 1 },
-    options: { unique: true, name: "idx_rss_entradas_raw_id_entrada_unique" },
-  },
-  {
-    keys: { id_fuente: 1, fecha_captura: -1 },
-    options: { name: "idx_rss_entradas_raw_fuente_fecha" },
   },
 ]);
 

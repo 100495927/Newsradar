@@ -7,34 +7,31 @@ def generar_lista_estandar_feeds() -> list[RSSFuente]:
         RSSFuente(
             "el_pais",
             "",
-            "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada",
-            RSSParser,
+            "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada"
         ),
-        RSSFuente("abc", "", "https://www.abc.es/rss/feeds/abcPortada.xml", RSSParser),
-        RSSFuente("bbc", "mundo", "https://feeds.bbci.co.uk/news/world/rss.xml", RSSParser),
+        RSSFuente("abc", "", "https://www.abc.es/rss/feeds/abcPortada.xml"),
+        RSSFuente("bbc", "mundo", "https://feeds.bbci.co.uk/news/world/rss.xml"),
         RSSFuente(
-            "rtve", "noticias", "https://api2.rtve.es/rss/temas_noticias.xml", RSSParser
+            "rtve", "noticias", "https://api2.rtve.es/rss/temas_noticias.xml"
         ),
         RSSFuente(
-            "elconfidencial", "mundo", "https://rss.elconfidencial.com/mundo/", RSSParser
+            "elconfidencial", "mundo", "https://rss.elconfidencial.com/mundo/"
         ),
         RSSFuente(
             "marca",
             "primera_division",
             "https://objetos.estaticos-marca.com/rss/futbol/primera-division.xml",
-            RSSParser,
         ),
-        RSSFuente("esdiario", "", "https://www.esdiario.com/rss/home.xml", RSSParser),
+        RSSFuente("esdiario", "", "https://www.esdiario.com/rss/home.xml"),
         RSSFuente(
-            "antena3", "", "https://www.antena3.com/noticias/rss/4013050.xml", RSSParser
+            "antena3", "", "https://www.antena3.com/noticias/rss/4013050.xml"
         ),
         RSSFuente(
             "ministerio_dsa",
             "",
             "https://www.dsca.gob.es/es/rss-noticias.xml",
-            MinisterioDSAParser,
         ),
-        RSSFuente("moncloa", "", "https://www.lamoncloa.gob.es/paginas/rss.aspx", RSSParser)
+        RSSFuente("moncloa", "", "https://www.lamoncloa.gob.es/paginas/rss.aspx")
     ]
 
     return feeds

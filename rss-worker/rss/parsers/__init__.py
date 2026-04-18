@@ -1,9 +1,9 @@
 from .RSSParser import RSSParser
 from .MinisterioDSAParser import MinisterioDSAParser
-from .mongo_ids import mongo_parser_ids
+from .url_a_parser import url_a_parser
 
 __all__ = [
     "RSSParser",
     "MinisterioDSAParser",
-    "mongo_parser_ids"
+    "url_a_parser"
 ]
