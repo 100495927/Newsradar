@@ -62,10 +62,6 @@ services:
         condition: service_healthy
       rss-worker:
         condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
-      elasticsearch-setup:
-        condition: service_completed_successfully
     healthcheck:
       test:
         [
@@ -137,83 +133,84 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
     networks:
       - newsradar_net
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-9.3.2}
-    container_name: newsradar-elasticsearch
-    restart: unless-stopped
-    environment:
-      discovery.type: single-node
-      xpack.security.enabled: false
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
-      cluster.routing.allocation.disk.threshold_enabled: false
-    ulimits: 
-      memlock:
-        soft: -1
-        hard: -1
-      nofile:
-        soft: 65536
-        hard: 65536
-    ports:
-      - "${ELASTIC_EXPOSE_PORT:-9200}:9200"
-    volumes:
-      - ./data/elasticsearch/data:/usr/share/elasticsearch/data
-      - ./data/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'",
-        ]
-      interval: 20s
-      timeout: 10s
-      retries: 10
-      start_period: 40s
-    networks:
-      - newsradar_net
+  # Elasticsearch y Kibana desactivados: el proyecto queda operando solo con MongoDB.
+  # Si se recupera la necesidad de busqueda indexada o BI, se pueden reactivar estos servicios.
+  #
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-9.3.2}
+  #   container_name: newsradar-elasticsearch
+  #   restart: unless-stopped
+  #   environment:
+  #     discovery.type: single-node
+  #     xpack.security.enabled: false
+  #     ES_JAVA_OPTS: -Xms512m -Xmx512m
+  #     cluster.routing.allocation.disk.threshold_enabled: false
+  #   ulimits: 
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #     nofile:
+  #       soft: 65536
+  #       hard: 65536
+  #   ports:
+  #     - "${ELASTIC_EXPOSE_PORT:-9200}:9200"
+  #   volumes:
+  #     - ./data/elasticsearch/data:/usr/share/elasticsearch/data
+  #     - ./data/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+  #   healthcheck:
+  #     test:
+  #       [
+  #         "CMD-SHELL",
+  #         "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'",
+  #       ]
+  #     interval: 20s
+  #     timeout: 10s
+  #     retries: 10
+  #     start_period: 40s
+  #   networks:
+  #     - newsradar_net
 
-  elasticsearch-setup:
-    image: curlimages/curl:8.11.1
-    container_name: newsradar-elasticsearch-setup
-    restart: "no"
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    volumes:
-      - ./scripts/elasticsearch/init-elasticsearch.sh:/init-elasticsearch.sh:ro
-    entrypoint: ["sh", "/init-elasticsearch.sh"]
-    networks:
-      - newsradar_net
+  # elasticsearch-setup:
+  #   image: curlimages/curl:8.11.1
+  #   container_name: newsradar-elasticsearch-setup
+  #   restart: "no"
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./scripts/elasticsearch/init-elasticsearch.sh:/init-elasticsearch.sh:ro
+  #   entrypoint: ["sh", "/init-elasticsearch.sh"]
+  #   networks:
+  #     - newsradar_net
 
-  kibana:
-    image: docker.elastic.co/kibana/kibana:${KIBANA_VERSION:-9.3.2}
-    container_name: newsradar-kibana
-    restart: unless-stopped
-    environment:
-      SERVER_NAME: kibana
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-      XPACK_SECURITY_ENABLED: ${ELASTIC_SECURITY_ENABLED:-false}
-    ports:
-      - "${KIBANA_EXPOSE_PORT:-5601}:5601"
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -fsS http://127.0.0.1:5601/api/status >/dev/null || exit 1",
-        ]
-      interval: 25s
-      timeout: 10s
-      retries: 10
-      start_period: 40s
-    networks:
-      - newsradar_net
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:${KIBANA_VERSION:-9.3.2}
+  #   container_name: newsradar-kibana
+  #   restart: unless-stopped
+  #   environment:
+  #     SERVER_NAME: kibana
+  #     ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+  #     XPACK_SECURITY_ENABLED: ${ELASTIC_SECURITY_ENABLED:-false}
+  #   ports:
+  #     - "${KIBANA_EXPOSE_PORT:-5601}:5601"
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test:
+  #       [
+  #         "CMD-SHELL",
+  #         "curl -fsS http://127.0.0.1:5601/api/status >/dev/null || exit 1",
+  #       ]
+  #     interval: 25s
+  #     timeout: 10s
+  #     retries: 10
+  #     start_period: 40s
+  #   networks:
+  #     - newsradar_net
 
 networks:
   newsradar_net:
