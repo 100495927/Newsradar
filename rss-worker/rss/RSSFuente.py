@@ -15,7 +15,8 @@ class RSSFuente:
         rss: str,
         url: str,
         activo: bool = True,
-        mongo_id: str | None = None
+        mongo_id: str | None = None,
+        categoria_iptc: str | None = None,
     ):
         from .parsers import url_a_parser
         self.medio = medio
@@ -24,6 +25,7 @@ class RSSFuente:
         self.parser = url_a_parser(url)
         self.activo = activo
         self.mongo_id = mongo_id
+        self.categoria_iptc = categoria_iptc
 
     def obtener_entradas(self) -> list[RSSEntrada]:
         from feedparser import parse
@@ -46,6 +48,7 @@ class RSSFuente:
             "rss": self.rss,
             "url": self.url,
             "activo": self.activo,
+            "categoria_iptc": self.categoria_iptc,
             "creado": datetime.now(timezone.utc),
             "actualizado": datetime.now(timezone.utc),
         }
@@ -66,6 +69,7 @@ class RSSFuente:
             url=url,
             activo=activo,
             mongo_id=mongo_dict.get("_id"),
+            categoria_iptc=mongo_dict.get("categoria_iptc"),
         )
 
     @property

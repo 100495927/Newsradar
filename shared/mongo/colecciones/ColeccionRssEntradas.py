@@ -31,6 +31,7 @@ class ColeccionRssEntradas(Coleccion):
                 "autores": {"bsonType": ["array", "null"]},
                 "link": {"bsonType": "string"},
                 "categorias": {"bsonType": ["array", "null"]},
+                "categorias_raw": {"bsonType": ["array", "null"]},
                 "resumen": {"bsonType": ["string", "null"]},
                 "fecha_publicacion": {"bsonType": "date"},
                 "hash_deduplicado": {"bsonType": "string"},
