@@ -243,20 +243,76 @@ Pendientes recomendados:
 
 ### 6.2 Worker de alertas
 
-Pendiente principal:
+Estado actualizado a 2026-04-20:
 
-- Crear o integrar un `alerts-worker`.
+- Ya no es necesario crear de cero un `alerts-worker` para disponer de una
+  primera version funcional.
+- Se ha integrado un comprobador de alertas dentro del `rss-worker`, ejecutado
+  al final de cada ciclo de ingesta RSS.
+- La decision operativa actual es procesar alertas despues de insertar nuevas
+  entradas en `rss_entradas`, usando MongoDB como punto de intercambio entre la
+  API y el worker.
 
-Flujo previsto:
+Flujo implementado:
 
 1. Leer alertas activas desde MongoDB.
-2. Evaluar si toca ejecutarlas segun `cron_expression`/`next_run_at`.
-3. Buscar noticias nuevas en `rss_entradas` desde `last_checked_at`.
-4. Comparar `descriptors` contra titulo/resumen.
-5. Crear notificaciones en MongoDB.
-6. Enviar correo si procede.
-7. Actualizar `email_status`.
-8. Actualizar `last_checked_at`, `last_run_at` y `next_run_at`.
+2. Buscar noticias nuevas en `rss_entradas` desde `last_checked_at`.
+3. Si una alerta no tiene `last_checked_at`, usar una ventana inicial de 24
+   horas para evitar revisar todo el historico.
+4. Comparar `descriptors` contra `titulo` y `resumen` de cada entrada RSS.
+5. Evitar duplicados comprobando si ya existe una notificacion para esa alerta
+   con el mismo `matches.rss_entry_hash`.
+6. Crear como maximo una notificacion por alerta y ciclo, agrupando todas las
+   noticias coincidentes.
+7. Guardar `matches`, `metrics`, `delivery_channels`, `email_status`,
+   `subject`, `created_at` y `updated_at` en `notifications`.
+8. Actualizar `last_checked_at`, `last_run_at` y `updated_at` en la alerta.
+
+Archivos anadidos o modificados:
+
+- `rss-worker/alerts/__init__.py`
+- `rss-worker/alerts/matcher.py`
+- `rss-worker/alerts/notifications.py`
+- `rss-worker/alerts/processor.py`
+- `rss-worker/worker/main.py`
+- `rss-worker/tests/alerts/test_matcher.py`
+- `rss-worker/tests/alerts/test_notifications.py`
+- `rss-worker/tests/alerts/test_processor.py`
+- `rss-worker/tests/worker/test_smoke.py`
+
+Comportamiento relevante:
+
+- El `rss-worker` llama a `process_alerts_safely(db)` justo despues de
+  `fetch_de_entradas(db)`, tanto en modo `run_once` como en el bucle continuo.
+- Los fallos de procesamiento de alertas se registran en logs, pero no tumban
+  el ciclo principal de ingesta RSS.
+- El asunto de la notificacion sigue el formato interno
+  `Actualizacion de <alerta> en <YYYY-MM-DD HH:MM>`.
+- El envio real de correo no se ejecuta todavia: si la alerta incluye `email`
+  en `notification_channels`, la notificacion queda con `email_status:
+  pending`; si no, queda como `skipped`.
+- El matching actual es intencionadamente sencillo: busqueda case-insensitive
+  por substring sobre titulo y resumen.
+
+Validacion realizada:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest rss-worker/tests -q
+```
+
+Resultado: `14 passed`. Los avisos observados proceden de `.pytest_cache` y no
+afectan al resultado funcional.
+
+Pendientes del worker:
+
+- Evaluar realmente `cron_expression`/`next_run_at`; ahora las alertas se
+  comprueban al ritmo del ciclo RSS.
+- Enviar correo real y actualizar `email_status` a `sent` o `failed`.
+- Actualizar `next_run_at` si se adopta una libreria de cron.
+- Filtrar por `category_id` y/o `rss_channel_ids` cuando la API exponga y
+  rellene esos campos de forma fiable.
+- Decidir si el comprobador debe permanecer dentro del `rss-worker` o extraerse
+  mas adelante a un contenedor `alerts-worker` independiente.
 
 ### 6.3 Frontend
 
@@ -281,6 +337,9 @@ Pendientes relacionados:
 - La API publica es prudente, pero los campos internos de Mongo ya preparan el
   producto real. Si el frontend necesita esos campos, conviene crear endpoints
   nuevos en vez de ampliar silenciosamente los modelos contractuales actuales.
+- El procesamiento automatico de alertas ya existe en el `rss-worker`, pero aun
+  no cubre cron real, envio SMTP, filtros por fuentes/categorias ni autorizacion
+  fina de lectura/escritura en endpoints de la API.
 
 ## 8. Resumen ejecutivo
 
@@ -293,5 +352,87 @@ El estado actual es una base segura para continuar:
 - Roles de gestor/admin compatibles con el modelo Mongo actual.
 
 El siguiente paso natural no es tocar mas el contrato actual, sino construir el
-`alerts-worker` o endpoints nuevos especificos para buzon avanzado si el
-frontend los necesita.
+envio real de correo, endpoints nuevos especificos para buzon avanzado si el
+frontend los necesita y validaciones/autorizacion mas estrictas en la API.
+
+## 9. Actualizacion 2026-04-20 - Comprobador de alertas en RSS worker
+
+El 2026-04-20 se ha implementado una primera version funcional del comprobador
+de alertas dentro del `rss-worker`. Esta decision evita introducir un contenedor
+nuevo en esta fase y aprovecha el punto natural del pipeline: justo despues de
+actualizar las fuentes RSS y persistir nuevas entradas.
+
+### 9.1 Encaje en el pipeline
+
+El flujo efectivo queda asi:
+
+1. La API registra alertas en MongoDB, coleccion `alerts`.
+2. El `rss-worker` ingiere feeds y guarda noticias en `rss_entradas`.
+3. Al terminar la ingesta, el `rss-worker` ejecuta el procesador de alertas.
+4. El procesador busca coincidencias en noticias recientes.
+5. Si hay coincidencias nuevas, crea documentos en `notifications`.
+6. La API puede seguir leyendo las notificaciones desde sus endpoints actuales.
+
+La comunicacion entre contenedores sigue siendo indirecta mediante MongoDB. No
+se ha anadido socket, broker ni llamada HTTP entre backend y worker.
+
+### 9.2 Diseno implementado
+
+Se ha separado la funcionalidad en tres piezas:
+
+- `matcher.py`: limpieza de descriptores y matching case-insensitive sobre
+  `titulo` y `resumen`.
+- `notifications.py`: construccion del documento interno de notificacion,
+  incluyendo `subject`, `metrics`, `matches`, `delivery_channels` y
+  `email_status`.
+- `processor.py`: orquestacion sobre MongoDB, lectura de alertas activas,
+  deduplicacion, creacion de notificaciones y actualizacion de marcas de la
+  alerta.
+
+La integracion en `worker/main.py` se ha hecho mediante `process_alerts_safely`.
+La intencion es que un fallo de alertas no impida que continue la ingesta RSS.
+
+### 9.3 Estado actual respecto a requisitos
+
+Cubierto o parcialmente cubierto:
+
+- Alertas persistidas en MongoDB.
+- Notificaciones persistidas en MongoDB.
+- Deteccion automatica de noticias por descriptor.
+- Agrupacion de coincidencias en una notificacion por alerta y ciclo.
+- Buzon interno preparado a nivel de datos (`notifications` con `user_id`,
+  `read_at`, `matches`, `subject`).
+- Preparacion de envio de email mediante `email_status: pending`.
+- Deduplicacion basica por `alert_id` y `rss_entry_hash`.
+
+Pendiente para poder considerar alertas/notificaciones practicamente cerradas
+en backend:
+
+- Integrar envio SMTP real usando la utilidad compartida de correo y actualizar
+  `email_status`, `email_sent_at` y `email_error`.
+- Crear endpoint de buzon global, recomendado:
+  - `GET /api/v1/users/{user_id}/notifications`
+  - `PATCH /api/v1/users/{user_id}/notifications/{notification_id}/read`
+- Endurecer autorizacion: evitar que un usuario autenticado acceda o modifique
+  alertas/notificaciones de otro usuario salvo que sea admin/gestor con permiso.
+- Validar y usar `cron_expression`; ahora se procesa al ritmo del ciclo RSS.
+- Resolver el uso real de `category_id` y `rss_channel_ids`.
+- Implementar o decidir donde queda la recomendacion de 3 a 10 sinonimos o
+  palabras relacionadas.
+- Anadir test de integracion con Mongo real en Docker: alerta + entrada RSS
+  coincidente debe crear una notificacion.
+- Revisar la divergencia entre las colecciones usadas por la API de fuentes
+  (`information_sources`/`rss_channels`) y las usadas por el worker
+  (`rss_fuentes`/`rss_entradas`).
+
+### 9.4 Valoracion
+
+Con esta actualizacion, el backend deja de tener solo CRUD de alertas y pasa a
+tener un workflow automatico minimo:
+
+`alerta configurada -> entrada RSS ingerida -> coincidencia detectada ->
+notificacion persistida`.
+
+La parte de alertas/notificaciones queda bien encaminada para una v1 backend,
+pero no debe marcarse como completamente terminada hasta cerrar al menos email
+real, buzon global, autorizacion y una prueba de integracion con Mongo real.
