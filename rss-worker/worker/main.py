@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from time import sleep
 
+from alerts import process_alerts
 from rss.links_estandar import generar_lista_estandar_feeds
 from rss.RSSFuente import RSSFuente
 from shared.mongo import Database, RUNTIME_REQUIRED_COLLECTIONS, RUNTIME_REQUIRED_INDEXES
@@ -29,11 +30,15 @@ def main() -> None:
 
     if entorno.run_once == "true":
         fetch_de_entradas(db)
+        # Las alertas se evaluan justo despues de ingerir nuevas entradas RSS.
+        process_alerts_safely(db)
         return
 
     while True:
         try:
             fetch_de_entradas(db)
+            # Fallos de alertas no deben impedir que el worker siga ingiriendo RSS.
+            process_alerts_safely(db)
         except Exception:
             logger.exception("Fallo un ciclo completo de ingesta RSS")
         sleep(float(entorno.intervalo_rss))
@@ -83,6 +88,15 @@ def fetch_de_entradas(db: Database) -> None:
             logger.exception("Fallo la ingesta para la fuente %s", fuente.url)
 
     logger.info("Ciclo RSS completado. Nuevas entradas insertadas: %s", inserted_entries)
+
+
+def process_alerts_safely(db: Database) -> int:
+    """Ejecuta alertas sin tumbar el ciclo principal del worker."""
+    try:
+        return process_alerts(db)
+    except Exception:
+        logger.exception("Fallo el procesamiento de alertas")
+        return 0
 
 
 if __name__ == "__main__":
