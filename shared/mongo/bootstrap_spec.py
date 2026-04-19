@@ -211,6 +211,201 @@ COLLECTION_SPECS = [
             },
         ],
     },
+    {
+        "name": "alerts",
+        "validator": {
+            "$jsonSchema": {
+                "bsonType": "object",
+                "required": [
+                    "id",
+                    "user_id",
+                    "name",
+                    "descriptors",
+                    "category_id",
+                    "rss_channel_ids",
+                    "cron_expression",
+                    "notification_channels",
+                    "enabled",
+                    "created_at",
+                    "updated_at",
+                ],
+                "properties": {
+                    "_id": {"bsonType": "objectId"},
+                    "id": {"bsonType": ["int", "long"]},
+                    "user_id": {"bsonType": ["int", "long"]},
+                    "name": {"bsonType": "string"},
+                    "descriptors": {
+                        "bsonType": "array",
+                        "minItems": 1,
+                        "items": {"bsonType": "string"},
+                    },
+                    "categories": {
+                        "bsonType": ["array", "null"],
+                        "items": {
+                            "bsonType": "object",
+                            "properties": {
+                                "code": {"bsonType": "string"},
+                                "label": {"bsonType": "string"},
+                            },
+                        },
+                    },
+                    "category_id": {"bsonType": ["int", "long"]},
+                    "rss_channel_ids": {
+                        "bsonType": "array",
+                        "items": {"bsonType": ["int", "long"]},
+                    },
+                    "cron_expression": {"bsonType": "string"},
+                    "notification_channels": {
+                        "bsonType": "array",
+                        "items": {"enum": ["app", "email"]},
+                    },
+                    "enabled": {"bsonType": "bool"},
+                    "last_checked_at": {"bsonType": ["date", "null"]},
+                    "last_run_at": {"bsonType": ["date", "null"]},
+                    "next_run_at": {"bsonType": ["date", "null"]},
+                    "created_at": {"bsonType": "date"},
+                    "updated_at": {"bsonType": "date"},
+                },
+            }
+        },
+        "indexes": [
+            {
+                "keys": [("id", 1)],
+                "kwargs": {"unique": True, "name": "idx_alerts_id_unique"},
+            },
+            {
+                "keys": [("user_id", 1), ("enabled", 1), ("next_run_at", 1)],
+                "kwargs": {"name": "idx_alerts_user_enabled_next_run"},
+            },
+            {
+                "keys": [("category_id", 1), ("enabled", 1)],
+                "kwargs": {"name": "idx_alerts_category_enabled"},
+            },
+            {
+                "keys": [("rss_channel_ids", 1)],
+                "kwargs": {"name": "idx_alerts_rss_channel_ids"},
+            },
+        ],
+    },
+    {
+        "name": "notifications",
+        "validator": {
+            "$jsonSchema": {
+                "bsonType": "object",
+                "required": [
+                    "id",
+                    "alert_id",
+                    "user_id",
+                    "timestamp",
+                    "subject",
+                    "metrics",
+                    "matches",
+                    "delivery_channels",
+                    "email_status",
+                    "created_at",
+                ],
+                "properties": {
+                    "_id": {"bsonType": "objectId"},
+                    "id": {"bsonType": ["int", "long"]},
+                    "alert_id": {"bsonType": ["int", "long"]},
+                    "user_id": {"bsonType": ["int", "long"]},
+                    "timestamp": {"bsonType": "date"},
+                    "subject": {"bsonType": "string"},
+                    "metrics": {
+                        "bsonType": "array",
+                        "items": {
+                            "bsonType": "object",
+                            "required": ["name", "value"],
+                            "properties": {
+                                "name": {"bsonType": "string"},
+                                "value": {
+                                    "bsonType": ["double", "int", "long", "decimal"]
+                                },
+                            },
+                        },
+                    },
+                    "matches": {
+                        "bsonType": "array",
+                        "items": {
+                            "bsonType": "object",
+                            "required": [
+                                "title",
+                                "link",
+                                "source",
+                                "published_at",
+                                "summary",
+                                "matched_descriptors",
+                            ],
+                            "properties": {
+                                "rss_entry_id": {"bsonType": ["objectId", "null"]},
+                                "rss_entry_hash": {"bsonType": ["string", "null"]},
+                                "title": {"bsonType": "string"},
+                                "link": {"bsonType": "string"},
+                                "source": {"bsonType": ["string", "null"]},
+                                "published_at": {"bsonType": ["date", "null"]},
+                                "summary": {"bsonType": ["string", "null"]},
+                                "matched_descriptors": {
+                                    "bsonType": "array",
+                                    "items": {"bsonType": "string"},
+                                },
+                                "category_id": {"bsonType": ["int", "long", "null"]},
+                            },
+                        },
+                    },
+                    "delivery_channels": {
+                        "bsonType": "array",
+                        "items": {"enum": ["app", "email"]},
+                    },
+                    "email_status": {
+                        "enum": ["pending", "sent", "failed", "skipped"]
+                    },
+                    "email_sent_at": {"bsonType": ["date", "null"]},
+                    "email_error": {"bsonType": ["string", "null"]},
+                    "read_at": {"bsonType": ["date", "null"]},
+                    "created_at": {"bsonType": "date"},
+                    "updated_at": {"bsonType": ["date", "null"]},
+                },
+            }
+        },
+        "indexes": [
+            {
+                "keys": [("id", 1)],
+                "kwargs": {"unique": True, "name": "idx_notifications_id_unique"},
+            },
+            {
+                "keys": [("alert_id", 1), ("timestamp", -1)],
+                "kwargs": {"name": "idx_notifications_alert_timestamp"},
+            },
+            {
+                "keys": [("user_id", 1), ("read_at", 1), ("timestamp", -1)],
+                "kwargs": {"name": "idx_notifications_user_read_timestamp"},
+            },
+            {
+                "keys": [("email_status", 1), ("created_at", 1)],
+                "kwargs": {"name": "idx_notifications_email_status_created"},
+            },
+        ],
+    },
+    {
+        "name": "counters",
+        "validator": {
+            "$jsonSchema": {
+                "bsonType": "object",
+                "required": ["_id", "seq", "updated_at"],
+                "properties": {
+                    "_id": {"bsonType": "string"},
+                    "seq": {"bsonType": ["int", "long"]},
+                    "updated_at": {"bsonType": "date"},
+                },
+            }
+        },
+        "indexes": [],
+    },
+]
+
+COUNTER_SEEDS = [
+    {"_id": "alerts", "seq": 0},
+    {"_id": "notifications", "seq": 0},
 ]
 
 EXPECTED_COLLECTION_NAMES = [spec["name"] for spec in COLLECTION_SPECS]
@@ -247,6 +442,7 @@ RUNTIME_REQUIRED_INDEXES = {
 
 __all__ = [
     "COLLECTION_SPECS",
+    "COUNTER_SEEDS",
     "EXPECTED_COLLECTION_NAMES",
     "EXPECTED_INDEX_NAMES",
     "RUNTIME_REQUIRED_COLLECTIONS",
