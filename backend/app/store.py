@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 from typing import Any, Dict
 
-from pymongo import MongoClient
+from pymongo import MongoClient, ReturnDocument
 
 # -- MongoDB --
 MONGODB_URI = os.getenv(
@@ -22,6 +23,9 @@ users_col = db["users"]
 sources_col = db["information_sources"]
 channels_col = db["rss_channels"]
 stats_col = db["stats"]
+alerts_col = db["alerts"]
+notifications_col = db["notifications"]
+counters_col = db["counters"]
 
 # -- In-memory stores (usuarios migrados a MongoDB) --
 roles_store: Dict[int, Any] = {}
@@ -49,3 +53,17 @@ def next_id(counter_key: str) -> int:
     value = counters[counter_key]
     counters[counter_key] += 1
     return value
+
+
+def next_mongo_id(counter_key: str) -> int:
+    """Genera IDs enteros compartidos entre API y workers usando MongoDB."""
+    result = counters_col.find_one_and_update(
+        {"_id": counter_key},
+        {
+            "$inc": {"seq": 1},
+            "$set": {"updated_at": datetime.now(timezone.utc)},
+        },
+        upsert=True,
+        return_document=ReturnDocument.AFTER,
+    )
+    return int(result["seq"])
