@@ -1,3 +1,6 @@
+"""NO MODIFICAR NI USAR.
+SE MANTIENE COMO REFERENCIA"""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta
