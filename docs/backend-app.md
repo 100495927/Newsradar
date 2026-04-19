@@ -43,31 +43,41 @@ backend/app/
 ## Shared Files
 
 ### `store.py`
-Single source of truth for all mutable state.
+Shared persistence and runtime state.
 
 | Export | Description |
 |--------|-------------|
 | `roles_store` | `Dict[int, Role]` in-memory store |
-| `users_store` | `Dict[int, UserInDB]` in-memory store |
 | `alerts_store` | `Dict[int, Alert]` in-memory store |
 | `categories_store` | `Dict[int, Category]` in-memory store |
 | `notifications_store` | `Dict[int, Notification]` in-memory store |
-| `information_sources_store` | `Dict[int, InformationSource]` in-memory store |
-| `rss_channels_store` | `Dict[int, RSSChannel]` in-memory store |
-| `stats_store` | `Dict[int, Stats]` in-memory store |
-| `active_tokens` | `Dict[str, int]` bearer token → user ID |
-| `users_col` | PyMongo collection for persistent user operations |
+| `users_col` | PyMongo collection for users |
+| `sources_col` | PyMongo collection for information sources |
+| `channels_col` | PyMongo collection for RSS channels |
+| `stats_col` | PyMongo collection for stats |
 | `next_id(key)` | Auto-increment ID generator per entity type |
+
+Current persistence split:
+
+- MongoDB: users, information sources, RSS channels, stats
+- In-memory: roles, alerts, categories, notifications
 
 ### `dependencies.py`
 FastAPI dependencies imported by all route modules.
 
 | Function | Description |
 |----------|-------------|
-| `get_current_user` | Resolves the authenticated user from a Bearer token |
+| `get_current_user` | Resolves the authenticated user from a JWT Bearer token |
 | `sanitize_user` | Returns a public `User` view (no password) |
 | `es_token_valido` | Checks that a token timestamp is within 24 hours |
-| `ensure_gestor_role` | Raises 403 if the current user lacks the `admin` role |
+| `ensure_gestor_role` | Raises 403 if the current user lacks the `admin` or `manager` role |
+
+### `app.py`
+
+- Registers the modular routers under `/api/v1`
+- Configures CORS for `http://localhost:5173`
+- Exposes `GET /api/v1/health`
+- Contains seed helpers, but the current startup hook is temporarily bypassed and does not load initial data automatically
 
 ---
 
@@ -80,10 +90,10 @@ All routes are prefixed with `/api/v1`.
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/auth/login` | Login with email/password, returns Bearer token |
-| `POST` | `/auth/register` | Register a new user (prints verification token to logs) |
+| `POST` | `/auth/register` | Register a new user, returns the created public `User` |
 | `GET` | `/auth/verify/{token}` | Verify account email via token (expires in 24h) |
-| `POST` | `/auth/forgot-password` | Generate password reset token (stored in MongoDB) |
-| `POST` | `/auth/reset-password` | Reset password using a valid reset token |
+| `POST` | `/auth/forgot-password` | Generate password reset token in MongoDB |
+| `POST` | `/auth/reset-password` | Reset password using `token` and `new_password` query params |
 
 ### Users — `auth/routes.py`
 
@@ -110,7 +120,7 @@ All routes are prefixed with `/api/v1`.
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/users/{user_id}/alerts` | List alerts for a user |
-| `POST` | `/users/{user_id}/alerts` | Create alert (requires gestor role) |
+| `POST` | `/users/{user_id}/alerts` | Create alert (requires `admin` or `manager` role) |
 | `GET` | `/users/{user_id}/alerts/{alert_id}` | Get a specific alert |
 | `PUT` | `/users/{user_id}/alerts/{alert_id}` | Update an alert |
 | `DELETE` | `/users/{user_id}/alerts/{alert_id}` | Delete alert + cascade delete notifications |
@@ -172,3 +182,11 @@ All routes are prefixed with `/api/v1`.
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/v1/health` | Healthcheck — returns status and UTC timestamp |
+
+---
+
+## Notes
+
+- `auth/routes.py` currently owns three groups of endpoints: auth, users and roles.
+- The runtime contract is defined by the modular backend, not by the old monolithic AG reference file.
+- If you need the contract-oriented view with reconciliation notes against the AG version, use `docs/contrato-api-backend.md`.
