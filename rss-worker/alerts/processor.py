@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any
 
 from pymongo import ReturnDocument
@@ -10,8 +10,6 @@ from .matcher import clean_descriptors, find_matched_descriptors
 from .notifications import build_match, build_notification_doc, utc_now
 
 logger = logging.getLogger(__name__)
-
-INITIAL_LOOKBACK_HOURS = 24
 
 
 def process_alerts(db: Any, now: datetime | None = None) -> int:
@@ -41,8 +39,8 @@ def process_alerts(db: Any, now: datetime | None = None) -> int:
 
 def _process_single_alert(app_db: Any, alert: dict, timestamp: datetime) -> bool:
     descriptors = clean_descriptors(alert.get("descriptors"))
-    # Si la alerta es nueva, limitamos la primera busqueda para evitar re-notificar todo el historico.
-    since = alert.get("last_checked_at") or timestamp - timedelta(hours=INITIAL_LOOKBACK_HOURS)
+    # Si la alerta es nueva, empezamos a contar desde su creacion para no incluir historico previo.
+    since = alert.get("last_checked_at") or alert.get("created_at") or timestamp
 
     matches: list[dict] = []
     source_cache: dict[Any, str | None] = {}
