@@ -77,7 +77,7 @@ FastAPI dependencies imported by all route modules.
 - Registers the modular routers under `/api/v1`
 - Configures CORS for `http://localhost:5173`
 - Exposes `GET /api/v1/health`
-- Contains seed helpers, but the current startup hook is temporarily bypassed and does not load initial data automatically
+- Contains seed helpers that create the base roles and the default `AdminDefault`, `GestorDefault` and `LectorDefault` users on first startup when the roles are available
 
 ---
 
