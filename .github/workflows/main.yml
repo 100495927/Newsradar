@@ -19,9 +19,6 @@ jobs:
         run: |
           cp .env.example .env
 
-      - name: Configurar memoria virtual para Elasticsearch
-        run: sudo sysctl -w vm.max_map_count=262144
-
       - name: Build y Up de Docker
         run: docker compose up -d --build
 
@@ -31,22 +28,8 @@ jobs:
       - name: Check Health Endpoints
         run: |
           docker ps
-          # Esperamos un poco más específicamente para Elastic
-          # MEJORA: He añadido una comprobación extra para ver si el contenedor sigue vivo
-          for i in {1..10}; do 
-            if curl -s http://localhost:9200/_cluster/health; then
-              echo "Elasticsearch está vivo"
-              break
-            fi
-            echo "Esperando a Elasticsearch..."
-            sleep 10
-          done
-          
           # Verificar el backend
-          curl -f http://localhost:8000/health || exit 1
-
-          echo "Índices actuales en Elasticsearch:"
-          curl -s http://localhost:9200/_cat/indices?v
+          curl -f http://localhost:8000/api/v1/health || exit 1
 
       - name: Ejecutar Tests Unitarios e Integración (Pytest)
         run: |
