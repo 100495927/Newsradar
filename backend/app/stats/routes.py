@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from ..dependencies import get_current_user
 from ..auth.user import UserInDB
 from ..store import next_id, stats_col  # Usamos stats_col de Mongo
-from .models import Stats, StatsCreate, StatsUpdate
+from .models import Stats, StatsCreate, StatsUpdate, GlobalDashboard, WordCloudItem
+from . import service
 
 router = APIRouter(tags=["stats"])
 
@@ -79,3 +80,21 @@ def delete_stats(
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Stats no encontrados")
     return Response(status_code=204)
+
+
+# Añadimos nuevos endpoints de analisis
+
+@router.get("/global", response_model=GlobalDashboard)
+def read_global_stats(_: UserInDB = Depends(get_current_user)):
+    """Panel de mando con estadísticas globales."""
+    return service.get_global_stats()
+
+@router.get("/feed/{feed_id}", response_model=Stats) 
+def read_feed_stats(feed_id: int, _: UserInDB = Depends(get_current_user)):
+    """Estadísticas específicas para un RSS/Fuente."""
+    return service.get_feed_stats(feed_id)
+
+@router.get("/cloud/{categoria}", response_model=List[WordCloudItem])
+def read_word_cloud(categoria: str, _: UserInDB = Depends(get_current_user)):
+    """Nube de palabras por categoría."""
+    return service.get_word_cloud_data(categoria)

@@ -24,3 +24,20 @@ class StatsUpdate(BaseModel):
 
 class Stats(StatsBase):
     id: int
+
+
+# Nuevos modelos para el panel de control
+
+class CategoryCount(BaseModel):
+    id: str  # Nombre de la categoría
+    total: int
+
+class GlobalDashboard(BaseModel):
+    n_fuentes: int
+    n_noticias: int
+    n_alertas: int
+    alertas_por_categoria: List[CategoryCount]
+
+class WordCloudItem(BaseModel):
+    word: str
+    value: int

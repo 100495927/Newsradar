@@ -38,7 +38,7 @@ app.include_router(alertas_router, prefix=API_PREFIX)
 app.include_router(notificaciones_router, prefix=API_PREFIX)
 app.include_router(rss_router, prefix=API_PREFIX)
 app.include_router(category_router, prefix=API_PREFIX)
-app.include_router(stats_router, prefix=API_PREFIX)
+app.include_router(stats_router, prefix=f"{API_PREFIX}/stats")
 
 
 # -- Startup --
