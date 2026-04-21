@@ -41,7 +41,6 @@ def fetch_de_entradas(db: Database) -> None:
 # In worker/main.py
 
 def main() -> None:
-    print("A")
     configure_logging()
     entorno = Entorno()
     db = Database()
