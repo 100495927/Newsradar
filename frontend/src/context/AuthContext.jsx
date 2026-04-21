@@ -5,6 +5,15 @@ const AuthContext = createContext(null)
 const TOKEN_KEY = 'nr_token'
 const USER_KEY = 'nr_user'
 
+function parseJwtId(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return parseInt(payload.sub, 10)
+  } catch {
+    return null
+  }
+}
+
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [user, setUser] = useState(() => {
@@ -48,10 +57,12 @@ export function AuthProvider({ children }) {
   }
 
   function _persist(accessToken, userData) {
+    const id = parseJwtId(accessToken)
+    const full = { ...userData, id }
     setToken(accessToken)
-    setUser(userData)
+    setUser(full)
     localStorage.setItem(TOKEN_KEY, accessToken)
-    localStorage.setItem(USER_KEY, JSON.stringify(userData))
+    localStorage.setItem(USER_KEY, JSON.stringify(full))
   }
 
   return (

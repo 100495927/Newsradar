@@ -5,7 +5,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 
-from ..dependencies import ensure_gestor_role, get_current_user
+from ..dependencies import get_current_user
 from ..auth.user import UserInDB
 from ..store import alerts_col, next_mongo_id, notifications_col, users_col
 from .models import Alert, AlertCreate, AlertUpdate
@@ -32,6 +32,7 @@ def _doc_to_alert(doc: dict) -> Alert:
         descriptors=doc.get("descriptors", []),
         categories=doc.get("categories", []),
         cron_expression=doc["cron_expression"],
+        enabled=doc.get("enabled", True),
     )
 
 
@@ -58,7 +59,6 @@ def list_user_alerts(user_id: int, _: UserInDB = Depends(get_current_user)) -> L
     "/users/{user_id}/alerts",
     response_model=Alert,
     status_code=201,
-    dependencies=[Depends(ensure_gestor_role)],
 )
 def create_user_alert(
     user_id: int,
