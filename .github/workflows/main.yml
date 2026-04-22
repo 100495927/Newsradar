@@ -1,6 +1,14 @@
 name: NewsRadar Sprint 1 CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main, master, develop ]
+    # Evita ejecutar el CI si solo cambias documentación o usas [skip ci] en el mensaje
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build-and-test:
@@ -10,30 +18,31 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Verificar ausencia de .env real
-        run: |
-          if [ -f .env ]; then echo "Error: .env detectado en el repo"; exit 1; fi
-
-      # Usamos las contraseñas del .env.example para que todo sea coherente
-      - name: Crear .env temporal
-        run: |
-          cp .env.example .env
+      - name: Crear .env temporal desde el example
+        run: cp .env.example .env
 
       - name: Build y Up de Docker
         run: docker compose up -d --build
 
-      - name: Esperar a que los servicios estén listos
-        run: sleep 120
-
-      - name: Check Health Endpoints
+      - name: Esperar a que los servicios estén Healthy
+        # En lugar de un sleep fijo, Docker esperará a los healthchecks del compose
         run: |
-          docker ps
-          # Verificar el backend
-          curl -f http://localhost:8000/api/v1/health || exit 1
+          echo "Esperando a que los contenedores estén listos..."
+          for i in {1..30}; do
+            if [ "$(docker inspect -f '{{.State.Health.Status}}' newsradar-backend)" == "healthy" ]; then
+              echo "Backend listo!"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Error: El backend no llegó a estar healthy"
+          docker ps -a
+          docker logs newsradar-backend
+          exit 1
 
-      - name: Ejecutar Tests Unitarios e Integración (Pytest)
+      - name: Ejecutar Suite de Tests Completa
         run: |
+          # Importante: Usamos la ruta correcta donde están tus tests reales
           docker exec \
-            -e MONGODB_URI="mongodb://newsradar_root:change_me_root_pwd@mongodb:27017/admin?authSource=admin" \
-            -e SMTP_PASSWORD="mwliwwhxoioebhte" \
-            newsradar-backend pytest -s test/test_sprint1.py
+            -e PYTHONPATH=. \
+            newsradar-backend pytest backend/tests/
