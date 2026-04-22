@@ -48,19 +48,20 @@ Shared persistence and runtime state.
 | Export | Description |
 |--------|-------------|
 | `roles_store` | `Dict[int, Role]` in-memory store |
-| `alerts_store` | `Dict[int, Alert]` in-memory store |
 | `categories_store` | `Dict[int, Category]` in-memory store |
-| `notifications_store` | `Dict[int, Notification]` in-memory store |
 | `users_col` | PyMongo collection for users |
-| `sources_col` | PyMongo collection for information sources |
-| `channels_col` | PyMongo collection for RSS channels |
+| `rss_fuentes_col` | Canonical PyMongo collection for information sources and RSS channels |
 | `stats_col` | PyMongo collection for stats |
+| `alerts_col` | PyMongo collection for alerts |
+| `notifications_col` | PyMongo collection for notifications |
+| `counters_col` | PyMongo collection for persistent integer counters |
 | `next_id(key)` | Auto-increment ID generator per entity type |
+| `next_mongo_id(key)` | Persistent MongoDB-backed ID generator |
 
 Current persistence split:
 
-- MongoDB: users, information sources, RSS channels, stats
-- In-memory: roles, alerts, categories, notifications
+- MongoDB: users, RSS sources/channels in `rss_fuentes`, alerts, notifications, stats and counters
+- In-memory: roles and categories
 
 ### `dependencies.py`
 FastAPI dependencies imported by all route modules.
@@ -77,7 +78,7 @@ FastAPI dependencies imported by all route modules.
 - Registers the modular routers under `/api/v1`
 - Configures CORS for `http://localhost:5173`
 - Exposes `GET /api/v1/health`
-- Contains seed helpers, but the current startup hook is temporarily bypassed and does not load initial data automatically
+- Contains seed helpers that create the base roles and the default `AdminDefault`, `GestorDefault` and `LectorDefault` users on first startup when the roles are available
 
 ---
 

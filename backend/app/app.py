@@ -18,6 +18,33 @@ from .store import counters, next_id, roles_store, users_col
 
 API_PREFIX = "/api/v1"
 
+DEFAULT_USERS = (
+    {
+        "email": "AdminDefault@newsradar.local",
+        "first_name": "AdminDefault",
+        "last_name": "NewsRadar",
+        "organization": "NewsRadar",
+        "role_name": "admin",
+        "stored_role": "admin",
+    },
+    {
+        "email": "GestorDefault@newsradar.local",
+        "first_name": "GestorDefault",
+        "last_name": "NewsRadar",
+        "organization": "NewsRadar",
+        "role_name": "manager",
+        "stored_role": "manager",
+    },
+    {
+        "email": "LectorDefault@newsradar.local",
+        "first_name": "LectorDefault",
+        "last_name": "NewsRadar",
+        "organization": "NewsRadar",
+        "role_name": "reader",
+        "stored_role": "reader",
+    },
+)
+
 app = FastAPI(
     title="NewsRadar API",
     version="1.0.0",
@@ -43,44 +70,72 @@ app.include_router(stats_router, prefix=API_PREFIX)
 
 # -- Startup --
 
-def create_seed_data() -> None:
-    """Carga roles en memoria y crea el admin en MongoDB si no existe."""
-    if roles_store:
+def _sync_user_counter_from_mongo() -> None:
+    """Alinea el contador de usuarios con el mayor ID persistido en MongoDB."""
+    max_doc = users_col.find_one(sort=[("id", pymongo.DESCENDING)])
+    if max_doc and isinstance(max_doc.get("id"), int):
+        counters["users"] = max_doc["id"] + 1
+
+
+def _get_role_id(role_name: str) -> int | None:
+    for role_id, role in roles_store.items():
+        if role.name == role_name:
+            return role_id
+    return None
+
+
+def _ensure_role(role_name: str) -> int:
+    role_id = _get_role_id(role_name)
+    if role_id is not None:
+        return role_id
+
+    role_id = next_id("roles")
+    roles_store[role_id] = Role(id=role_id, name=role_name)
+    return role_id
+
+
+def _seed_default_user(user_data: dict[str, str]) -> None:
+    if users_col.find_one({"email": user_data["email"]}):
         return
 
-    admin_role_id = next_id("roles")
-    roles_store[admin_role_id] = Role(id=admin_role_id, name="admin")
+    role_id = _get_role_id(user_data["role_name"])
+    if role_id is None:
+        return
 
-    user_role_id = next_id("roles")
-    roles_store[user_role_id] = Role(id=user_role_id, name="user")
-
-    if not users_col.find_one({"email": "admin@newsradar.com"}):
-        now = datetime.now(timezone.utc)
-        admin_id = next_id("users")
-        users_col.insert_one({
-            "id": admin_id,
-            "email": "admin@newsradar.com",
-            "first_name": "Admin",
-            "last_name": "NewsRadar",
-            "organization": "NewsRadar",
-            "password_hash": hash_password("admin123"),
-            "role_ids": [admin_role_id],
+    now = datetime.now(timezone.utc)
+    user_id = next_id("users")
+    users_col.insert_one(
+        {
+            "id": user_id,
+            "email": user_data["email"],
+            "first_name": user_data["first_name"],
+            "last_name": user_data["last_name"],
+            "organization": user_data["organization"],
+            "password_hash": hash_password("NewsRadar2026"),
+            "role_ids": [role_id],
             "created_at": now,
             "updated_at": now,
-            "role": "admin",
+            "role": user_data["stored_role"],
             "status": "active",
-        })
+            "is_verified": True,
+        }
+    )
+
+
+def create_seed_data() -> None:
+    """Carga roles base y usuarios por defecto en el arranque si no existen."""
+    _sync_user_counter_from_mongo()
+
+    for role_name in ("admin", "manager", "reader"):
+        _ensure_role(role_name)
+
+    for user_data in DEFAULT_USERS:
+        _seed_default_user(user_data)
 
 
 @app.on_event("startup")
 def on_startup() -> None:
-    # Sincronizar el counter de usuarios con el max id en MongoDB
-    #max_doc = users_col.find_one(sort=[("id", pymongo.DESCENDING)])
-    #if max_doc:
-        #counters["users"] = max_doc["id"] + 1
-
-    #create_seed_data()
-    print("Bypass temporal")
+    create_seed_data()
 
 
 @app.get(f"{API_PREFIX}/health", tags=["system"])

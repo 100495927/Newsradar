@@ -26,8 +26,10 @@ class AlertUpdate(BaseModel):
     descriptors: Optional[List[str]] = None
     categories: Optional[List[AlertCategoryItem]] = None
     cron_expression: Optional[str] = Field(None, min_length=1, max_length=120)
+    enabled: Optional[bool] = None
 
 
 class Alert(AlertBase):
     id: int
     user_id: int
+    enabled: bool = True

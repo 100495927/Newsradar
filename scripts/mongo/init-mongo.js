@@ -50,6 +50,21 @@ function ensureIndexes(name, indexes) {
   });
 }
 
+function ensureCounter(name) {
+  db.getCollection("counters").updateOne(
+    { _id: name },
+    {
+      $setOnInsert: {
+        _id: name,
+        seq: NumberInt(0),
+        updated_at: new Date(),
+      },
+    },
+    { upsert: true }
+  );
+  print("[init-mongo] Contador asegurado: " + name);
+}
+
 ensureAppUser();
 
 ensureCollection("rss_fuentes", {
@@ -62,8 +77,15 @@ ensureCollection("rss_fuentes", {
       medio: { bsonType: "string" },
       rss: { bsonType: ["string", "null"] },
       url: { bsonType: "string" },
+      tipo: { enum: ["source", "channel", null] },
+      source_id: { bsonType: ["int", "long", "null"] },
+      source_name: { bsonType: ["string", "null"] },
+      source_url: { bsonType: ["string", "null"] },
+      channel_id: { bsonType: ["int", "long", "null"] },
+      category_id: { bsonType: ["int", "long", "null"] },
       activo: { bsonType: "bool" },
       categoria_iptc: { bsonType: ["string", "null"] },
+      deleted_at: { bsonType: ["date", "null"] },
       creado: { bsonType: "date" },
       actualizado: { bsonType: "date" },
     },
@@ -206,5 +228,189 @@ ensureIndexes("user_sessions", [
     options: { expireAfterSeconds: 0, name: "idx_user_sessions_expires_ttl" },
   },
 ]);
+
+ensureCollection("alerts", {
+  $jsonSchema: {
+    bsonType: "object",
+    required: [
+      "id",
+      "user_id",
+      "name",
+      "descriptors",
+      "category_id",
+      "rss_channel_ids",
+      "cron_expression",
+      "notification_channels",
+      "enabled",
+      "created_at",
+      "updated_at",
+    ],
+    properties: {
+      _id: { bsonType: "objectId" },
+      id: { bsonType: ["int", "long"] },
+      user_id: { bsonType: ["int", "long"] },
+      name: { bsonType: "string" },
+      descriptors: {
+        bsonType: "array",
+        minItems: 1,
+        items: { bsonType: "string" },
+      },
+      categories: {
+        bsonType: ["array", "null"],
+        items: {
+          bsonType: "object",
+          properties: {
+            code: { bsonType: "string" },
+            label: { bsonType: "string" },
+          },
+        },
+      },
+      category_id: { bsonType: ["int", "long"] },
+      rss_channel_ids: {
+        bsonType: "array",
+        items: { bsonType: ["int", "long"] },
+      },
+      cron_expression: { bsonType: "string" },
+      notification_channels: {
+        bsonType: "array",
+        items: { enum: ["app", "email"] },
+      },
+      enabled: { bsonType: "bool" },
+      last_checked_at: { bsonType: ["date", "null"] },
+      last_run_at: { bsonType: ["date", "null"] },
+      next_run_at: { bsonType: ["date", "null"] },
+      created_at: { bsonType: "date" },
+      updated_at: { bsonType: "date" },
+    },
+  },
+});
+ensureIndexes("alerts", [
+  {
+    keys: { id: 1 },
+    options: { unique: true, name: "idx_alerts_id_unique" },
+  },
+  {
+    keys: { user_id: 1, enabled: 1, next_run_at: 1 },
+    options: { name: "idx_alerts_user_enabled_next_run" },
+  },
+  {
+    keys: { category_id: 1, enabled: 1 },
+    options: { name: "idx_alerts_category_enabled" },
+  },
+  {
+    keys: { rss_channel_ids: 1 },
+    options: { name: "idx_alerts_rss_channel_ids" },
+  },
+]);
+
+ensureCollection("notifications", {
+  $jsonSchema: {
+    bsonType: "object",
+    required: [
+      "id",
+      "alert_id",
+      "user_id",
+      "timestamp",
+      "subject",
+      "metrics",
+      "matches",
+      "delivery_channels",
+      "email_status",
+      "created_at",
+    ],
+    properties: {
+      _id: { bsonType: "objectId" },
+      id: { bsonType: ["int", "long"] },
+      alert_id: { bsonType: ["int", "long"] },
+      user_id: { bsonType: ["int", "long"] },
+      timestamp: { bsonType: "date" },
+      subject: { bsonType: "string" },
+      metrics: {
+        bsonType: "array",
+        items: {
+          bsonType: "object",
+          required: ["name", "value"],
+          properties: {
+            name: { bsonType: "string" },
+            value: { bsonType: ["double", "int", "long", "decimal"] },
+          },
+        },
+      },
+      matches: {
+        bsonType: "array",
+        items: {
+          bsonType: "object",
+          required: [
+            "title",
+            "link",
+            "source",
+            "published_at",
+            "summary",
+            "matched_descriptors",
+          ],
+          properties: {
+            rss_entry_id: { bsonType: ["objectId", "null"] },
+            rss_entry_hash: { bsonType: ["string", "null"] },
+            title: { bsonType: "string" },
+            link: { bsonType: "string" },
+            source: { bsonType: ["string", "null"] },
+            published_at: { bsonType: ["date", "null"] },
+            summary: { bsonType: ["string", "null"] },
+            matched_descriptors: {
+              bsonType: "array",
+              items: { bsonType: "string" },
+            },
+            category_id: { bsonType: ["int", "long", "null"] },
+          },
+        },
+      },
+      delivery_channels: {
+        bsonType: "array",
+        items: { enum: ["app", "email"] },
+      },
+      email_status: { enum: ["pending", "sent", "failed", "skipped"] },
+      email_sent_at: { bsonType: ["date", "null"] },
+      email_error: { bsonType: ["string", "null"] },
+      read_at: { bsonType: ["date", "null"] },
+      created_at: { bsonType: "date" },
+      updated_at: { bsonType: ["date", "null"] },
+    },
+  },
+});
+ensureIndexes("notifications", [
+  {
+    keys: { id: 1 },
+    options: { unique: true, name: "idx_notifications_id_unique" },
+  },
+  {
+    keys: { alert_id: 1, timestamp: -1 },
+    options: { name: "idx_notifications_alert_timestamp" },
+  },
+  {
+    keys: { user_id: 1, read_at: 1, timestamp: -1 },
+    options: { name: "idx_notifications_user_read_timestamp" },
+  },
+  {
+    keys: { email_status: 1, created_at: 1 },
+    options: { name: "idx_notifications_email_status_created" },
+  },
+]);
+
+ensureCollection("counters", {
+  $jsonSchema: {
+    bsonType: "object",
+    required: ["_id", "seq", "updated_at"],
+    properties: {
+      _id: { bsonType: "string" },
+      seq: { bsonType: ["int", "long"] },
+      updated_at: { bsonType: "date" },
+    },
+  },
+});
+ensureIndexes("counters", []);
+ensureCounter("information_sources");
+ensureCounter("rss_channels");
+ensureCounter("alerts");
+ensureCounter("notifications");
 
 print("[init-mongo] Inicializacion de colecciones e indices completada");

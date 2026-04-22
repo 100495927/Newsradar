@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 
-from ..dependencies import ensure_gestor_role, get_current_user
+from ..dependencies import get_current_user
 from ..auth.user import UserInDB
-from ..store import alerts_store, next_id, notifications_store, users_col
+from ..store import alerts_col, next_mongo_id, notifications_col, users_col
 from .models import Alert, AlertCreate, AlertUpdate
 
 router = APIRouter(tags=["alerts"])
@@ -22,12 +23,25 @@ def ensure_user_exists(user_id: int) -> None:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
 
+def _doc_to_alert(doc: dict) -> Alert:
+    """Convierte un documento MongoDB en el modelo público de alerta."""
+    return Alert(
+        id=doc["id"],
+        user_id=doc["user_id"],
+        name=doc["name"],
+        descriptors=doc.get("descriptors", []),
+        categories=doc.get("categories", []),
+        cron_expression=doc["cron_expression"],
+        enabled=doc.get("enabled", True),
+    )
+
+
 def ensure_alert_for_user(user_id: int, alert_id: int) -> Alert:
     """Comprueba que la alerta exista y pertenezca al usuario indicado."""
-    alert = alerts_store.get(alert_id)
-    if not alert or alert.user_id != user_id:
+    alert = alerts_col.find_one({"id": alert_id, "user_id": user_id}, {"_id": 0})
+    if not alert:
         raise HTTPException(status_code=404, detail="Alerta no encontrada para el usuario")
-    return alert
+    return _doc_to_alert(alert)
 
 
 # ---------------------------------------------------------------------------
@@ -38,14 +52,13 @@ def ensure_alert_for_user(user_id: int, alert_id: int) -> Alert:
 def list_user_alerts(user_id: int, _: UserInDB = Depends(get_current_user)) -> List[Alert]:
     """Lista alertas de un usuario concreto."""
     ensure_user_exists(user_id)
-    return [a for a in alerts_store.values() if a.user_id == user_id]
+    return [_doc_to_alert(doc) for doc in alerts_col.find({"user_id": user_id}, {"_id": 0}).sort("id", 1)]
 
 
 @router.post(
     "/users/{user_id}/alerts",
     response_model=Alert,
     status_code=201,
-    dependencies=[Depends(ensure_gestor_role)],
 )
 def create_user_alert(
     user_id: int,
@@ -54,10 +67,37 @@ def create_user_alert(
 ) -> Alert:
     """Crea una alerta para un usuario (requiere rol gestor)."""
     ensure_user_exists(user_id)
-    alert_id = next_id("alerts")
-    alert = Alert(id=alert_id, user_id=user_id, **payload.model_dump())
-    alerts_store[alert_id] = alert
-    return alert
+
+    if not payload.descriptors:
+        raise HTTPException(
+            status_code=400,
+            detail="La alerta debe incluir al menos un descriptor",
+        )
+
+    if alerts_col.count_documents({"user_id": user_id}) >= 20:
+        raise HTTPException(
+            status_code=400,
+            detail="Un gestor no puede tener más de 20 alertas",
+        )
+
+    now = datetime.now(timezone.utc)
+    alert_id = next_mongo_id("alerts")
+    alert_doc = {
+        "id": alert_id,
+        "user_id": user_id,
+        **payload.model_dump(),
+        "category_id": 0,
+        "rss_channel_ids": [],
+        "notification_channels": ["app", "email"],
+        "enabled": True,
+        "last_checked_at": None,
+        "last_run_at": None,
+        "next_run_at": None,
+        "created_at": now,
+        "updated_at": now,
+    }
+    alerts_col.insert_one(alert_doc)
+    return _doc_to_alert(alert_doc)
 
 
 @router.get("/users/{user_id}/alerts/{alert_id}", response_model=Alert)
@@ -78,10 +118,24 @@ def update_user_alert(
     _: UserInDB = Depends(get_current_user),
 ) -> Alert:
     """Actualiza una alerta de usuario."""
-    alert = ensure_alert_for_user(user_id, alert_id)
-    updated = alert.model_copy(update=payload.model_dump(exclude_unset=True))
-    alerts_store[alert_id] = updated
-    return updated
+    ensure_alert_for_user(user_id, alert_id)
+    update_data = payload.model_dump(exclude_unset=True)
+
+    if "descriptors" in update_data and not update_data["descriptors"]:
+        raise HTTPException(
+            status_code=400,
+            detail="La alerta debe incluir al menos un descriptor",
+        )
+
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc)
+        alerts_col.update_one(
+            {"id": alert_id, "user_id": user_id},
+            {"$set": update_data},
+        )
+
+    updated = alerts_col.find_one({"id": alert_id, "user_id": user_id}, {"_id": 0})
+    return _doc_to_alert(updated)
 
 
 @router.delete(
@@ -97,7 +151,5 @@ def delete_user_alert(
 ) -> None:
     """Elimina una alerta y sus notificaciones vinculadas."""
     ensure_alert_for_user(user_id, alert_id)
-    notification_ids = [n.id for n in notifications_store.values() if n.alert_id == alert_id]
-    for nid in notification_ids:
-        notifications_store.pop(nid, None)
-    alerts_store.pop(alert_id, None)
+    notifications_col.delete_many({"alert_id": alert_id})
+    alerts_col.delete_one({"id": alert_id, "user_id": user_id})

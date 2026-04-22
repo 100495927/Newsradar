@@ -13,9 +13,9 @@ from ..dependencies import (
     sanitize_user,
 )
 from ..store import (
-    alerts_store,
+    alerts_col,
     next_id,
-    notifications_store,
+    notifications_col,
     roles_store,
     users_col,
 )
@@ -197,7 +197,7 @@ def update_user(
     current_user: UserInDB = Depends(get_current_user),
 ) -> User:
     """Actualiza el perfil con restricciones de seguridad; persiste en MongoDB."""
-    is_admin = any(
+    is_admin = current_user.role == "admin" or any(
         roles_store[r_id].name == "admin"
         for r_id in current_user.role_ids
         if r_id in roles_store
@@ -232,12 +232,10 @@ def delete_user(user_id: int, _: UserInDB = Depends(get_current_user)) -> None:
     if not users_col.find_one({"id": user_id}):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    alert_ids = [a.id for a in alerts_store.values() if a.user_id == user_id]
+    alert_ids = [doc["id"] for doc in alerts_col.find({"user_id": user_id}, {"id": 1})]
     for alert_id in alert_ids:
-        notification_ids = [n.id for n in notifications_store.values() if n.alert_id == alert_id]
-        for nid in notification_ids:
-            notifications_store.pop(nid, None)
-        alerts_store.pop(alert_id, None)
+        notifications_col.delete_many({"alert_id": alert_id})
+    alerts_col.delete_many({"user_id": user_id})
 
     users_col.delete_one({"id": user_id})
 

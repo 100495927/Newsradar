@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 
 from ..dependencies import get_current_user
 from ..auth.user import UserInDB
-from ..store import categories_store, next_id, rss_channels_store
+from ..store import categories_store, next_id, rss_fuentes_col
 from .models import Category, CategoryCreate, CategoryUpdate
 
 router = APIRouter(tags=["categories"])
@@ -85,8 +85,15 @@ def delete_category(
     if category_id not in categories_store:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
 
-    for channel in rss_channels_store.values():
-        if channel.category_id == category_id:
-            raise HTTPException(status_code=409, detail="Categoría asociada a canales RSS")
+    linked_channel = rss_fuentes_col.find_one(
+        {
+            "tipo": "channel",
+            "category_id": category_id,
+            "deleted_at": {"$exists": False},
+        },
+        {"_id": 1},
+    )
+    if linked_channel:
+        raise HTTPException(status_code=409, detail="Categoría asociada a canales RSS")
 
     categories_store.pop(category_id, None)

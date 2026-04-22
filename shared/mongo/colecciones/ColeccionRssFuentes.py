@@ -22,8 +22,15 @@ class ColeccionRssFuentes(Coleccion):
                 "medio": {"bsonType": "string"},
                 "rss": {"bsonType": ["string", "null"]},
                 "url": {"bsonType": "string"},
+                "tipo": {"enum": ["source", "channel", None]},
+                "source_id": {"bsonType": ["int", "long", "null"]},
+                "source_name": {"bsonType": ["string", "null"]},
+                "source_url": {"bsonType": ["string", "null"]},
+                "channel_id": {"bsonType": ["int", "long", "null"]},
+                "category_id": {"bsonType": ["int", "long", "null"]},
                 "activo": {"bsonType": "bool"},
                 "categoria_iptc": {"bsonType": ["string", "null"]},
+                "deleted_at": {"bsonType": ["date", "null"]},
                 "creado": {"bsonType": "date"},
                 "actualizado": {"bsonType": "date"},
             },
@@ -54,6 +61,7 @@ class ColeccionRssFuentes(Coleccion):
                     "medio": datos["medio"],
                     "rss": datos["rss"],
                     "url": datos["url"],
+                    "tipo": datos.get("tipo", "channel"),
                     "activo": datos["activo"],
                     "categoria_iptc": datos["categoria_iptc"],
                     "actualizado": ahora,
@@ -77,4 +85,9 @@ class ColeccionRssFuentes(Coleccion):
     def lista_fuentes(self) -> list["RSSFuente"]:
         from rss.RSSFuente import RSSFuente
 
-        return [RSSFuente.de_mongo(doc) for doc in self._collection.find()]
+        query = {
+            "activo": True,
+            "$or": [{"tipo": "channel"}, {"tipo": {"$exists": False}}],
+            "deleted_at": {"$exists": False},
+        }
+        return [RSSFuente.de_mongo(doc) for doc in self._collection.find(query)]

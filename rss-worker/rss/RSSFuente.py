@@ -47,6 +47,7 @@ class RSSFuente:
             "medio": self.medio,
             "rss": self.rss,
             "url": self.url,
+            "tipo": "channel",
             "activo": self.activo,
             "categoria_iptc": self.categoria_iptc,
             "creado": datetime.now(timezone.utc),

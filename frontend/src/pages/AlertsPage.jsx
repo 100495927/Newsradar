@@ -2,11 +2,8 @@ import { useState, useEffect } from 'react'
 import TopNavBar from '../components/TopNavBar'
 import SideNavBar from '../components/SideNavBar'
 import MobileNav from '../components/MobileNav'
-
-const mockAlerts = [
-  { id: 1, name: 'Volatilidad Energética', cat: 'FIN_MRKT', cron: '0 9 * * 1-5', enabled: true },
-  { id: 2, name: 'Tensión Geopolítica: Báltico', cat: 'SEC_POL', cron: '*/15 * * * *', enabled: true },
-]
+import { useAuth } from '../context/AuthContext'
+import { apiFetch } from '../api/apiClient'
 
 const categories = [
   { value: 'FIN_MRKT', label: 'Finanzas y Mercados' },
@@ -16,87 +13,95 @@ const categories = [
   { value: 'HEALTH', label: 'Salud' },
 ]
 
+// Map backend Alert to local shape
+function toLocal(a) {
+  return {
+    id: a.id,
+    name: a.name,
+    cat: a.categories?.[0]?.code ?? '',
+    cron: a.cron_expression,
+    enabled: a.enabled ?? true,
+  }
+}
+
 function AlertsPage() {
+  const { user } = useAuth()
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [newAlert, setNewAlert] = useState({ name: '', cat: 'FIN_MRKT', cron: '' })
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    fetchAlerts()
-  }, [])
+    if (user?.id) fetchAlerts()
+  }, [user?.id])
 
   const fetchAlerts = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/alertas')
-      if (!response.ok) throw new Error('API no disponible')
-      const data = await response.json()
-      setAlerts(data)
+      const res = await apiFetch(`/api/v1/users/${user.id}/alerts`)
+      if (!res.ok) throw new Error('Error al cargar alertas')
+      const data = await res.json()
+      setAlerts(data.map(toLocal))
     } catch (err) {
-      console.warn('Usando datos de fallback:', err.message)
-      setAlerts(mockAlerts)
+      console.error(err.message)
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async (id) => {
-    try {
-      await fetch(`/api/alertas/${id}`, { method: 'DELETE' })
-    } catch (err) {
-      console.warn('API no disponible, eliminando localmente')
-    }
     setAlerts(alerts.filter((a) => a.id !== id))
+    await apiFetch(`/api/v1/users/${user.id}/alerts/${id}`, { method: 'DELETE' })
   }
 
   const handleToggle = async (id) => {
-    const updated = alerts.map((a) =>
-      a.id === id ? { ...a, enabled: !a.enabled } : a
-    )
+    const updated = alerts.map((a) => a.id === id ? { ...a, enabled: !a.enabled } : a)
     setAlerts(updated)
-
-    try {
-      const alert = updated.find((a) => a.id === id)
-      await fetch(`/api/alertas/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: alert.enabled }),
-      })
-    } catch (err) {
-      console.warn('API no disponible, cambio guardado localmente')
-    }
+    const alert = updated.find((a) => a.id === id)
+    await apiFetch(`/api/v1/users/${user.id}/alerts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        name: alert.name,
+        cron_expression: alert.cron,
+        enabled: alert.enabled,
+        descriptors: [alert.name],
+        categories: categories
+          .filter((c) => c.value === alert.cat)
+          .map((c) => ({ code: c.value, label: c.label })),
+      }),
+    })
   }
 
   const handleCreateAlert = async (e) => {
     e.preventDefault()
+    setError('')
     if (!newAlert.name.trim() || !newAlert.cron.trim()) return
 
-    const alertToCreate = {
-      id: Date.now(),
-      ...newAlert,
-      enabled: true,
+    const catInfo = categories.find((c) => c.value === newAlert.cat)
+    const payload = {
+      name: newAlert.name,
+      cron_expression: newAlert.cron,
+      descriptors: [newAlert.name],
+      categories: catInfo ? [{ code: catInfo.value, label: catInfo.label }] : [],
     }
 
     try {
-      const response = await fetch('/api/alertas', {
+      const res = await apiFetch(`/api/v1/users/${user.id}/alerts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(alertToCreate),
+        body: JSON.stringify(payload),
       })
-      if (response.ok) {
-        const savedAlert = await response.json()
-        setAlerts([...alerts, savedAlert])
-      } else {
-        throw new Error('API error')
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.detail || 'Error al crear alerta')
       }
+      const saved = await res.json()
+      setAlerts([...alerts, toLocal(saved)])
+      setNewAlert({ name: '', cat: 'FIN_MRKT', cron: '' })
+      setShowModal(false)
     } catch (err) {
-      console.warn('API no disponible, agregando localmente')
-      setAlerts([...alerts, alertToCreate])
+      setError(err.message)
     }
-
-    setNewAlert({ name: '', cat: 'FIN_MRKT', cron: '' })
-    setShowModal(false)
   }
 
   return (
@@ -267,6 +272,7 @@ function AlertsPage() {
                 </p>
               </div>
 
+              {error && <p className="text-red-500 text-sm">{error}</p>}
               <div className="flex gap-4 justify-end pt-4">
                 <button
                   type="button"

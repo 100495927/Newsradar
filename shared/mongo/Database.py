@@ -42,6 +42,9 @@ class Database:
         self.col_users = colecciones.ColeccionUsers(self)
         self.col_user_sesions = colecciones.ColeccionUserSessions(self)
 
+    def ping(self) -> None:
+        self.__cliente_app.admin.command("ping")
+
     @property
     def cliente_admin(self):
         return self.__cliente_admin
