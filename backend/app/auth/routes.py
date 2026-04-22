@@ -70,9 +70,9 @@ def login(payload: LoginRequest) -> TokenResponse:
     return TokenResponse(access_token=token)
 
 
-@router.post("/auth/register", response_model=User, status_code=201, tags=["auth"])
-def register(payload: UserCreate) -> User:
-    """Registra un usuario nuevo en MongoDB y devuelve el usuario creado."""
+@router.post("/auth/register", response_model=TokenResponse, status_code=201, tags=["auth"])
+def register(payload: UserCreate) -> TokenResponse:
+    """Registra un usuario nuevo en MongoDB y devuelve un JWT para login automático."""
     if users_col.find_one({"email": payload.email}):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
@@ -93,12 +93,12 @@ def register(payload: UserCreate) -> User:
         "updated_at": now,
         "verification_token": str(uuid4()),
         "token_created_at": now,
-        "role": "reader",      
+        "role": "reader",
         "status": "active"
     })
 
-    doc = users_col.find_one({"id": user_id})
-    return sanitize_user(_doc_to_userindb(doc))
+    token = create_access_token(user_id)
+    return TokenResponse(access_token=token)
 
 
 @router.get("/auth/verify/{token}", tags=["auth"])

@@ -46,7 +46,11 @@ export function AuthProvider({ children }) {
       throw new Error(err.detail || 'Error al registrarse')
     }
     const data = await res.json()
-    _persist(data.access_token, { email: fields.email })
+    _persist(data.access_token, {
+      email: fields.email,
+      first_name: fields.first_name,
+      last_name: fields.last_name,
+    })
   }
 
   function logout() {
