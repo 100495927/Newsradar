@@ -8,7 +8,7 @@ from rss.RSSFuente import RSSFuente
 from worker.Entorno import Entorno
 from shared.mongo.Database import Database
 import threading
-from api_fuentes import api_task
+from worker.api_fuentes import api_task
 
 logger = logging.getLogger(__name__)
 

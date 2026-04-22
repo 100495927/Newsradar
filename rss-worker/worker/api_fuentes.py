@@ -1,15 +1,20 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
-from rss import RSSParser, RSSFuente
-from typing_extensions import Type
+from rss import RSSFuente
 from shared.mongo import Database
-from Entorno import Entorno
+from worker.Entorno import Entorno
 
 
 app = FastAPI()
-db = Database()
-entorno = Entorno()
+db: Database | None = None
+
+
+def get_db() -> Database:
+    global db
+    if db is None:
+        db = Database()
+    return db
 
 class FuenteJSON(BaseModel):
     medio: str
@@ -28,7 +33,7 @@ async def actualizar_fuente(fuente: FuenteJSON):
             fuente.activo,
             categoria_iptc=fuente.categoria_iptc,
         )
-        db.col_rss_fuentes.insertar(objecto_fuente)
+        get_db().col_rss_fuentes.insertar(objecto_fuente)
         
         return {"message": "Fuente insertada"}
     except Exception as e:
@@ -36,6 +41,7 @@ async def actualizar_fuente(fuente: FuenteJSON):
     
 def api_task():
     import uvicorn
+    entorno = Entorno()
     uvicorn.run(app, host="0.0.0.0", port=entorno.puerto_uvicorn)
 
 __all__ = ["api_task"]
