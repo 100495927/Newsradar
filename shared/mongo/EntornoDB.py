@@ -11,12 +11,25 @@ class EntornoDB:
                 return value
         return None
 
-    def __init__(self, require_root: bool = False):
-        self.__root_usuario = self._get_env(VARENV_MONGO_USUARIO_ROOT)
-        self.__root_contraseña = self._get_env(VARENV_MONGO_CONTRASEÑA_ROOT)
-        self.__root_db_name = self._get_env(VARENV_INITDB_DATABASE)
-        self.__host = self._get_env(VARENV_MONGO_HOST)
-        self.__puerto = self._get_env(VARENV_PUERTO_MONGODB)
+    def __init__(self):
+        self.__root_usuario = self._get_env(
+            VARENV_MONGO_USUARIO_ROOT,
+            VARENV_MONGO_USUARIO_ROOT_LEGACY,
+        )
+        if not self.__root_usuario:
+            raise ValueError(
+                "Variable de entorno de usuario root no encontrada "
+                f"({VARENV_MONGO_USUARIO_ROOT} o {VARENV_MONGO_USUARIO_ROOT_LEGACY})"
+            )
+        self.__root_contraseña = self._get_env(
+            VARENV_MONGO_CONTRASEÑA_ROOT,
+            VARENV_MONGO_CONTRASEÑA_ROOT_LEGACY,
+        )
+        if not self.__root_contraseña:
+            raise ValueError(
+                "Variable de entorno de contraseña root no encontrada "
+                f"({VARENV_MONGO_CONTRASEÑA_ROOT} o {VARENV_MONGO_CONTRASEÑA_ROOT_LEGACY})"
+            )
         self.__app_usuario = self._get_env(VARENV_USUARIO_MONGODB_APP)
         if not self.__app_usuario:
             raise ValueError(
@@ -27,26 +40,26 @@ class EntornoDB:
             raise ValueError(
                 f"Variable de entorno {VARENV_CONTRASEÑA_MONGODB_APP} no encontrada"
             )
+        self.__puerto = self._get_env(
+            VARENV_PUERTO_LOCAL_MONGODB,
+            VARENV_PUERTO_LOCAL_MONGODB_LEGACY,
+        )
         if not self.__puerto:
-            raise ValueError(f"Variable de entorno {VARENV_PUERTO_MONGODB} no encontrada")
+            raise ValueError(
+                "Variable de entorno de puerto Mongo no encontrada "
+                f"({VARENV_PUERTO_LOCAL_MONGODB} o {VARENV_PUERTO_LOCAL_MONGODB_LEGACY})"
+            )
         self.__app_db_name = self._get_env(VARENV_APP_DB_NAME)
         if not self.__app_db_name:
             raise ValueError(f"Variable de entorno {VARENV_APP_DB_NAME} no encontrada")
+        self.__root_db_name = self._get_env(VARENV_INITDB_DATABASE)
+        if not self.__root_db_name:
+            raise ValueError(
+                f"Variable de entorno {VARENV_INITDB_DATABASE} no encontrada"
+            )
+        self.__host = self._get_env(VARENV_MONGO_HOST)
         if not self.__host:
             raise ValueError(f"Variable de entorno {VARENV_MONGO_HOST} no encontrada")
-        if require_root:
-            if not self.__root_usuario:
-                raise ValueError(
-                    f"Variable de entorno {VARENV_MONGO_USUARIO_ROOT} no encontrada"
-                )
-            if not self.__root_contraseña:
-                raise ValueError(
-                    f"Variable de entorno {VARENV_MONGO_CONTRASEÑA_ROOT} no encontrada"
-                )
-            if not self.__root_db_name:
-                raise ValueError(
-                    f"Variable de entorno {VARENV_INITDB_DATABASE} no encontrada"
-                )
 
     @property
     def root_usuario(self):
