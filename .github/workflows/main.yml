@@ -42,7 +42,6 @@ jobs:
 
       - name: Ejecutar Suite de Tests Completa
         run: |
-          # Importante: Usamos la ruta correcta donde están tus tests reales
           docker exec \
-            -e PYTHONPATH=. \
-            newsradar-backend pytest backend/tests/
+            -e PYTHONPATH="/app:/app/backend" \
+            newsradar-backend pytest tests/
