@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from ..dependencies import get_current_user
 from ..auth.user import UserInDB
 from ..store import next_id, stats_col  # Usamos stats_col de Mongo
-from .models import Stats, StatsCreate, StatsUpdate
+from .models import FeedStats, GlobalDashboard, Stats, StatsCreate, StatsUpdate, WordCloudItem
+from . import service
 
 router = APIRouter(tags=["stats"])
 
@@ -13,14 +14,14 @@ router = APIRouter(tags=["stats"])
 # Routes
 # ---------------------------------------------------------------------------
 
-@router.get("/stats", response_model=List[Stats])
+@router.get("", response_model=List[Stats])
 def list_stats(_: UserInDB = Depends(get_current_user)) -> List[Stats]:
     """Lista registros de estadísticas desde MongoDB."""
     cursor = stats_col.find({}, {"_id": 0})
     return [Stats(**doc) for doc in cursor]
 
 
-@router.post("/stats", response_model=Stats, status_code=201)
+@router.post("", response_model=Stats, status_code=201)
 def create_stats(
     payload: StatsCreate,
     _: UserInDB = Depends(get_current_user),
@@ -36,7 +37,27 @@ def create_stats(
     return Stats(**new_stats)
 
 
-@router.get("/stats/{stats_id}", response_model=Stats)
+# Añadimos nuevos endpoints de analisis
+
+@router.get("/global", response_model=GlobalDashboard)
+def read_global_stats(_: UserInDB = Depends(get_current_user)):
+    """Panel de mando con estadísticas globales."""
+    return service.get_global_stats()
+
+
+@router.get("/feed/{feed_id}", response_model=FeedStats)
+def read_feed_stats(feed_id: int, _: UserInDB = Depends(get_current_user)):
+    """Estadísticas específicas para un RSS/Fuente."""
+    return service.get_feed_stats(feed_id)
+
+
+@router.get("/cloud/{categoria}", response_model=List[WordCloudItem])
+def read_word_cloud(categoria: str, _: UserInDB = Depends(get_current_user)):
+    """Nube de palabras por categoría."""
+    return service.get_word_cloud_data(categoria)
+
+
+@router.get("/{stats_id}", response_model=Stats)
 def get_stats(
     stats_id: int,
     _: UserInDB = Depends(get_current_user),
@@ -48,7 +69,7 @@ def get_stats(
     return Stats(**stats)
 
 
-@router.put("/stats/{stats_id}", response_model=Stats)
+@router.put("/{stats_id}", response_model=Stats)
 def update_stats(
     stats_id: int,
     payload: StatsUpdate,
@@ -69,7 +90,7 @@ def update_stats(
     return Stats(**updated_doc)
 
 
-@router.delete("/stats/{stats_id}", status_code=204)
+@router.delete("/{stats_id}", status_code=204)
 def delete_stats(
     stats_id: int,
     _: UserInDB = Depends(get_current_user),

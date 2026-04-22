@@ -21,6 +21,7 @@ client = MongoClient(MONGODB_URI)
 db = client[os.getenv("MONGO_APP_DB", "newsradar")]
 users_col = db["users"]
 rss_fuentes_col = db["rss_fuentes"]
+rss_entradas_col = db["rss_entradas"]
 stats_col = db["stats"]
 alerts_col = db["alerts"]
 notifications_col = db["notifications"]
