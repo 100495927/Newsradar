@@ -5,11 +5,13 @@ from datetime import datetime, timezone
 from typing import List
 from uuid import uuid4
 
+import pymongo
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from ..dependencies import (
     es_token_valido,
     get_current_user,
+    normalize_legacy_user_doc,
     sanitize_user,
 )
 from ..store import (
@@ -42,8 +44,17 @@ ALLOWED_ROLE_NAMES = {"manager", "reader"}
 
 def _doc_to_userindb(doc: dict) -> UserInDB:
     """Convierte un documento MongoDB en UserInDB eliminando el _id de Mongo."""
-    doc = {k: v for k, v in doc.items() if k != "_id"}
+    doc = normalize_legacy_user_doc(doc)
     return UserInDB(**doc)
+
+
+def _sync_user_counter_from_mongo() -> None:
+    """Evita IDs duplicados cuando el contador en memoria arranca desfasado."""
+    max_doc = users_col.find_one(sort=[("id", pymongo.DESCENDING)])
+    if max_doc and isinstance(max_doc.get("id"), int):
+        from .. import store
+
+        store.counters["users"] = max(store.counters["users"], max_doc["id"] + 1)
 
 
 def ensure_role_ids_exist(role_ids: List[int]) -> None:
@@ -100,6 +111,7 @@ def register(payload: UserCreate) -> TokenResponse:
     if payload.role_ids:
         ensure_role_ids_exist(payload.role_ids)
 
+    _sync_user_counter_from_mongo()
     now = datetime.now(timezone.utc)
     user_id = next_id("users")
     users_col.insert_one({

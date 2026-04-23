@@ -1,4 +1,5 @@
 import pytest
+from uuid import uuid4
 from fastapi.testclient import TestClient
 from app.app import app
 
@@ -13,6 +14,8 @@ def auth_headers():
     return {"Authorization": f"Bearer {token}"}
 
 def test_rss_workflow(auth_headers):
+    unique_suffix = uuid4().hex[:8]
+
     # 1. Crear una categoría primero (necesaria para el canal RSS)
     cat_resp = client.post("/api/v1/categories", 
                           json={"name": "Tecnología", "description": "Tech news"}, 
@@ -21,13 +24,19 @@ def test_rss_workflow(auth_headers):
     cat_id = cat_resp.json()["id"]
 
     # 2. Crear una Fuente de Información
-    source_data = {"name": "El Mundo", "url": "https://www.elmundo.es"}
+    source_data = {
+        "name": f"El Mundo {unique_suffix}",
+        "url": f"https://www.elmundo.es/?testrun={unique_suffix}",
+    }
     source_resp = client.post("/api/v1/information-sources", json=source_data, headers=auth_headers)
     assert source_resp.status_code == 201
     source_id = source_resp.json()["id"]
 
     # 3. Crear un Canal RSS vinculado
-    rss_data = {"url": "https://www.elmundo.es/rss/portada.xml", "category_id": cat_id}
+    rss_data = {
+        "url": f"https://www.elmundo.es/rss/portada.xml?testrun={unique_suffix}",
+        "category_id": cat_id,
+    }
     rss_resp = client.post(f"/api/v1/information-sources/{source_id}/rss-channels", 
                            json=rss_data, headers=auth_headers)
     assert rss_resp.status_code == 201
