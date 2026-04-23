@@ -5,7 +5,8 @@ La API permite registrar nuevas fuentes de noticias (medios) en la base de datos
 ### Configuración del Servidor
 El servidor corre bajo **FastAPI** y se levanta en un hilo independiente al iniciar el worker principal.
 * **Host:** `0.0.0.0`
-* **Puerto:** Definido por la variable de entorno `RSS_WORKER_UVICORN_PORT`. (Actualmente exuesto en el 12600)
+* **Puerto interno:** Definido por la variable de entorno `RSS_WORKER_UVICORN_PORT`. Por defecto escucha en el `8000` dentro del contenedor.
+* **Puerto expuesto:** Definido por la variable de entorno `RSS_WORKER_UVICORN_EXPOSE_PORT`. Por defecto se publica en el `12670` del host.
 
 ---
 
@@ -58,7 +59,8 @@ La API utiliza el modelo `FuenteJSON` para validar los datos de entrada antes de
 
 ### Variables de Entorno Requeridas
 Para que la API funcione, el archivo `Entorno.py` debe poder leer:
-* `RSS_WORKER_UVICORN_PORT`: El puerto donde escuchará la API.
+* `RSS_WORKER_UVICORN_PORT`: El puerto donde escuchará la API dentro del contenedor.
+* `RSS_WORKER_UVICORN_EXPOSE_PORT`: El puerto del host que Docker mapeará hacia la API del worker.
 
 ---
 

@@ -43,11 +43,13 @@ class EntornoDB:
         self.__puerto = self._get_env(
             VARENV_PUERTO_LOCAL_MONGODB,
             VARENV_PUERTO_LOCAL_MONGODB_LEGACY,
+            VARENV_PUERTO_LOCAL_MONGODB_LEGACY_2,
         )
         if not self.__puerto:
             raise ValueError(
                 "Variable de entorno de puerto Mongo no encontrada "
-                f"({VARENV_PUERTO_LOCAL_MONGODB} o {VARENV_PUERTO_LOCAL_MONGODB_LEGACY})"
+                f"({VARENV_PUERTO_LOCAL_MONGODB}, {VARENV_PUERTO_LOCAL_MONGODB_LEGACY} "
+                f"o {VARENV_PUERTO_LOCAL_MONGODB_LEGACY_2})"
             )
         self.__app_db_name = self._get_env(VARENV_APP_DB_NAME)
         if not self.__app_db_name:

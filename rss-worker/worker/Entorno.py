@@ -7,19 +7,20 @@ class Entorno:
     VARENV_INTERVALO_RSS = "RSS_WORKER_INTERVAL_SECONDS"
     VARENV_RUN_ONCE = "RSS_WORKER_RUN_ONCE"
     VARENV_PUERTO_UVICORN = "RSS_WORKER_UVICORN_PORT"
+    DEFAULT_INTERVALO_RSS = "60"
+    DEFAULT_RUN_ONCE = "false"
+    DEFAULT_PUERTO_UVICORN = "8000"
 
     def __init__(self):
-        self.__intervalo_rss = environ.get(self.VARENV_INTERVALO_RSS)
-        if not self.__intervalo_rss:
-            raise ValueError(
-                f"Variable de entorno {self.VARENV_INTERVALO_RSS} no encontrada"
-            )
-        self.__run_once = environ.get(self.VARENV_RUN_ONCE)
-        if not self.__run_once:
-            raise ValueError(f"Variable de entorno {self.VARENV_RUN_ONCE} no encontrada")
-        self.__uvicorn_port = environ.get(self.VARENV_PUERTO_UVICORN)
-        if not self.__uvicorn_port:
-            raise ValueError(f"Variable de entorno {self.VARENV_PUERTO_UVICORN} no encontrada")
+        self.__intervalo_rss = environ.get(
+            self.VARENV_INTERVALO_RSS,
+            self.DEFAULT_INTERVALO_RSS,
+        )
+        self.__run_once = environ.get(self.VARENV_RUN_ONCE, self.DEFAULT_RUN_ONCE)
+        self.__uvicorn_port = environ.get(
+            self.VARENV_PUERTO_UVICORN,
+            self.DEFAULT_PUERTO_UVICORN,
+        )
 
     @property
     def intervalo_rss(self):
