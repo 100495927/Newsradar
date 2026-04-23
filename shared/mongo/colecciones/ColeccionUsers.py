@@ -34,3 +34,5 @@ class ColeccionUsers(Coleccion):
         self._collection.create_index(
             [("role", ASCENDING), ("status", ASCENDING)], name="idx_users_role_status"
         )
+
+__all__ = ["ColeccionUsers"]

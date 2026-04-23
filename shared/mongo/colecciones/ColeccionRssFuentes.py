@@ -15,7 +15,14 @@ class ColeccionRssFuentes(Coleccion):
     def esquema(self):
         return {
             "bsonType": "object",
-            "required": ["hash_fuente", "medio", "url", "activo", "creado", "actualizado"],
+            "required": [
+                "hash_fuente",
+                "medio",
+                "url",
+                "activo",
+                "creado",
+                "actualizado",
+            ],
             "properties": {
                 "_id": {"bsonType": "objectId"},
                 "hash_fuente": {"bsonType": "string"},
@@ -23,11 +30,6 @@ class ColeccionRssFuentes(Coleccion):
                 "rss": {"bsonType": ["string", "null"]},
                 "url": {"bsonType": "string"},
                 "tipo": {"enum": ["source", "channel", None]},
-                "source_id": {"bsonType": ["int", "long", "null"]},
-                "source_name": {"bsonType": ["string", "null"]},
-                "source_url": {"bsonType": ["string", "null"]},
-                "channel_id": {"bsonType": ["int", "long", "null"]},
-                "category_id": {"bsonType": ["int", "long", "null"]},
                 "activo": {"bsonType": "bool"},
                 "categoria_iptc": {"bsonType": ["string", "null"]},
                 "deleted_at": {"bsonType": ["date", "null"]},
@@ -46,9 +48,7 @@ class ColeccionRssFuentes(Coleccion):
         self._collection.create_index(
             [("medio", 1), ("rss", 1)], name="idx_rss_fuentes_medio_rss"
         )
-        self._collection.create_index(
-            "activo", name="idx_rss_fuentes_activo"
-        )
+        self._collection.create_index("activo", name="idx_rss_fuentes_activo")
 
     def insertar(self, fuente: "RSSFuente"):
         datos = fuente.a_mongo()
@@ -75,7 +75,9 @@ class ColeccionRssFuentes(Coleccion):
             fuente.mongo_id = resultado.upserted_id
             return resultado.upserted_id
 
-        doc = self._collection.find_one({"hash_fuente": datos["hash_fuente"]}, {"_id": 1})
+        doc = self._collection.find_one(
+            {"hash_fuente": datos["hash_fuente"]}, {"_id": 1}
+        )
         if not doc:
             raise ValueError("No se pudo recuperar la fuente RSS tras el upsert")
 
@@ -91,3 +93,6 @@ class ColeccionRssFuentes(Coleccion):
             "deleted_at": {"$exists": False},
         }
         return [RSSFuente.de_mongo(doc) for doc in self._collection.find(query)]
+
+
+__all__ = ["ColeccionRssFuentes"]

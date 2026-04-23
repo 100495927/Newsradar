@@ -72,3 +72,5 @@ class ColeccionRssEntradas(Coleccion):
             upsert=True,
         )
         return resultado.upserted_id
+
+__all__ = ["ColeccionRssEntradas"]

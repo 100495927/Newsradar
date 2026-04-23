@@ -54,3 +54,5 @@ class Coleccion(ABC):
     @property
     def _db_padre(self):
         return self.__db_padre
+
+__all__ = ["Coleccion"]
