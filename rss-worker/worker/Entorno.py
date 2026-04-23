@@ -23,10 +23,12 @@ class Entorno:
         )
 
     @property
-    def intervalo_rss(self):
+    def intervalo_rss(self) -> int:
         if not self.__intervalo_rss:
             raise ValueError("Intervalo de rss no encontrado")
-        return self.__intervalo_rss
+        if not self.__intervalo_rss.isdigit():
+            raise TypeError("Intervalo de rss no es un numero")
+        return int(self.__intervalo_rss)
 
     @property
     def run_once(self):

@@ -46,3 +46,5 @@ class ColeccionUserSessions(Coleccion):
         self._collection.create_index(
             "expires_at", expireAfterSeconds=0, name="idx_user_sessions_expires_ttl"
         )
+
+__all__ = ["ColeccionUserSessions"]

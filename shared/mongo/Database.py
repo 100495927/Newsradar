@@ -41,6 +41,9 @@ class Database:
         self.col_rss_fuentes = colecciones.ColeccionRssFuentes(self)
         self.col_users = colecciones.ColeccionUsers(self)
         self.col_user_sesions = colecciones.ColeccionUserSessions(self)
+        self.col_alertas = colecciones.ColeccionAlerts(self)
+        self.col_counters = colecciones.ColeccionCounters(self)
+        self.col_notifications = colecciones.ColeccionNotifications(self)
 
     def ping(self) -> None:
         self.__cliente_app.admin.command("ping")

@@ -7,14 +7,6 @@ from worker.Entorno import Entorno
 
 
 app = FastAPI()
-db: Database | None = None
-
-
-def get_db() -> Database:
-    global db
-    if db is None:
-        db = Database()
-    return db
 
 class FuenteJSON(BaseModel):
     medio: str
@@ -38,7 +30,7 @@ async def actualizar_fuente(fuente: FuenteJSON):
         return {"message": "Fuente insertada"}
     except Exception as e:
         return {"message": str(e)}
-    
+
 def api_task():
     import uvicorn
     entorno = Entorno()

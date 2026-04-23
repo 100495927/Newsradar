@@ -1,6 +1,7 @@
 import sys
 from shared.mongo import Database
 
+
 def main() -> int:
     try:
         db = Database()
@@ -10,7 +11,10 @@ def main() -> int:
             db.col_rss_entradas.NOMBRE_COLECCION,
             db.col_rss_fuentes.NOMBRE_COLECCION,
             db.col_user_sesions.NOMBRE_COLECCION,
-            db.col_users.NOMBRE_COLECCION
+            db.col_users.NOMBRE_COLECCION,
+            db.col_alertas.NOMBRE_COLECCION,
+            db.col_notifications.NOMBRE_COLECCION,
+            db.col_counters.NOMBRE_COLECCION,
         ]
 
         for col in cols_req:
@@ -28,16 +32,18 @@ def main() -> int:
     print("Healthcheck Pass: worker con fuentes RSS registradas.")
     return 0
 
+
 def test_uvicorn():
     from Entorno import Entorno
     import requests
+
     entorno = Entorno()
-    url = f"http://localhost:{entorno.puerto_uvicorn}/fuentes" 
+    url = f"http://localhost:{entorno.puerto_uvicorn}/fuentes"
     data = {
         "medio": "Test Media",
         "rss": "https://example.com/rss",
         "url": "https://example.com",
-        "activo": False
+        "activo": False,
     }
 
     try:
@@ -46,6 +52,7 @@ def test_uvicorn():
         print(f"Response Body: {response.json()}")
     except Exception as e:
         print(f"Uvicorn is not responding: {e}")
+
 
 if __name__ == "__main__":
     sys.exit(main())
