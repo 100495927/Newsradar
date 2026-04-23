@@ -71,14 +71,14 @@ FastAPI dependencies imported by all route modules.
 | `get_current_user` | Resolves the authenticated user from a JWT Bearer token |
 | `sanitize_user` | Returns a public `User` view (no password) |
 | `es_token_valido` | Checks that a token timestamp is within 24 hours |
-| `ensure_gestor_role` | Raises 403 if the current user lacks the `admin` or `manager` role |
+| `ensure_gestor_role` | Raises 403 if the current user lacks the `manager` role |
 
 ### `app.py`
 
 - Registers the modular routers under `/api/v1`
 - Configures CORS for `http://localhost:5173`
 - Exposes `GET /api/v1/health`
-- Contains seed helpers that create the base roles and the default `AdminDefault`, `GestorDefault` and `LectorDefault` users on first startup when the roles are available
+- Contains seed helpers that create the base roles and the default `AdminDefault`, `GestorDefault` and `LectorDefault` users on first startup when the roles are available. `AdminDefault` and `GestorDefault` both use the functional `manager` role.
 
 ---
 
@@ -103,7 +103,7 @@ All routes are prefixed with `/api/v1`.
 | `GET` | `/users` | List all users (no passwords) |
 | `POST` | `/users` | Create a user (authenticated) |
 | `GET` | `/users/{user_id}` | Get user by ID |
-| `PUT` | `/users/{user_id}` | Update user profile (own profile or admin only) |
+| `PUT` | `/users/{user_id}` | Update user profile (own profile or manager only) |
 | `DELETE` | `/users/{user_id}` | Delete user + cascade delete alerts and notifications |
 
 ### Roles — `auth/routes.py`
@@ -121,7 +121,7 @@ All routes are prefixed with `/api/v1`.
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/users/{user_id}/alerts` | List alerts for a user |
-| `POST` | `/users/{user_id}/alerts` | Create alert (requires `admin` or `manager` role) |
+| `POST` | `/users/{user_id}/alerts` | Create alert (requires `manager` role) |
 | `GET` | `/users/{user_id}/alerts/{alert_id}` | Get a specific alert |
 | `PUT` | `/users/{user_id}/alerts/{alert_id}` | Update an alert |
 | `DELETE` | `/users/{user_id}/alerts/{alert_id}` | Delete alert + cascade delete notifications |

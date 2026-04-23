@@ -54,12 +54,12 @@ def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
 
 
 def ensure_gestor_role(user: UserInDB = Depends(get_current_user)) -> UserInDB:
-    """Verifica que el usuario tenga rol de admin o manager."""
-    if user.role in {"admin", "manager"}:
+    """Verifica que el usuario tenga rol de gestor."""
+    if user.role == "manager":
         return user
 
     user_role_names = {roles_store[r_id].name for r_id in user.role_ids if r_id in roles_store}
-    if not user_role_names.intersection({"admin", "manager"}):
+    if "manager" not in user_role_names:
         raise HTTPException(
             status_code=403,
             detail="Acceso denegado: Se requiere rol de Gestor de NewsRadar",

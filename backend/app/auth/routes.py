@@ -33,6 +33,7 @@ from .user import (
 )
 
 router = APIRouter()
+ALLOWED_ROLE_NAMES = {"manager", "reader"}
 
 
 # ---------------------------------------------------------------------------
@@ -52,6 +53,26 @@ def ensure_role_ids_exist(role_ids: List[int]) -> None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Roles no encontrados: {missing}",
+        )
+
+    invalid = [
+        roles_store[role_id].name
+        for role_id in role_ids
+        if roles_store[role_id].name not in ALLOWED_ROLE_NAMES
+    ]
+    if invalid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Roles no permitidos: {invalid}",
+        )
+
+
+def ensure_role_name_allowed(role_name: str) -> None:
+    """Valida que solo existan roles lector o gestor."""
+    if role_name not in ALLOWED_ROLE_NAMES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Rol no permitido. Use 'reader' o 'manager'",
         )
 
 
@@ -170,7 +191,7 @@ def list_users(_: UserInDB = Depends(get_current_user)) -> List[User]:
 
 @router.post("/users", response_model=User, status_code=201, tags=["users"])
 def create_user(payload: UserCreate, _: UserInDB = Depends(get_current_user)) -> User:
-    """Crea usuario administrativo autenticado por token."""
+    """Crea usuario autenticado por token."""
     if users_col.find_one({"email": payload.email}):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
@@ -197,19 +218,19 @@ def update_user(
     current_user: UserInDB = Depends(get_current_user),
 ) -> User:
     """Actualiza el perfil con restricciones de seguridad; persiste en MongoDB."""
-    is_admin = current_user.role == "admin" or any(
-        roles_store[r_id].name == "admin"
+    is_manager = current_user.role == "manager" or any(
+        roles_store[r_id].name == "manager"
         for r_id in current_user.role_ids
         if r_id in roles_store
     )
-    if current_user.id != user_id and not is_admin:
+    if current_user.id != user_id and not is_manager:
         raise HTTPException(status_code=403, detail="No tienes permiso para editar este perfil")
 
     if not users_col.find_one({"id": user_id}):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     data = payload.model_dump(exclude_unset=True)
-    if not is_admin:
+    if not is_manager:
         data.pop("role_ids", None)
         data.pop("email", None)
 
@@ -253,6 +274,7 @@ def list_roles(_: UserInDB = Depends(get_current_user)) -> List[Role]:
 @router.post("/roles", response_model=Role, status_code=201, tags=["roles"])
 def create_role(payload: RoleCreate, _: UserInDB = Depends(get_current_user)) -> Role:
     """Crea un rol nuevo."""
+    ensure_role_name_allowed(payload.name)
     role_id = next_id("roles")
     role = Role(id=role_id, **payload.model_dump())
     roles_store[role_id] = role
@@ -278,7 +300,10 @@ def update_role(
     role = roles_store.get(role_id)
     if not role:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
-    updated = role.model_copy(update=payload.model_dump(exclude_unset=True))
+    update_data = payload.model_dump(exclude_unset=True)
+    if "name" in update_data:
+        ensure_role_name_allowed(update_data["name"])
+    updated = role.model_copy(update=update_data)
     roles_store[role_id] = updated
     return updated
 

@@ -28,6 +28,13 @@ class FakeUsersCollection:
         self.docs.append(doc)
         return SimpleNamespace(inserted_id=doc.get("id"))
 
+    def update_one(self, query: dict, update: dict) -> SimpleNamespace:
+        doc = self.find_one(query)
+        if doc:
+            doc.update(update.get("$set", {}))
+            return SimpleNamespace(modified_count=1)
+        return SimpleNamespace(modified_count=0)
+
 
 def test_create_seed_data_creates_default_users_once(monkeypatch):
     fake_users_col = FakeUsersCollection()
@@ -52,7 +59,6 @@ def test_create_seed_data_creates_default_users_once(monkeypatch):
     app_module.create_seed_data()
 
     assert {role.name for role in app_module.roles_store.values()} == {
-        "admin",
         "manager",
         "reader",
     }
@@ -62,6 +68,50 @@ def test_create_seed_data_creates_default_users_once(monkeypatch):
         "LectorDefault@newsradar.local",
     }
     assert len(fake_users_col.docs) == 3
+    assert sum(doc["role"] == "manager" for doc in fake_users_col.docs) == 2
+    assert sum(doc["role"] == "reader" for doc in fake_users_col.docs) == 1
     assert all(doc["password_hash"] for doc in fake_users_col.docs)
     assert all(doc["status"] == "active" for doc in fake_users_col.docs)
     assert all(doc["is_verified"] is True for doc in fake_users_col.docs)
+
+
+def test_create_seed_data_converts_existing_admin_default_to_manager(monkeypatch):
+    fake_users_col = FakeUsersCollection()
+    fake_users_col.docs.append(
+        {
+            "id": 1,
+            "email": "AdminDefault@newsradar.local",
+            "first_name": "AdminDefault",
+            "last_name": "NewsRadar",
+            "organization": "NewsRadar",
+            "password_hash": "hash",
+            "role_ids": [99],
+            "created_at": object(),
+            "updated_at": object(),
+            "role": "admin",
+            "status": "active",
+            "is_verified": True,
+        }
+    )
+    monkeypatch.setattr(app_module, "users_col", fake_users_col)
+    monkeypatch.setattr(app_module, "roles_store", {})
+    monkeypatch.setattr(
+        app_module,
+        "counters",
+        {
+            "roles": 1,
+            "users": 2,
+            "alerts": 1,
+            "categories": 1,
+            "notifications": 1,
+            "information_sources": 1,
+            "rss_channels": 1,
+            "stats": 1,
+        },
+    )
+
+    app_module.create_seed_data()
+
+    admin_default = fake_users_col.find_one({"email": "AdminDefault@newsradar.local"})
+    assert admin_default["role"] == "manager"
+    assert admin_default["role_ids"] == [1]

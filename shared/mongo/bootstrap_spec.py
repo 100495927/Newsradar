@@ -153,7 +153,7 @@ COLLECTION_SPECS = [
                     "last_name": {"bsonType": "string"},
                     "organization": {"bsonType": ["string", "null"]},
                     "email": {"bsonType": "string"},
-                    "role": {"enum": ["admin", "manager", "reader"]},
+                    "role": {"enum": ["manager", "reader"]},
                     "status": {"enum": ["pending_verification", "active", "disabled"]},
                     "password_hash": {"bsonType": ["string", "null"]},
                     "email_verified_at": {"bsonType": ["date", "null"]},

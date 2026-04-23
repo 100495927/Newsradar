@@ -24,8 +24,8 @@ DEFAULT_USERS = (
         "first_name": "AdminDefault",
         "last_name": "NewsRadar",
         "organization": "NewsRadar",
-        "role_name": "admin",
-        "stored_role": "admin",
+        "role_name": "manager",
+        "stored_role": "manager",
     },
     {
         "email": "GestorDefault@newsradar.local",
@@ -95,14 +95,24 @@ def _ensure_role(role_name: str) -> int:
 
 
 def _seed_default_user(user_data: dict[str, str]) -> None:
-    if users_col.find_one({"email": user_data["email"]}):
-        return
-
     role_id = _get_role_id(user_data["role_name"])
     if role_id is None:
         return
 
     now = datetime.now(timezone.utc)
+    if users_col.find_one({"email": user_data["email"]}):
+        users_col.update_one(
+            {"email": user_data["email"]},
+            {
+                "$set": {
+                    "role_ids": [role_id],
+                    "role": user_data["stored_role"],
+                    "updated_at": now,
+                }
+            },
+        )
+        return
+
     user_id = next_id("users")
     users_col.insert_one(
         {
@@ -126,7 +136,7 @@ def create_seed_data() -> None:
     """Carga roles base y usuarios por defecto en el arranque si no existen."""
     _sync_user_counter_from_mongo()
 
-    for role_name in ("admin", "manager", "reader"):
+    for role_name in ("manager", "reader"):
         _ensure_role(role_name)
 
     for user_data in DEFAULT_USERS:
