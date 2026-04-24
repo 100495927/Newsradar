@@ -1,13 +1,26 @@
 function TrendChart({ data, loading }) {
   const maxVal = data.length > 0 ? Math.max(...data.map((d) => d.total)) : 1
 
-  // Show at most 30 bars; if fewer, pad with nulls so bars have consistent width
   const bars = data.slice(-30)
 
   // X-axis labels: show first, middle and last date only
   const firstLabel = bars[0]?.fecha?.slice(5) ?? ''
   const midLabel = bars[Math.floor(bars.length / 2)]?.fecha?.slice(5) ?? ''
   const lastLabel = bars[bars.length - 1]?.fecha?.slice(5) ?? ''
+
+  const W = 800
+  const H = 320
+  const PAD = { top: 16, right: 16, bottom: 8, left: 8 }
+
+  const toX = (i) => PAD.left + (i / (bars.length - 1 || 1)) * (W - PAD.left - PAD.right)
+  const toY = (val) => PAD.top + (1 - val / maxVal) * (H - PAD.top - PAD.bottom)
+
+  const points = bars.map((d, i) => `${toX(i)},${toY(d.total)}`).join(' ')
+  const areaPoints = [
+    `${toX(0)},${H - PAD.bottom}`,
+    ...bars.map((d, i) => `${toX(i)},${toY(d.total)}`),
+    `${toX(bars.length - 1)},${H - PAD.bottom}`,
+  ].join(' ')
 
   return (
     <section className="lg:col-span-8 bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
@@ -30,28 +43,40 @@ function TrendChart({ data, loading }) {
         </div>
       ) : (
         <>
-          <div className="relative h-[320px] w-full border-l border-b border-slate-200">
-            <div className="absolute bottom-0 left-0 w-full h-full flex items-end px-2 gap-1">
-              {bars.map((entry, index) => {
-                const heightPct = Math.round((entry.total / maxVal) * 100)
-                const isMax = entry.total === maxVal
-                return (
-                  <div
-                    key={entry.fecha}
-                    title={`${entry.fecha}: ${entry.total.toLocaleString('es-ES')} noticias`}
-                    className={`flex-1 rounded-t transition-all cursor-default ${
-                      isMax
-                        ? 'bg-slate-900 hover:bg-black'
-                        : index % 7 === 0
-                          ? 'bg-slate-300 hover:bg-slate-400'
-                          : 'bg-slate-200/70 hover:bg-slate-300'
-                    }`}
-                    style={{ height: `${heightPct}%` }}
-                  />
-                )
-              })}
-            </div>
-          </div>
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            className="w-full h-[320px] border-l border-b border-slate-200"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="lineArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#1e293b" stopOpacity="0.15" />
+                <stop offset="100%" stopColor="#1e293b" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <polygon points={areaPoints} fill="url(#lineArea)" />
+            <polyline
+              points={points}
+              fill="none"
+              stroke="#1e293b"
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            {bars.map((d, i) => (
+              <circle
+                key={d.fecha}
+                cx={toX(i)}
+                cy={toY(d.total)}
+                r="3"
+                fill={d.total === maxVal ? '#0f172a' : '#64748b'}
+                stroke="white"
+                strokeWidth="1.5"
+              >
+                <title>{`${d.fecha}: ${d.total.toLocaleString('es-ES')} noticias`}</title>
+              </circle>
+            ))}
+          </svg>
           <div className="flex justify-between mt-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">
             <span>{firstLabel}</span>
             <span>{midLabel}</span>

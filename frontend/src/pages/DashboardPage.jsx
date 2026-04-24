@@ -41,8 +41,8 @@ function buildStatCards(data, t) {
       title: t('dashboard.alerts'),
       value: data.n_alertas.toLocaleString(),
       icon: 'notifications_active',
-      cardAccent: data.n_alertas > 0 ? 'critical' : 'default',
-      badge: data.n_alertas > 0 ? t('dashboard.activeBadge') : null,
+      cardAccent: 'default',
+      badge: null,
       badgeTone: 'red',
     },
     {
