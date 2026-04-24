@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import TopNavBar from '../components/TopNavBar'
 import SideNavBar from '../components/SideNavBar'
 import MobileNav from '../components/MobileNav'
 import { apiFetch } from '../api/apiClient'
 
 function SourcesPage() {
+  const { t } = useTranslation()
   const [sources, setSources] = useState([])
   const [newUrl, setNewUrl] = useState('')
   const [loading, setLoading] = useState(true)
@@ -32,7 +34,6 @@ function SourcesPage() {
       const response = await apiFetch('/api/v1/information-sources')
       if (!response.ok) throw new Error('API no disponible')
       const data = await response.json()
-      // Flatten sources: fetch channels for each source so we can display them
       const allChannels = await Promise.all(
         data.map(async (src) => {
           const chRes = await apiFetch(`/api/v1/information-sources/${src.id}/rss-channels`)
@@ -72,12 +73,11 @@ function SourcesPage() {
       const name = domain.split('.')[0]
       return name.charAt(0).toUpperCase() + name.slice(1)
     } catch {
-      return 'Nueva Fuente'
+      return t('sources.defaultSourceName')
     }
   }
 
   const createSourceAndChannel = async (url, categoryId) => {
-    // 1. Create information source
     const srcRes = await apiFetch('/api/v1/information-sources', {
       method: 'POST',
       body: JSON.stringify({ name: extractDomainName(url), url }),
@@ -88,7 +88,6 @@ function SourcesPage() {
     }
     const src = await srcRes.json()
 
-    // 2. Create RSS channel under the source
     const chRes = await apiFetch(`/api/v1/information-sources/${src.id}/rss-channels`, {
       method: 'POST',
       body: JSON.stringify({ url, category_id: categoryId }),
@@ -124,14 +123,12 @@ function SourcesPage() {
       } else if (data.status === 'ok') {
         const match = categories.find((c) => c.name === data.detected_categories[0])
         if (!match) {
-          // Category detected but not in our store yet — fall back to selection modal
           setPendingUrl(newUrl)
           setShowCategoryModal(true)
         } else {
           await createSourceAndChannel(newUrl, match.id)
         }
       } else {
-        // no_category
         setPendingUrl(newUrl)
         setShowCategoryModal(true)
       }
@@ -161,25 +158,25 @@ function SourcesPage() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
             <div>
               <h1 className="text-4xl font-extrabold tracking-tight text-primary-container mb-2">
-                Fuentes y RSS
+                {t('sources.pageTitle')}
               </h1>
             </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
               <section className="bg-surface-container-low rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-6">Canales RSS Activos</h3>
+                <h3 className="text-xl font-bold mb-6">{t('sources.activeSources')}</h3>
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
                     <span className="material-symbols-outlined animate-spin text-slate-400">
                       progress_activity
                     </span>
-                    <span className="ml-2 text-slate-500">Cargando fuentes...</span>
+                    <span className="ml-2 text-slate-500">{t('sources.loading')}</span>
                   </div>
                 ) : sources.length === 0 ? (
                   <div className="text-center py-8 text-slate-500">
                     <span className="material-symbols-outlined text-4xl mb-2">rss_feed</span>
-                    <p>No hay fuentes RSS configuradas</p>
+                    <p>{t('sources.empty')}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -213,13 +210,13 @@ function SourcesPage() {
             </div>
             <div className="lg:col-span-4">
               <section className="bg-primary-container text-white rounded-xl p-8 sticky top-24">
-                <h3 className="text-2xl font-extrabold mb-4">Añadir Fuente</h3>
+                <h3 className="text-2xl font-extrabold mb-4">{t('sources.addTitle')}</h3>
                 <form className="space-y-6" onSubmit={handleSubmit}>
                   <div>
-                    <label className="block text-[10px] uppercase font-bold mb-2">URL RSS</label>
+                    <label className="block text-[10px] uppercase font-bold mb-2">{t('sources.urlLabel')}</label>
                     <input
                       className="w-full bg-slate-800/50 border-0 rounded-lg py-3 px-4 text-sm text-white placeholder-slate-400"
-                      placeholder="https://dominio.com/feed.xml"
+                      placeholder={t('sources.urlPlaceholder')}
                       type="url"
                       value={newUrl}
                       onChange={(e) => {
@@ -237,7 +234,7 @@ function SourcesPage() {
                     disabled={validating}
                     className="w-full bg-white text-primary-container font-black py-4 rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
                   >
-                    {validating ? 'Verificando...' : 'Conectar Stream'}
+                    {validating ? '...' : t('sources.connectButton')}
                   </button>
                 </form>
               </section>

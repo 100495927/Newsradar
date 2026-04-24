@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import TopNavBar from '../components/TopNavBar'
 import SideNavBar from '../components/SideNavBar'
 import MobileNav from '../components/MobileNav'
@@ -19,35 +20,35 @@ const CATEGORY_COLORS = [
   'bg-orange-400',
 ]
 
-function buildStatCards(data) {
+function buildStatCards(data, t) {
   return [
     {
       id: 'total-news',
-      title: 'Noticias Totales',
-      value: data.n_noticias.toLocaleString('es-ES'),
+      title: t('dashboard.totalNews'),
+      value: data.n_noticias.toLocaleString(),
       icon: 'newspaper',
       cardAccent: 'default',
     },
     {
       id: 'sources',
-      title: 'Fuentes Activas',
-      value: data.n_fuentes.toLocaleString('es-ES'),
+      title: t('dashboard.activeSources'),
+      value: data.n_fuentes.toLocaleString(),
       icon: 'source',
       cardAccent: 'default',
     },
     {
       id: 'alerts',
-      title: 'Alertas',
-      value: data.n_alertas.toLocaleString('es-ES'),
+      title: t('dashboard.alerts'),
+      value: data.n_alertas.toLocaleString(),
       icon: 'notifications_active',
       cardAccent: data.n_alertas > 0 ? 'critical' : 'default',
-      badge: data.n_alertas > 0 ? 'Activas' : null,
+      badge: data.n_alertas > 0 ? t('dashboard.activeBadge') : null,
       badgeTone: 'red',
     },
     {
       id: 'rss-channels',
-      title: 'Canales RSS',
-      value: data.n_canales_rss.toLocaleString('es-ES'),
+      title: t('dashboard.rssChannels'),
+      value: data.n_canales_rss.toLocaleString(),
       icon: 'rss_feed',
       cardAccent: 'default',
     },
@@ -66,6 +67,7 @@ function buildCategories(noticiasPorCategoria) {
 }
 
 function DashboardPage() {
+  const { t } = useTranslation()
   const [stats, setStats] = useState(null)
   const [timeline, setTimeline] = useState([])
   const [loading, setLoading] = useState(true)
@@ -80,7 +82,7 @@ function DashboardPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const statCards = stats ? buildStatCards(stats) : []
+  const statCards = stats ? buildStatCards(stats, t) : []
   const categories = stats ? buildCategories(stats.noticias_por_categoria) : []
 
   return (

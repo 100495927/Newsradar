@@ -1,0 +1,133 @@
+{
+  "nav": {
+    "dashboard": "Control Panel",
+    "summary": "My Summary",
+    "alerts": "Alerts",
+    "sources": "Sources",
+    "settings": "Settings",
+    "brandTagline": "Intelligence Lens"
+  },
+  "mobileNav": {
+    "dashboard": "Panel",
+    "summary": "Summary",
+    "alerts": "Alerts",
+    "profile": "Profile"
+  },
+  "topNav": {
+    "searchPlaceholder": "Global Search..."
+  },
+  "pageHeader": {
+    "title": "Global Overview",
+    "subtitle": "Real-time intelligence extraction from the global news landscape.",
+    "statusActive": "System Active",
+    "lastUpdate": "Last Update",
+    "lastUpdateValue": "2 min ago"
+  },
+  "dashboard": {
+    "totalNews": "Total News",
+    "activeSources": "Active Sources",
+    "alerts": "Alerts",
+    "rssChannels": "RSS Channels",
+    "activeBadge": "Active"
+  },
+  "login": {
+    "tagline": "The Informed Lens",
+    "subtitle": "Access your intelligence panel",
+    "emailLabel": "Username",
+    "emailPlaceholder": "name@newsradar.com",
+    "passwordLabel": "Password",
+    "submitLoading": "Signing in...",
+    "submit": "Sign In",
+    "noAccount": "Don't have an account?",
+    "requestAccess": "Request access"
+  },
+  "register": {
+    "heroTitle": "The informed lens for global intelligence.",
+    "heroSubtitle": "Access deep editorial analysis and real-time news alerts powered by neural processing.",
+    "feature1Title": "Editorial Precision",
+    "feature1Desc": "Curated information that filters noise from signal.",
+    "feature2Title": "Instant Awareness",
+    "feature2Desc": "Be the first to see global changes as they happen.",
+    "copyright": "© 2026 NewsRadar Intelligence",
+    "formTitle": "Create your account",
+    "formSubtitle": "Join our network of professional analysts.",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "organization": "Organization",
+    "organizationPlaceholder": "Your organisation name",
+    "password": "Password",
+    "passwordPlaceholder": "Minimum 6 characters",
+    "submitLoading": "Registering...",
+    "submit": "Register",
+    "hasAccount": "Already have an account?",
+    "loginLink": "Sign in to NewsRadar"
+  },
+  "alerts": {
+    "pageTitle": "Alert Management",
+    "pageSubtitle": "Configure your intelligence triggers.",
+    "createButton": "Create New Alert",
+    "colName": "Alert Name",
+    "colCategory": "Category",
+    "colFrequency": "Frequency",
+    "colStatus": "Status",
+    "loading": "Loading alerts...",
+    "empty": "No alerts configured",
+    "modalTitle": "New Alert",
+    "namePlaceholder": "E.g: Market Volatility",
+    "cronLabel": "Frequency (Cron)",
+    "cronHint": "Examples: */15 * * * * (every 15 min), 0 9 * * 1-5 (9AM Mon-Fri)",
+    "cancel": "Cancel",
+    "createSubmit": "Create Alert",
+    "errorLoad": "Error loading alerts",
+    "errorCreate": "Error creating alert"
+  },
+  "categories": {
+    "FIN_MRKT": "Finance & Markets",
+    "SEC_POL": "Political Security",
+    "TECH": "Technology",
+    "ENERGY": "Energy",
+    "HEALTH": "Health"
+  },
+  "profile": {
+    "pageTitle": "Profile Settings",
+    "statusActive": "Active",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "deleteButton": "Delete Profile",
+    "saveButton": "Save Profile",
+    "savedMessage": "Profile saved successfully",
+    "deleteModalTitle": "Delete Profile",
+    "deleteModalWarning": "This action cannot be undone",
+    "deleteModalBody": "Are you sure you want to delete your profile? All your data, alerts and settings will be permanently deleted.",
+    "deleteModalCancel": "Cancel",
+    "deleteModalConfirm": "Yes, delete"
+  },
+  "sources": {
+    "pageTitle": "Sources & RSS",
+    "activeSources": "Active RSS Channels",
+    "loading": "Loading sources...",
+    "empty": "No RSS sources configured",
+    "addTitle": "Add Source",
+    "urlLabel": "RSS URL",
+    "urlPlaceholder": "https://domain.com/feed.xml",
+    "connectButton": "Connect Stream",
+    "defaultSourceName": "New Source"
+  },
+  "summary": {
+    "pageTitle": "Intelligence Summary",
+    "pageSubtitle": "Hottest topics by category extracted from monitored RSS channels.",
+    "globalCloud": "Global Keyword Cloud",
+    "globalCloudSub": "All categories · top 80 terms",
+    "byCategory": "Keywords by Category",
+    "newsCount": "{{count}} news",
+    "noData": "No data",
+    "noNewsProcessed": "No news processed yet"
+  },
+  "language": {
+    "select": "Select language",
+    "es": "Español",
+    "en": "English"
+  }
+}

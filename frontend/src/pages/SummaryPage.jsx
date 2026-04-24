@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import TopNavBar from '../components/TopNavBar'
 import SideNavBar from '../components/SideNavBar'
 import MobileNav from '../components/MobileNav'
@@ -30,9 +31,7 @@ function WordCloudDisplay({ words }) {
     <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-4 py-4 px-2">
       {words.map((item, i) => {
         const size = scaleFont(item.value, min, max)
-        // Opacity decreases slightly for smaller words
         const opacity = 0.45 + ((item.value - min) / (max - min || 1)) * 0.55
-        // Alternate between dark navy and slate tones based on rank
         const color =
           i === 0
             ? '#0A192F'
@@ -57,6 +56,7 @@ function WordCloudDisplay({ words }) {
 }
 
 function SummaryPage() {
+  const { t } = useTranslation()
   const [categories, setCategories] = useState([])
   const [cloudByCategory, setCloudByCategory] = useState({})
   const [combinedCloud, setCombinedCloud] = useState([])
@@ -71,9 +71,7 @@ function SummaryPage() {
         if (topCats.length === 0) return
 
         const results = await Promise.all(
-          topCats.map((cat) =>
-            getWordCloud(cat.id).catch(() => [])
-          )
+          topCats.map((cat) => getWordCloud(cat.id).catch(() => []))
         )
 
         const byCategory = {}
@@ -82,7 +80,6 @@ function SummaryPage() {
         })
         setCloudByCategory(byCategory)
 
-        // Merge all words summing values across categories
         const merged = {}
         results.flat().forEach(({ word, value }) => {
           merged[word] = (merged[word] || 0) + value
@@ -108,10 +105,10 @@ function SummaryPage() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-200 pb-8">
             <div>
               <h1 className="text-3xl font-extrabold font-headline tracking-tight text-slate-950 uppercase italic">
-                Resumen de Inteligencia
+                {t('summary.pageTitle')}
               </h1>
               <p className="text-slate-500 mt-2 text-sm font-medium">
-                Temas más candentes por categoría extraídos de los canales RSS monitorizados.
+                {t('summary.pageSubtitle')}
               </p>
             </div>
           </div>
@@ -129,7 +126,7 @@ function SummaryPage() {
             <div className="bg-white border border-slate-200 rounded-xl p-16 text-center">
               <span className="material-symbols-outlined text-4xl text-slate-300">cloud_off</span>
               <p className="mt-4 text-slate-400 font-medium uppercase tracking-widest text-xs">
-                No hay noticias procesadas todavía
+                {t('summary.noNewsProcessed')}
               </p>
             </div>
           ) : (
@@ -138,10 +135,10 @@ function SummaryPage() {
               <section className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
                 <div className="bg-[#0A192F] px-6 py-4">
                   <h2 className="text-white text-xs font-black uppercase tracking-[0.2em]">
-                    Nube Global de Palabras Clave
+                    {t('summary.globalCloud')}
                   </h2>
                   <p className="text-slate-400 text-[10px] mt-1 uppercase tracking-wider">
-                    Todas las categorías · top 80 términos
+                    {t('summary.globalCloudSub')}
                   </p>
                 </div>
                 <div className="p-8">
@@ -152,7 +149,7 @@ function SummaryPage() {
               {/* Per-category keyword rankings */}
               <section>
                 <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6">
-                  Palabras Clave por Categoría
+                  {t('summary.byCategory')}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {categories.map((cat, i) => {
@@ -168,12 +165,12 @@ function SummaryPage() {
                             {cat.id}
                           </h3>
                           <span className="text-[10px] font-bold text-slate-400">
-                            {cat.total.toLocaleString('es-ES')} noticias
+                            {t('summary.newsCount', { count: cat.total.toLocaleString() })}
                           </span>
                         </div>
                         {words.length === 0 ? (
                           <p className="px-5 py-6 text-slate-400 text-xs text-center uppercase tracking-widest">
-                            Sin datos
+                            {t('summary.noData')}
                           </p>
                         ) : (
                           <ol className="px-5 py-4 space-y-2">
