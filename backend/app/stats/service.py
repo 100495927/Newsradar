@@ -26,6 +26,7 @@ def get_global_stats() -> dict[str, Any]:
     """Realiza agregaciones en MongoDB para el dashboard global."""
     return {
         "n_fuentes": _count_active_feed_channels(),
+        "n_canales_rss": _count_all_rss_channels(),
         "n_noticias": rss_entradas_col.count_documents({}),
         "n_alertas": alerts_col.count_documents({}),
         "alertas_por_categoria": list(
@@ -33,6 +34,16 @@ def get_global_stats() -> dict[str, Any]:
                 [
                     {"$unwind": "$categories"},
                     {"$group": {"_id": "$categories.label", "total": {"$sum": 1}}},
+                    {"$project": {"_id": 0, "id": "$_id", "total": 1}},
+                    {"$sort": {"total": -1, "id": 1}},
+                ]
+            )
+        ),
+        "noticias_por_categoria": list(
+            rss_entradas_col.aggregate(
+                [
+                    {"$unwind": "$categorias"},
+                    {"$group": {"_id": "$categorias", "total": {"$sum": 1}}},
                     {"$project": {"_id": 0, "id": "$_id", "total": 1}},
                     {"$sort": {"total": -1, "id": 1}},
                 ]
@@ -80,10 +91,43 @@ def get_word_cloud_data(categoria: str) -> list[dict[str, int | str]]:
     ]
 
 
+def get_timeline_stats() -> list[dict[str, Any]]:
+    """Noticias ingestionadas por dia agrupadas por fecha (ultimos 30 dias)."""
+    return list(
+        rss_entradas_col.aggregate(
+            [
+                {
+                    "$group": {
+                        "_id": {
+                            "$dateToString": {
+                                "format": "%Y-%m-%d",
+                                "date": "$fecha_ingestion",
+                            }
+                        },
+                        "total": {"$sum": 1},
+                    }
+                },
+                {"$project": {"_id": 0, "fecha": "$_id", "total": 1}},
+                {"$sort": {"fecha": 1}},
+                {"$limit": 30},
+            ]
+        )
+    )
+
+
 def _count_active_feed_channels() -> int:
     return rss_fuentes_col.count_documents(
         {
             "activo": True,
+            "$or": [{"tipo": "channel"}, {"tipo": {"$exists": False}}],
+            "deleted_at": {"$exists": False},
+        }
+    )
+
+
+def _count_all_rss_channels() -> int:
+    return rss_fuentes_col.count_documents(
+        {
             "$or": [{"tipo": "channel"}, {"tipo": {"$exists": False}}],
             "deleted_at": {"$exists": False},
         }
