@@ -124,9 +124,9 @@ services:
       RSS_WORKER_INTERVAL_SECONDS: "60"
       RSS_WORKER_RUN_ONCE: "false"
       RSS_WORKER_UVICORN_PORT: "8000"
-    command: ["python", "/app/rss-worker/worker/main.py"]
+    command: ["python", "/app/rss-worker/rss_worker/main.py"]
     healthcheck:
-      test: ["CMD", "python", "/app/rss-worker/worker/test.py"]
+      test: ["CMD", "python", "/app/rss-worker/rss_worker/healthcheck.py"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -153,7 +153,7 @@ services:
       MONGO_PORT: 27017
       ALERT_WORKER_INTERVAL_SECONDS: "60"
       ALERT_WORKER_RUN_ONCE: "false"
-    command: ["python", "/app/rss-worker/worker/alert_main.py"]
+    command: ["python", "/app/rss-worker/alert_worker/main.py"]
     healthcheck:
       test:
         [
