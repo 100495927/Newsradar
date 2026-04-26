@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from alerts.processor import process_alerts
+from alerts.processor import deliver_pending_notifications, process_alerts, process_due_alerts
 
 
 class FakeCursor(list):
@@ -71,8 +71,12 @@ class FakeDb:
         self.db_app = app_db
 
 
-def test_process_alerts_creates_grouped_notification_and_avoids_duplicates() -> None:
+def test_process_alerts_creates_grouped_notification_and_avoids_duplicates(monkeypatch) -> None:
     now = datetime(2026, 4, 19, 12, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(
+        "alerts.processor.send_notification_email_with_error",
+        lambda to_email, subject, body: (True, None),
+    )
     app_db = FakeAppDb(
         {
             "alerts": FakeCollection(
@@ -105,6 +109,7 @@ def test_process_alerts_creates_grouped_notification_and_avoids_duplicates() -> 
                 ]
             ),
             "rss_fuentes": FakeCollection([{"_id": "source-1", "medio": "medio-test"}]),
+            "users": FakeCollection([{"id": 3, "email": "manager@example.test"}]),
             "notifications": FakeCollection([]),
             "counters": FakeCollection([{"_id": "notifications", "seq": 0}]),
         }
@@ -119,7 +124,8 @@ def test_process_alerts_creates_grouped_notification_and_avoids_duplicates() -> 
     notification = app_db["notifications"].docs[0]
     assert notification["id"] == 1
     assert notification["alert_id"] == 10
-    assert notification["email_status"] == "pending"
+    assert notification["email_status"] == "sent"
+    assert notification["email_sent_at"] == now
     assert notification["matches"][0]["rss_entry_hash"] == "hash-1"
     assert notification["matches"][0]["source"] == "medio-test"
     assert app_db["alerts"].docs[0]["last_checked_at"] == now
@@ -155,6 +161,7 @@ def test_process_alerts_without_matches_updates_alert_but_creates_no_notificatio
                 ]
             ),
             "rss_fuentes": FakeCollection([]),
+            "users": FakeCollection([{"id": 3, "email": "manager@example.test"}]),
             "notifications": FakeCollection([]),
             "counters": FakeCollection([{"_id": "notifications", "seq": 0}]),
         }
@@ -212,6 +219,7 @@ def test_process_alerts_new_alert_only_matches_entries_after_created_at() -> Non
                 ]
             ),
             "rss_fuentes": FakeCollection([{"_id": "source-1", "medio": "medio-test"}]),
+            "users": FakeCollection([{"id": 3, "email": "manager@example.test"}]),
             "notifications": FakeCollection([]),
             "counters": FakeCollection([{"_id": "notifications", "seq": 0}]),
         }
@@ -226,12 +234,192 @@ def test_process_alerts_new_alert_only_matches_entries_after_created_at() -> Non
     assert notification["matches"][0]["rss_entry_hash"] == "hash-new"
 
 
+def test_process_due_alerts_only_runs_due_alerts_and_sets_next_run() -> None:
+    now = datetime(2026, 4, 19, 12, 0, tzinfo=timezone.utc)
+    app_db = FakeAppDb(
+        {
+            "alerts": FakeCollection(
+                [
+                    {
+                        "id": 10,
+                        "user_id": 3,
+                        "name": "Energia",
+                        "descriptors": ["energia"],
+                        "category_id": 8,
+                        "notification_channels": ["app"],
+                        "cron_expression": "*/5 * * * *",
+                        "enabled": True,
+                        "last_checked_at": None,
+                        "next_run_at": now,
+                        "created_at": now - timedelta(hours=1),
+                    },
+                    {
+                        "id": 11,
+                        "user_id": 3,
+                        "name": "No due",
+                        "descriptors": ["energia"],
+                        "category_id": 8,
+                        "notification_channels": ["app"],
+                        "cron_expression": "*/5 * * * *",
+                        "enabled": True,
+                        "last_checked_at": None,
+                        "next_run_at": now + timedelta(minutes=5),
+                        "created_at": now - timedelta(hours=1),
+                    },
+                ]
+            ),
+            "rss_entradas": FakeCollection(
+                [
+                    {
+                        "_id": "entry-1",
+                        "id_fuente": "source-1",
+                        "titulo": "Nueva crisis de energia",
+                        "resumen": "Resumen",
+                        "link": "https://example.test/1",
+                        "hash_deduplicado": "hash-1",
+                        "fecha_publicacion": now - timedelta(minutes=10),
+                        "fecha_ingestion": now - timedelta(minutes=5),
+                    }
+                ]
+            ),
+            "rss_fuentes": FakeCollection([{"_id": "source-1", "medio": "medio-test"}]),
+            "users": FakeCollection([{"id": 3, "email": "manager@example.test"}]),
+            "notifications": FakeCollection([]),
+            "counters": FakeCollection([{"_id": "notifications", "seq": 0}]),
+        }
+    )
+
+    created = process_due_alerts(FakeDb(app_db), now)
+
+    assert created == 1
+    assert len(app_db["notifications"].docs) == 1
+    assert app_db["alerts"].docs[0]["last_run_at"] == now
+    assert app_db["alerts"].docs[0]["next_run_at"] == now + timedelta(minutes=5)
+    assert app_db["alerts"].docs[1].get("last_run_at") is None
+
+
+def test_process_due_alerts_initializes_missing_next_run_without_running() -> None:
+    now = datetime(2026, 4, 19, 12, 3, tzinfo=timezone.utc)
+    app_db = FakeAppDb(
+        {
+            "alerts": FakeCollection(
+                [
+                    {
+                        "id": 10,
+                        "user_id": 3,
+                        "name": "Energia",
+                        "descriptors": ["energia"],
+                        "category_id": 8,
+                        "notification_channels": ["app"],
+                        "cron_expression": "*/5 * * * *",
+                        "enabled": True,
+                        "last_checked_at": None,
+                        "next_run_at": None,
+                        "created_at": now - timedelta(hours=1),
+                    }
+                ]
+            ),
+            "rss_entradas": FakeCollection([]),
+            "rss_fuentes": FakeCollection([]),
+            "users": FakeCollection([{"id": 3, "email": "manager@example.test"}]),
+            "notifications": FakeCollection([]),
+            "counters": FakeCollection([{"_id": "notifications", "seq": 0}]),
+        }
+    )
+
+    created = process_due_alerts(FakeDb(app_db), now)
+
+    assert created == 0
+    assert app_db["notifications"].docs == []
+    assert app_db["alerts"].docs[0]["next_run_at"] == datetime(
+        2026, 4, 19, 12, 5, tzinfo=timezone.utc
+    )
+    assert app_db["alerts"].docs[0].get("last_run_at") is None
+
+
+def test_deliver_pending_notifications_updates_email_status(monkeypatch) -> None:
+    now = datetime(2026, 4, 19, 12, 15, tzinfo=timezone.utc)
+    monkeypatch.setattr(
+        "alerts.processor.send_notification_email_with_error",
+        lambda to_email, subject, body: (True, None),
+    )
+    app_db = FakeAppDb(
+        {
+            "alerts": FakeCollection(
+                [
+                    {
+                        "id": 10,
+                        "user_id": 3,
+                        "name": "Energia",
+                        "notification_channels": ["app", "email"],
+                    }
+                ]
+            ),
+            "users": FakeCollection([{"id": 3, "email": "manager@example.test"}]),
+            "notifications": FakeCollection(
+                [
+                    {
+                        "id": 7,
+                        "alert_id": 10,
+                        "user_id": 3,
+                        "timestamp": now - timedelta(minutes=2),
+                        "subject": "Actualizacion de Energia",
+                        "metrics": [],
+                        "matches": [
+                            {
+                                "title": "Titulo",
+                                "link": "https://example.test/1",
+                                "source": "medio-test",
+                                "published_at": now - timedelta(minutes=3),
+                                "summary": "Resumen",
+                                "matched_descriptors": ["energia"],
+                            }
+                        ],
+                        "delivery_channels": ["app", "email"],
+                        "email_status": "pending",
+                        "email_sent_at": None,
+                        "email_error": None,
+                        "read_at": None,
+                        "created_at": now - timedelta(minutes=2),
+                        "updated_at": now - timedelta(minutes=2),
+                    }
+                ]
+            ),
+            "rss_entradas": FakeCollection([]),
+            "rss_fuentes": FakeCollection([]),
+            "counters": FakeCollection([{"_id": "notifications", "seq": 7}]),
+        }
+    )
+
+    delivered = deliver_pending_notifications(FakeDb(app_db), now)
+
+    assert delivered == 1
+    notification = app_db["notifications"].docs[0]
+    assert notification["email_status"] == "sent"
+    assert notification["email_sent_at"] == now
+
+
 def _matches(doc: dict, query: dict) -> bool:
+    or_conditions = query.get("$or")
+    if or_conditions:
+        if not any(_matches(doc, condition) for condition in or_conditions):
+            return False
+
     for key, expected in query.items():
+        if key == "$or":
+            continue
         actual = _get_value(doc, key)
-        if isinstance(expected, dict) and "$gt" in expected:
-            if not actual or actual <= expected["$gt"]:
-                return False
+        if isinstance(expected, dict):
+            if "$gt" in expected:
+                if not actual or actual <= expected["$gt"]:
+                    return False
+            if "$lte" in expected:
+                if actual is None or actual > expected["$lte"]:
+                    return False
+            if "$exists" in expected:
+                exists = actual is not None
+                if exists != expected["$exists"]:
+                    return False
         elif actual != expected:
             return False
     return True
