@@ -7,9 +7,13 @@ class Entorno:
     VARENV_INTERVALO_RSS = "RSS_WORKER_INTERVAL_SECONDS"
     VARENV_RUN_ONCE = "RSS_WORKER_RUN_ONCE"
     VARENV_PUERTO_UVICORN = "RSS_WORKER_UVICORN_PORT"
+    VARENV_INTERVALO_ALERTAS = "ALERT_WORKER_INTERVAL_SECONDS"
+    VARENV_ALERT_RUN_ONCE = "ALERT_WORKER_RUN_ONCE"
     DEFAULT_INTERVALO_RSS = "60"
     DEFAULT_RUN_ONCE = "false"
     DEFAULT_PUERTO_UVICORN = "8000"
+    DEFAULT_INTERVALO_ALERTAS = "60"
+    DEFAULT_ALERT_RUN_ONCE = "false"
 
     def __init__(self):
         self.__intervalo_rss = environ.get(
@@ -20,6 +24,14 @@ class Entorno:
         self.__uvicorn_port = environ.get(
             self.VARENV_PUERTO_UVICORN,
             self.DEFAULT_PUERTO_UVICORN,
+        )
+        self.__intervalo_alertas = environ.get(
+            self.VARENV_INTERVALO_ALERTAS,
+            self.DEFAULT_INTERVALO_ALERTAS,
+        )
+        self.__alert_run_once = environ.get(
+            self.VARENV_ALERT_RUN_ONCE,
+            self.DEFAULT_ALERT_RUN_ONCE,
         )
 
     @property
@@ -39,5 +51,17 @@ class Entorno:
         if not self.__uvicorn_port:
             raise ValueError("Puerto de uvicorn no encontrado")
         return int(self.__uvicorn_port)
+
+    @property
+    def intervalo_alertas(self):
+        if not self.__intervalo_alertas:
+            raise ValueError("Intervalo de alertas no encontrado")
+        return self.__intervalo_alertas
+
+    @property
+    def alert_run_once(self):
+        if not self.__alert_run_once:
+            raise ValueError("Alert run once no encontrado")
+        return self.__alert_run_once
 
 __all__ = ["Entorno"]
