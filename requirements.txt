@@ -1,0 +1,22 @@
+# Requisitos Python unificados para desarrollo local del backend,
+# rss-worker, alert-worker, utilidades compartidas y ejecucion de tests.
+#
+# Este fichero no sustituye a `backend/requirements.txt` ni a
+# `rss-worker/requirements.txt` en Docker; actua como superset raiz del repo.
+
+fastapi==0.116.1
+pydantic>=2,<3
+uvicorn[standard]==0.35.0
+
+pymongo==4.14.1
+feedparser==6.0.12
+dateparser==1.3.0
+requests==2.32.5
+croniter==2.0.7
+
+python-jose[cryptography]==3.3.0
+bcrypt==4.3.0
+email-validator==2.2.0
+
+httpx==0.27.0
+pytest==8.3.3
