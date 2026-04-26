@@ -7,7 +7,7 @@ Run with: `uvicorn app.app:app --reload` from the `backend/` directory.
 
 ## Folder Structure
 
-```
+```text
 backend/app/
 ├── app.py               # FastAPI app: registers all routers, seed data, /health
 ├── store.py             # Shared state: in-memory stores + MongoDB connection
@@ -185,6 +185,16 @@ All routes are prefixed with `/api/v1`.
 | `GET` | `/api/v1/health` | Healthcheck — returns status and UTC timestamp |
 
 ---
+
+## Current Status: Alerts and Notifications
+
+The backend keeps the original AG contract for `Alert` and `Notification`, and stores the worker-facing alert state in MongoDB.
+
+- `alerts` now persists `cron_expression`, `enabled`, `last_checked_at`, `last_run_at` and `next_run_at`
+- `notifications` persists the generated matches plus internal delivery fields such as `delivery_channels`, `email_status`, `email_sent_at`, `email_error` and `read_at`
+- the normal contractual routes are still available for alerts and notifications
+- the delivery configuration per alert and the user mailbox routes are documented as backend extensions outside the original contract in `docs/contrato-api-backend.md`
+- the backend writes alert state to MongoDB, while `alert-worker` is responsible for processing due alerts and delivering notifications
 
 ## Notes
 
