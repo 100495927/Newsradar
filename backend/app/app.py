@@ -14,7 +14,9 @@ from .notificaciones.routes import router as notificaciones_router
 from .rss.routes import router as rss_router
 from .stats.routes import router as stats_router
 from .auth.jwt_utils import hash_password
-from .store import counters, next_id, roles_store, users_col
+from .category.models import Category
+from .rss.iptc_utils import IPTC_TOP_LEVEL_CATEGORIES
+from .store import categories_store, counters, next_id, roles_store, users_col
 
 API_PREFIX = "/api/v1"
 
@@ -132,9 +134,19 @@ def _seed_default_user(user_data: dict[str, str]) -> None:
     )
 
 
+def _seed_iptc_categories() -> None:
+    """Populates categories_store with the 15 standard IPTC top-level categories."""
+    if categories_store:
+        return
+    for name in IPTC_TOP_LEVEL_CATEGORIES:
+        category_id = next_id("categories")
+        categories_store[category_id] = Category(id=category_id, name=name, source="IPTC")
+
+
 def create_seed_data() -> None:
     """Carga roles base y usuarios por defecto en el arranque si no existen."""
     _sync_user_counter_from_mongo()
+    _seed_iptc_categories()
 
     for role_name in ("manager", "reader"):
         _ensure_role(role_name)

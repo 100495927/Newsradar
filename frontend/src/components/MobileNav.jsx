@@ -1,15 +1,17 @@
 import { Link, useLocation } from 'react-router-dom'
-
-const mobileItems = [
-  { id: 'dashboard', label: 'Panel', icon: 'dashboard', path: '/dashboard' },
-  { id: 'summary', label: 'Resumen', icon: 'auto_stories', path: '/summary' },
-  { id: 'alerts', label: 'Alertas', icon: 'notification_important', path: '/alerts' },
-  { id: 'profile', label: 'Perfil', icon: 'settings', path: '/profile' },
-]
+import { useTranslation } from 'react-i18next'
 
 function MobileNav() {
   const location = useLocation()
+  const { t } = useTranslation()
   const isActive = (path) => location.pathname === path
+
+  const mobileItems = [
+    { id: 'dashboard', label: t('mobileNav.dashboard'), icon: 'dashboard', path: '/dashboard' },
+    { id: 'summary', label: t('mobileNav.summary'), icon: 'auto_stories', path: '/summary' },
+    { id: 'alerts', label: t('mobileNav.alerts'), icon: 'notification_important', path: '/alerts' },
+    { id: 'profile', label: t('mobileNav.profile'), icon: 'settings', path: '/profile' },
+  ]
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 w-full bg-[#0A192F] h-16 flex items-center justify-around px-4 z-50 border-t border-white/10">
