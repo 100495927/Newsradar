@@ -12,7 +12,7 @@ class RSSEntrada:
     titulo: str
     autores: list[str] | None
     link: str
-    categorias: list[str] | None
+    categorias: list[int] | None
     categorias_raw: list[str] | None
     fecha_publicacion: int  # Unix timestamp
     resumen: str | None = None

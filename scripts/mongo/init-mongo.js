@@ -76,7 +76,7 @@ ensureCollection("rss_fuentes", {
       hash_fuente: { bsonType: "string" },
       tipo: { enum: ["source", "channel", null] },
       activo: { bsonType: "bool" },
-      categoria_iptc: { bsonType: ["string", "null"] },
+      categoria_iptc: { bsonType: ["int", "null"] },
       deleted_at: { bsonType: ["date", "null"] },
       creado: { bsonType: "date" },
       actualizado: { bsonType: "date" },
@@ -147,6 +147,55 @@ ensureIndexes("rss_entradas", [
     keys: { categorias: 1 },
     options: { name: "idx_rss_entradas_categorias" },
   },
+]);
+
+ensureCollection("rss_categorias_iptc", {
+  $jsonSchema: {
+    bsonType: "object",
+    required: ["_id", "descripciones"],
+    properties: {
+      _id: {
+        bsonType: "int",
+        description: "IPTC Subject NewsCode (Primary Key)"
+      },
+      id_padre: {
+        bsonType: ["int", "null"],
+        description: "ID of the parent category"
+      },
+      nivel: {
+        bsonType: ["int", "null"],
+        description: "Hierarchical depth level"
+      },
+      descripciones: {
+        bsonType: "array",
+        items: {
+          bsonType: "object",
+          required: ["idioma", "nombre"],
+          properties: {
+            idioma: { bsonType: "string" },
+            nombre: { bsonType: "string" },
+            descripcion: { bsonType: "string" }
+          }
+        }
+      },
+      subcategorias: {
+        bsonType: "array",
+        items: { bsonType: "int" },
+        description: "List of child category IDs"
+      }
+    }
+  }
+});
+
+ensureIndexes("rss_categorias_iptc", [
+  {
+    keys: { id_padre: 1 },
+    options: { name: "idx_rss_categorias_iptc_id_padre" }
+  },
+  {
+    keys: { "descripciones.nombre": "text" },
+    options: { name: "idx_rss_categorias_iptc_nombre_text" }
+  }
 ]);
 
 ensureCollection("users", {

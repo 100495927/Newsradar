@@ -3,8 +3,8 @@ from __future__ import annotations
 import hashlib
 from typing import Type
 
-from .parsers import RSSParser
 from .RSSEntrada import RSSEntrada
+
 
 class RSSFuente:
     # Fuente RSS
@@ -16,9 +16,10 @@ class RSSFuente:
         url: str,
         activo: bool = True,
         mongo_id: str | None = None,
-        categoria_iptc: str | None = None,
+        categoria_iptc: int | None = None,
     ):
         from .parsers import url_a_parser
+
         self.medio = medio
         self.rss = rss
         self.url = url
@@ -53,6 +54,16 @@ class RSSFuente:
             "creado": datetime.now(timezone.utc),
             "actualizado": datetime.now(timezone.utc),
         }
+
+    def categoria_iptc_string(self) -> str | None:
+        from feedparser import parse
+
+        d = parse(self.url)
+
+        if hasattr(d.feed, "tags") and len(d.feed.tags) > 0:
+            return d.feed.tags[0].term
+
+        return None
 
     @classmethod
     def de_mongo(cls, mongo_dict: dict) -> "RSSFuente":

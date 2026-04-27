@@ -1,6 +1,5 @@
 from feedparser import FeedParserDict
 
-from ..iptc import normalize_feed_categories
 from ..RSSEntrada import RSSEntrada
 from ..RSSFuente import RSSFuente
 
@@ -43,16 +42,13 @@ class RSSParser:
         return timegm(self._entrada.published_parsed)
 
     def generar(self, fuente: RSSFuente) -> RSSEntrada:
-        categorias, categorias_raw = normalize_feed_categories(
-            self.categorias(),
-            fuente.categoria_iptc,
-        )
+        categorias_raw = self.categorias()
         return RSSEntrada(
             fuente,
             self.titulo(),
             self.autores(),
             self.link(),
-            categorias,
+            None,
             categorias_raw,
             self.fecha_publicacion(),
             self.resumen(),

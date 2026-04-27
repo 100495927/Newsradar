@@ -1,68 +1,177 @@
-from .parsers import *
-
 from .RSSFuente import RSSFuente
 
 def generar_lista_estandar_feeds() -> list[RSSFuente]:
     feeds = [
         RSSFuente(
             "el_pais",
-            "",
+            "portada",
             "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada",
-            categoria_iptc="Sociedad",
+        ),
+        RSSFuente(
+            "el_pais",
+            "america",
+            "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/america/portada",
+        ),
+        RSSFuente(
+            "el_pais",
+            "english",
+            "https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada",
+            ),
+        RSSFuente(
+            "el_pais",
+            "mexico",
+            "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/mexico/portada",
+        ),
+        RSSFuente(
+            "el_pais",
+            "colombia",
+            "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/america-colombia/portada",
+        ),
+        RSSFuente(
+            "el_pais",
+            "chile",
+            "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/chile/portada",
+        ),
+        RSSFuente(
+            "el_pais",
+            "argentina",
+            "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/argentina/portada",
+        ),
+        RSSFuente(
+            "abcnews",
+            "us",
+            "https://abcnews.com/abcnews/usheadlines",
+        ),
+        RSSFuente(
+            "abcnews",
+            "international",
+            "https://abcnews.com/abcnews/internationalheadlines",
+        ),
+        RSSFuente(
+            "abcnews",
+            "politics",
+            "https://abcnews.com/abcnews/politicsheadlines",
         ),
         RSSFuente(
             "abc",
             "",
             "https://www.abc.es/rss/feeds/abcPortada.xml",
-            categoria_iptc="Sociedad",
         ),
         RSSFuente(
             "bbc",
             "mundo",
             "https://feeds.bbci.co.uk/news/world/rss.xml",
-            categoria_iptc="Política",
         ),
         RSSFuente(
             "rtve",
             "noticias",
             "https://api2.rtve.es/rss/temas_noticias.xml",
-            categoria_iptc="Sociedad",
         ),
         RSSFuente(
             "elconfidencial",
             "mundo",
             "https://rss.elconfidencial.com/mundo/",
-            categoria_iptc="Política",
         ),
         RSSFuente(
             "marca",
             "primera_division",
             "https://objetos.estaticos-marca.com/rss/futbol/primera-division.xml",
-            categoria_iptc="Deporte",
+        ),
+        RSSFuente(
+            "marca",
+            "segunda_division",
+            "https://objetos.estaticos-marca.com/rss/futbol/segunda-division.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "mas_futbol",
+            "https://objetos.estaticos-marca.com/rss/futbol/mas-futbol.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "copa_del_rey",
+            "https://objetos.estaticos-marca.com/rss/futbol/copa-rey.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "furbol_femenino",
+            "https://objetos.estaticos-marca.com/rss/futbol/futbol-femenino.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "seleccion_española",
+            "https://objetos.estaticos-marca.com/rss/futbol/seleccion.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "futbol_sala",
+            "https://objetos.estaticos-marca.com/rss/futbol/futbol-sala.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "futbol_internacional",
+            "https://objetos.estaticos-marca.com/rss/futbol/futbol-internacional.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "champions_league",
+            "https://objetos.estaticos-marca.com/rss/futbol/champions-league.xml",
+
+        ),
+        RSSFuente(
+            "marca",
+            "europa_league",
+            "https://objetos.estaticos-marca.com/rss/futbol/europa-league.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "premier_league",
+            "https://objetos.estaticos-marca.com/rss/futbol/premier-league.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "bundersliga",
+            "https://objetos.estaticos-marca.com/rss/futbol/bundesliga.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "liga_italiana",
+            "https://objetos.estaticos-marca.com/rss/futbol/liga-italiana.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "liga_francesa",
+            "https://objetos.estaticos-marca.com/rss/futbol/liga-francesa.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "mundial_de_clubes",
+            "https://objetos.estaticos-marca.com/rss/futbol/mundial-de-clubes.xml",
+        ),
+        RSSFuente(
+            "marca",
+            "america",
+            "https://objetos.estaticos-marca.com/rss/futbol/america.xml",
         ),
         RSSFuente(
             "esdiario",
             "",
             "https://www.esdiario.com/rss/home.xml",
-            categoria_iptc="Sociedad",
         ),
         RSSFuente(
             "antena3",
             "",
             "https://www.antena3.com/noticias/rss/4013050.xml",
-            categoria_iptc="Sociedad",
         ),
         RSSFuente(
             "ministerio_dsa",
             "",
             "https://www.dsca.gob.es/es/rss-noticias.xml",
-            categoria_iptc="Política",
         ),
         RSSFuente(
             "moncloa",
             "",
             "https://www.lamoncloa.gob.es/paginas/rss.aspx",
-            categoria_iptc="Política",
         ),
     ]
 

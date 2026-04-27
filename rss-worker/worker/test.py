@@ -10,6 +10,7 @@ def main() -> int:
         cols_req = [
             db.col_rss_entradas.NOMBRE_COLECCION,
             db.col_rss_fuentes.NOMBRE_COLECCION,
+            db.col_rss_cat_iptc.NOMBRE_COLECCION,
             db.col_user_sesions.NOMBRE_COLECCION,
             db.col_users.NOMBRE_COLECCION,
             db.col_alertas.NOMBRE_COLECCION,

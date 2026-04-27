@@ -22,22 +22,29 @@ def configure_logging() -> None:
 
 
 def fetch_de_entradas(db: Database) -> None:
-    fuentes: list[RSSFuente] = db.col_rss_fuentes.lista_fuentes()
-    logger.info("Procesando %s fuentes RSS", len(fuentes))
+    fuentes = db.col_rss_fuentes.lista_fuentes()
+    logger.info("Iniciando procesamiento de %d fuentes RSS", len(fuentes))
 
-    inserted_entries = 0
+    total_nuevas = 0
     for fuente in fuentes:
-        if fuente.activo is False:
-            continue
         try:
             for entrada in fuente.obtener_entradas():
-                resultado = db.col_rss_entradas.insertar(entrada)
-                if resultado is not None:
-                    inserted_entries += 1
+                if entrada.categorias_raw:
+                    ids_iptc = {
+                        db.col_rss_cat_iptc.id_por_nombre(cat_nombre)
+                        for cat_nombre in entrada.categorias_raw
+                    }
+                    
+                    entrada.categorias = [i for i in ids_iptc if i is not None]
+                if db.col_rss_entradas.insertar(entrada) is not None:
+                    total_nuevas += 1
+            
+            db.col_rss_fuentes.actualizar_categoria_fuente(fuente.url)
+            
         except Exception:
-            logger.exception("Fallo la ingesta para la fuente %s", fuente.url)
+            logger.exception("Error crítico en ingesta de fuente: %s", fuente.url)
 
-    logger.info("Ciclo RSS completado. Nuevas entradas insertadas: %s", inserted_entries)
+    logger.info("Ciclo completado. Nuevas entradas detectadas: %d", total_nuevas)
 
 
 def process_alerts_safely(db: Database) -> int:
@@ -49,6 +56,16 @@ def process_alerts_safely(db: Database) -> int:
         return 0
 
 
+def importar_categorias_iptc(db: Database):
+    from rss.iptc import LOCALIZACION_JSON_IPTC
+    import json
+
+    with open(LOCALIZACION_JSON_IPTC, "r", encoding="utf-8") as f:
+        datos = json.load(f)
+
+    db.col_rss_cat_iptc.insertar_json(datos)
+
+
 def main() -> None:
     configure_logging()
     entorno = Entorno()
@@ -56,7 +73,16 @@ def main() -> None:
     api_hilo = threading.Thread(target=api_task, daemon=True)
     api_hilo.start()
 
+    importar_categorias_iptc(db)
+
     for feed in generar_lista_estandar_feeds():
+        categoria_str = feed.categoria_iptc_string()
+        if categoria_str:
+            categoria_id = db.col_rss_cat_iptc.id_por_nombre(categoria_str)
+            feed.categoria_iptc = categoria_id
+        else:
+            feed.categoria_iptc = None
+
         db.col_rss_fuentes.insertar(feed)
 
     if entorno.run_once == "true":
