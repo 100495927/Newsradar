@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -33,3 +33,14 @@ class Alert(AlertBase):
     id: int
     user_id: int
     enabled: bool = True
+
+
+NotificationChannel = Literal["app", "email"]
+
+
+class AlertNotificationSettings(BaseModel):
+    channels: List[NotificationChannel] = Field(default_factory=lambda: ["app", "email"])
+
+
+class AlertNotificationSettingsUpdate(BaseModel):
+    channels: List[NotificationChannel] = Field(..., min_length=1)

@@ -65,3 +65,27 @@ def build_notification_doc(
         "created_at": timestamp,
         "updated_at": timestamp,
     }
+
+
+def build_email_body(alert: dict, matches: list[dict], timestamp: datetime) -> str:
+    """Construye el contenido textual del email a partir de la notificacion."""
+    lines = [
+        f"Actualizacion de {alert.get('name', 'alerta')}",
+        f"Fecha de procesamiento: {timestamp.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+        f"Coincidencias detectadas: {len(matches)}",
+        "",
+    ]
+
+    for index, match in enumerate(matches, start=1):
+        lines.extend(
+            [
+                f"{index}. {match.get('title') or 'Sin titulo'}",
+                f"Origen: {match.get('source') or 'desconocido'}",
+                f"Fecha: {match.get('published_at') or 'desconocida'}",
+                f"Resumen: {match.get('summary') or 'Sin resumen'}",
+                f"Enlace: {match.get('link') or 'Sin enlace'}",
+                "",
+            ]
+        )
+
+    return "\n".join(lines).strip()

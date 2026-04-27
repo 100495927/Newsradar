@@ -124,15 +124,48 @@ services:
       RSS_WORKER_INTERVAL_SECONDS: "60"
       RSS_WORKER_RUN_ONCE: "false"
       RSS_WORKER_UVICORN_PORT: "8000"
-    command: ["python", "/app/rss-worker/worker/main.py"]
+    command: ["python", "/app/rss-worker/rss_worker/main.py"]
     healthcheck:
-      test: ["CMD", "python", "/app/rss-worker/worker/test.py"]
+      test: ["CMD", "python", "/app/rss-worker/rss_worker/healthcheck.py"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 15s
     ports:
       - "${RSS_WORKER_UVICORN_EXPOSE_PORT:-12670}:8000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - newsradar_net
+
+  alert-worker:
+    build:
+      context: .
+      dockerfile: rss-worker/Dockerfile
+    container_name: newsradar-alert-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PYTHONUNBUFFERED: "1"
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+      ALERT_WORKER_INTERVAL_SECONDS: "60"
+      ALERT_WORKER_RUN_ONCE: "false"
+    command: ["python", "/app/rss-worker/alert_worker/main.py"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "from shared.mongo import Database; Database().ping()",
+        ]
+      interval: 30s
+      timeout: 8s
+      retries: 5
+      start_period: 20s
     depends_on:
       mongodb:
         condition: service_healthy

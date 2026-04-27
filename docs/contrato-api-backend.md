@@ -1,6 +1,6 @@
 # Contrato API Backend NewsRadar
 
-Fecha: 2026-04-18
+Fecha: 2026-04-26
 
 ## 1. Objetivo
 
@@ -30,9 +30,14 @@ Diferencias residuales que siguen existiendo:
   - `GET /api/v1/auth/verify/{token}`
   - `POST /api/v1/auth/forgot-password`
   - `POST /api/v1/auth/reset-password`
+  - `GET /api/v1/users/{user_id}/alerts/{alert_id}/notification-settings`
+  - `PUT /api/v1/users/{user_id}/alerts/{alert_id}/notification-settings`
+  - `GET /api/v1/users/{user_id}/notifications`
+  - `GET /api/v1/users/{user_id}/notifications/{notification_id}`
+  - `PATCH /api/v1/users/{user_id}/notifications/{notification_id}/read`
 - En los modelos de usuario actuales `organization` es opcional, mientras que en el AG original era obligatoria.
 - `POST /api/v1/auth/register` devuelve `201 Created` en la implementacion actual; en el AG original no fijaba `201` y por defecto quedaba en `200 OK`.
-- `POST /api/v1/users/{user_id}/alerts` anade una restriccion funcional adicional: requiere rol `admin` o `manager`.
+- `POST /api/v1/users/{user_id}/alerts` anade una restriccion funcional adicional: requiere rol `manager`.
 - La autenticacion interna ya no usa tokens en memoria como el AG original; usa JWT. El shape externo del token sigue siendo compatible: `{ "access_token": "...", "token_type": "bearer" }`.
 
 Por tanto, a efectos de trabajo de backend y frontend, el contrato util debe considerarse el del backend actual modular, con las diferencias anteriores anotadas como desviaciones o extensiones respecto al AG.
@@ -262,7 +267,7 @@ Nota: en la implementacion actual `organization` puede venir como `null` u omiti
 | Metodo | Ruta | Auth | Request | Response | Notas |
 |---|---|---|---|---|---|
 | GET | `/api/v1/users/{user_id}/alerts` | Si | Path param `user_id` | `List[Alert]` | |
-| POST | `/api/v1/users/{user_id}/alerts` | Si | `AlertCreate` | `Alert` | `201 Created`; requiere rol `admin` o `manager` |
+| POST | `/api/v1/users/{user_id}/alerts` | Si | `AlertCreate` | `Alert` | `201 Created`; requiere rol `manager` |
 | GET | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | Path params | `Alert` | |
 | PUT | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | `AlertUpdate` | `Alert` | |
 | DELETE | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | Path params | Sin body | `204 No Content`; borra notificaciones asociadas |
@@ -312,18 +317,63 @@ Nota: en la implementacion actual `organization` puede venir como `null` u omiti
 | PUT | `/api/v1/stats/{stats_id}` | Si | `StatsUpdate` | `Stats` | |
 | DELETE | `/api/v1/stats/{stats_id}` | Si | Path param `stats_id` | Sin body | `204 No Content` |
 
+### 5.10 Extensiones del backend fuera del contrato original
+
+Esta subseccion describe funcionalidades implementadas en el backend actual que no forman parte de la API original entregada por AG.
+
+Regla de interpretacion:
+
+- estas rutas no pertenecen al contrato base
+- estas rutas son extensiones especificas del proyecto actual
+- frontend, tests y documentacion deben tratarlas como extension y no como parte de la API normal/AG
+
+#### 5.10.1 Configuracion de entrega por alerta
+
+El enunciado si parece pedir esta capacidad y la vincula a la alerta, no al perfil. La frase relevante es:
+
+- "La alerta se podra configurar para que envie notificaciones al buzon de la aplicacion o al correo electronico del usuario"
+
+Por tanto, la interpretacion adoptada es esta:
+
+- la configuracion pertenece a cada alerta
+- no se ha encontrado en la API AG original un campo equivalente en `Alert`
+- no se ha encontrado en perfil de usuario ni en otros modelos del AG un hueco contractual para expresar esta configuracion
+- para no romper el contrato original, esta capacidad se expone como extension
+
+| Metodo | Ruta | Auth | Request | Response | Notas |
+|---|---|---|---|---|---|
+| GET | `/api/v1/users/{user_id}/alerts/{alert_id}/notification-settings` | Si | Path params | `{ "channels": ["app", "email"] }` | Extension fuera del contrato original |
+| PUT | `/api/v1/users/{user_id}/alerts/{alert_id}/notification-settings` | Si | `{ "channels": ["app"] }` o similar | `{ "channels": [...] }` | Extension fuera del contrato original |
+
+#### 5.10.2 Buzon global del usuario
+
+Estas rutas exponen la notificacion interna rica persistida en MongoDB.
+
+Tambien son extension porque el modelo publico `Notification` del AG solo incluye:
+
+- `id`
+- `alert_id`
+- `timestamp`
+- `metrics`
+
+| Metodo | Ruta | Auth | Request | Response | Notas |
+|---|---|---|---|---|---|
+| GET | `/api/v1/users/{user_id}/notifications` | Si | Path param `user_id` | `List[NotificationMailboxItem]` | Extension fuera del contrato original |
+| GET | `/api/v1/users/{user_id}/notifications/{notification_id}` | Si | Path params | `NotificationMailboxItem` | Extension fuera del contrato original |
+| PATCH | `/api/v1/users/{user_id}/notifications/{notification_id}/read` | Si | Path params | `{ "id": 1, "read_at": "..." }` | Extension fuera del contrato original |
+
 ## 6. Observaciones de implementacion que conviene no confundir con el contrato
 
 - El backend actual esta dividido por modulos, pero `auth/routes.py` concentra tambien los endpoints de `users` y `roles`.
-- La persistencia es mixta:
-  - MongoDB para usuarios, fuentes, canales RSS y stats.
-  - Memoria para roles, alertas, categorias y notificaciones.
+- La persistencia actual es:
+  - MongoDB para usuarios, fuentes, canales RSS, alertas, notificaciones, stats y counters.
+  - Memoria para roles y categorias.
 - El contrato externo de la API no depende de esa separacion interna, pero si afecta a semillas, tests y comportamiento de arranque.
-- En `backend/app/app.py` el `startup` esta actualmente en modo "bypass temporal", asi que la carga automatica de roles y admin no esta activa. Esto no cambia las rutas del contrato, pero si puede afectar al uso real de endpoints que dependen de roles.
+- En `backend/app/app.py` el `startup` de semillas si esta activo actualmente.
 
 ## 7. Recomendacion de uso
 
-Si el equipo necesita una referencia contractual unica para seguir desarrollando frontend, tests o integraciones, la base debe ser este documento y no el informe del `2026-04-15`, porque ese informe ya no refleja los cambios introducidos por el commit `89faddb`.
+Si el equipo necesita una referencia contractual unica para seguir desarrollando frontend, tests o integraciones, la base debe ser este documento y no el informe del `2026-04-15`, porque ese informe ya no refleja los cambios introducidos despues de la reconciliacion inicial.
 
 Si en algun momento se quiere volver a una conformidad estricta con el AG original, los ajustes pendientes a revisar son:
 
@@ -331,3 +381,4 @@ Si en algun momento se quiere volver a una conformidad estricta con el AG origin
 - Decidir si `POST /auth/register` debe volver a `200 OK` o si se acepta `201 Created` como nueva convencion.
 - Decidir si las extensiones de verificacion y reseteo de password pasan a formar parte oficial del contrato compartido.
 - Decidir si la restriccion de rol en creacion de alertas debe considerarse regla funcional oficial del producto.
+- Decidir si las rutas de configuracion de entrega y buzon global se mantienen como extension permanente o se documentan en una futura v2 del contrato.

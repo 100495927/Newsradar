@@ -16,4 +16,4 @@ ENV PYTHONPATH="/app:/app/rss-worker"
 
 WORKDIR /app/rss-worker
 
-CMD ["python", "/app/rss-worker/worker/main.py"]
+CMD ["python", "/app/rss-worker/rss_worker/main.py"]
