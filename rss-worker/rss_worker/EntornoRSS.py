@@ -3,7 +3,7 @@ from os import environ
 
 
 @dataclass
-class Entorno:
+class EntornoRSS:
     VARENV_INTERVALO_RSS = "RSS_WORKER_INTERVAL_SECONDS"
     VARENV_RUN_ONCE = "RSS_WORKER_RUN_ONCE"
     VARENV_PUERTO_UVICORN = "RSS_WORKER_UVICORN_PORT"
@@ -42,4 +42,4 @@ class Entorno:
             raise ValueError("Puerto de uvicorn no encontrado")
         return int(self.__uvicorn_port)
 
-__all__ = ["Entorno"]
+__all__ = ["EntornoRSS"]

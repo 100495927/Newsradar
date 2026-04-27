@@ -1,12 +1,12 @@
 from shared.mongo import Database
-from Entorno import Entorno
+from EntornoRSS import EntornoRSS
 from rss.links_estandar import generar_lista_estandar_feeds
 import logging
 from alerts import process_alerts
 from main import LOGGER_NOMBRE
 from time import sleep
 
-entorno = Entorno()
+entorno = EntornoRSS()
 db = Database()
 logger = logging.getLogger(LOGGER_NOMBRE)
 

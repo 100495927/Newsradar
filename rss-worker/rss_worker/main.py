@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import threading
 
-from worker.api_fuentes import api_task
+from api_fuentes import api_task
 
 LOGGER_NOMBRE = "rssworker"
 logger = logging.getLogger(LOGGER_NOMBRE)

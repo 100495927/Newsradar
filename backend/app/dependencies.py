@@ -13,6 +13,26 @@ from .store import roles_store, users_col
 
 security = HTTPBearer(auto_error=False)
 
+LEGACY_DEFAULT_EMAILS = {
+    "AdminDefault@newsradar.local": "AdminDefault@newsradar.com",
+    "GestorDefault@newsradar.local": "GestorDefault@newsradar.com",
+    "LectorDefault@newsradar.local": "LectorDefault@newsradar.com",
+}
+
+
+def normalize_legacy_user_doc(doc: dict) -> dict:
+    """Migra en lectura los usuarios semilla antiguos con email .local."""
+    normalized_doc = {k: v for k, v in doc.items() if k != "_id"}
+    legacy_email = normalized_doc.get("email")
+    canonical_email = LEGACY_DEFAULT_EMAILS.get(legacy_email)
+    if canonical_email:
+        normalized_doc["email"] = canonical_email
+        users_col.update_one(
+            {"id": normalized_doc["id"], "email": legacy_email},
+            {"$set": {"email": canonical_email}},
+        )
+    return normalized_doc
+
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -30,7 +50,7 @@ def get_current_user(
     if not doc:
         raise HTTPException(status_code=401, detail="Usuario inválido")
 
-    doc = {k: v for k, v in doc.items() if k != "_id"}
+    doc = normalize_legacy_user_doc(doc)
     return UserInDB(**doc)
 
 
@@ -46,6 +66,27 @@ def sanitize_user(user: UserInDB) -> User:
     )
 
 
+def user_has_manager_role(user: UserInDB) -> bool:
+    """Indica si el usuario autenticado puede operar como gestor."""
+    if user.role == "manager":
+        return True
+    return any(
+        roles_store[r_id].name == "manager"
+        for r_id in user.role_ids
+        if r_id in roles_store
+    )
+
+
+def ensure_user_can_access(target_user_id: int, user: UserInDB) -> None:
+    """Permite acceso al propio usuario o a un gestor."""
+    if user.id == target_user_id or user_has_manager_role(user):
+        return
+    raise HTTPException(
+        status_code=403,
+        detail="No tienes permiso para acceder a los recursos de este usuario",
+    )
+
+
 def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
     """Valida el requisito de caducidad de 24 horas."""
     if not fecha_creacion:
@@ -55,11 +96,7 @@ def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
 
 def ensure_gestor_role(user: UserInDB = Depends(get_current_user)) -> UserInDB:
     """Verifica que el usuario tenga rol de gestor."""
-    if user.role == "manager":
-        return user
-
-    user_role_names = {roles_store[r_id].name for r_id in user.role_ids if r_id in roles_store}
-    if "manager" not in user_role_names:
+    if not user_has_manager_role(user):
         raise HTTPException(
             status_code=403,
             detail="Acceso denegado: Se requiere rol de Gestor de NewsRadar",

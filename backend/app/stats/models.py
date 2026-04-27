@@ -26,23 +26,31 @@ class Stats(StatsBase):
     id: int
 
 
-# Nuevos modelos para el panel de control
+# Dashboard models
 
 class CategoryCount(BaseModel):
-    id: str  # Nombre de la categoría
+    id: str
     total: int
+
 
 class GlobalDashboard(BaseModel):
     n_fuentes: int
+    n_canales_rss: int
     n_noticias: int
     n_alertas: int
     alertas_por_categoria: List[CategoryCount]
+    noticias_por_categoria: List[CategoryCount]
 
 
 class FeedStats(BaseModel):
     feed_id: int
     n_noticias: int
     n_alertas: int
+
+
+class TimelineEntry(BaseModel):
+    fecha: str
+    total: int
 
 
 class WordCloudItem(BaseModel):

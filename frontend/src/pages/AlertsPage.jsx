@@ -1,17 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import TopNavBar from '../components/TopNavBar'
 import SideNavBar from '../components/SideNavBar'
 import MobileNav from '../components/MobileNav'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../api/apiClient'
-
-const categories = [
-  { value: 'FIN_MRKT', label: 'Finanzas y Mercados' },
-  { value: 'SEC_POL', label: 'Seguridad Política' },
-  { value: 'TECH', label: 'Tecnología' },
-  { value: 'ENERGY', label: 'Energía' },
-  { value: 'HEALTH', label: 'Salud' },
-]
 
 // Map backend Alert to local shape
 function toLocal(a) {
@@ -25,12 +18,21 @@ function toLocal(a) {
 }
 
 function AlertsPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [newAlert, setNewAlert] = useState({ name: '', cat: 'FIN_MRKT', cron: '' })
   const [error, setError] = useState('')
+
+  const categories = [
+    { value: 'FIN_MRKT', label: t('categories.FIN_MRKT') },
+    { value: 'SEC_POL', label: t('categories.SEC_POL') },
+    { value: 'TECH', label: t('categories.TECH') },
+    { value: 'ENERGY', label: t('categories.ENERGY') },
+    { value: 'HEALTH', label: t('categories.HEALTH') },
+  ]
 
   useEffect(() => {
     if (user?.id) fetchAlerts()
@@ -40,7 +42,7 @@ function AlertsPage() {
     try {
       setLoading(true)
       const res = await apiFetch(`/api/v1/users/${user.id}/alerts`)
-      if (!res.ok) throw new Error('Error al cargar alertas')
+      if (!res.ok) throw new Error(t('alerts.errorLoad'))
       const data = await res.json()
       setAlerts(data.map(toLocal))
     } catch (err) {
@@ -93,7 +95,7 @@ function AlertsPage() {
       })
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.detail || 'Error al crear alerta')
+        throw new Error(err.detail || t('alerts.errorCreate'))
       }
       const saved = await res.json()
       setAlerts([...alerts, toLocal(saved)])
@@ -113,34 +115,34 @@ function AlertsPage() {
           <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
               <h1 className="text-4xl font-extrabold tracking-tighter text-primary-container mb-2">
-                Gestión de Alertas
+                {t('alerts.pageTitle')}
               </h1>
               <p className="text-on-primary-container font-medium max-w-lg">
-                Configure sus disparadores de inteligencia.
+                {t('alerts.pageSubtitle')}
               </p>
             </div>
             <button
               onClick={() => setShowModal(true)}
               className="bg-primary-container text-on-primary px-6 py-3 rounded-lg font-bold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all"
             >
-              <span className="material-symbols-outlined">add</span> Crear Nueva
-              Alerta
+              <span className="material-symbols-outlined">add</span>
+              {t('alerts.createButton')}
             </button>
           </header>
 
           <div className="bg-surface-container-low rounded-xl overflow-hidden">
             <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-surface-container-highest/50 border-b border-outline-variant/10">
               <div className="col-span-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-                Nombre de Alerta
+                {t('alerts.colName')}
               </div>
               <div className="col-span-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-                Categoría
+                {t('alerts.colCategory')}
               </div>
               <div className="col-span-3 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-                Frecuencia
+                {t('alerts.colFrequency')}
               </div>
               <div className="col-span-3 text-xs font-bold uppercase tracking-widest text-on-surface-variant text-right">
-                Estado
+                {t('alerts.colStatus')}
               </div>
             </div>
 
@@ -149,14 +151,14 @@ function AlertsPage() {
                 <span className="material-symbols-outlined animate-spin text-slate-400">
                   progress_activity
                 </span>
-                <span className="ml-2 text-slate-500">Cargando alertas...</span>
+                <span className="ml-2 text-slate-500">{t('alerts.loading')}</span>
               </div>
             ) : alerts.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
                 <span className="material-symbols-outlined text-4xl mb-2">
                   notifications_off
                 </span>
-                <p>No hay alertas configuradas</p>
+                <p>{t('alerts.empty')}</p>
               </div>
             ) : (
               alerts.map((a) => (
@@ -210,7 +212,7 @@ function AlertsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-slate-900">Nueva Alerta</h3>
+              <h3 className="text-2xl font-bold text-slate-900">{t('alerts.modalTitle')}</h3>
               <button
                 onClick={() => setShowModal(false)}
                 className="material-symbols-outlined text-slate-400 hover:text-slate-600"
@@ -222,29 +224,25 @@ function AlertsPage() {
             <form onSubmit={handleCreateAlert} className="space-y-6">
               <div className="space-y-2">
                 <label className="block text-xs font-bold uppercase text-slate-500">
-                  Nombre de Alerta
+                  {t('alerts.colName')}
                 </label>
                 <input
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
-                  placeholder="Ej: Volatilidad del Mercado"
+                  placeholder={t('alerts.namePlaceholder')}
                   value={newAlert.name}
-                  onChange={(e) =>
-                    setNewAlert({ ...newAlert, name: e.target.value })
-                  }
+                  onChange={(e) => setNewAlert({ ...newAlert, name: e.target.value })}
                   required
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-xs font-bold uppercase text-slate-500">
-                  Categoría
+                  {t('alerts.colCategory')}
                 </label>
                 <select
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
                   value={newAlert.cat}
-                  onChange={(e) =>
-                    setNewAlert({ ...newAlert, cat: e.target.value })
-                  }
+                  onChange={(e) => setNewAlert({ ...newAlert, cat: e.target.value })}
                 >
                   {categories.map((cat) => (
                     <option key={cat.value} value={cat.value}>
@@ -256,20 +254,16 @@ function AlertsPage() {
 
               <div className="space-y-2">
                 <label className="block text-xs font-bold uppercase text-slate-500">
-                  Frecuencia (Cron)
+                  {t('alerts.cronLabel')}
                 </label>
                 <input
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 font-mono text-sm"
                   placeholder="*/15 * * * *"
                   value={newAlert.cron}
-                  onChange={(e) =>
-                    setNewAlert({ ...newAlert, cron: e.target.value })
-                  }
+                  onChange={(e) => setNewAlert({ ...newAlert, cron: e.target.value })}
                   required
                 />
-                <p className="text-xs text-slate-400">
-                  Ejemplos: */15 * * * * (cada 15 min), 0 9 * * 1-5 (9AM L-V)
-                </p>
+                <p className="text-xs text-slate-400">{t('alerts.cronHint')}</p>
               </div>
 
               {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -279,13 +273,13 @@ function AlertsPage() {
                   onClick={() => setShowModal(false)}
                   className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors"
                 >
-                  Cancelar
+                  {t('alerts.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-6 py-2.5 bg-primary-container text-white rounded-lg font-medium transition-colors hover:opacity-90"
                 >
-                  Crear Alerta
+                  {t('alerts.createSubmit')}
                 </button>
               </div>
             </form>

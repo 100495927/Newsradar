@@ -5,9 +5,15 @@ from datetime import datetime, timezone
 from typing import Any
 
 from pymongo import ReturnDocument
+from shared.utils import (
+    floor_to_minute,
+    next_run_after,
+    next_run_on_or_after,
+    send_notification_email_with_error,
+)
 
 from .matcher import clean_descriptors, find_matched_descriptors
-from .notifications import build_match, build_notification_doc, utc_now
+from .notifications import build_email_body, build_match, build_notification_doc, utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +43,81 @@ def process_alerts(db: Any, now: datetime | None = None) -> int:
     return created_notifications
 
 
-def _process_single_alert(app_db: Any, alert: dict, timestamp: datetime) -> bool:
+def process_due_alerts(db: Any, now: datetime | None = None) -> int:
+    """Process only alerts scheduled to run at the current minute."""
+    app_db = db.db_app
+    timestamp = floor_to_minute(now or utc_now())
+    created_notifications = 0
+
+    _initialize_unscheduled_alerts(app_db, timestamp)
+
+    due_cursor = app_db["alerts"].find(
+        {
+            "enabled": True,
+            "next_run_at": {"$lte": timestamp},
+        }
+    )
+    for alert in due_cursor:
+        try:
+            next_run_at = _next_alert_run(alert, timestamp)
+            if _process_single_alert(app_db, alert, timestamp, next_run_at):
+                created_notifications += 1
+        except Exception:
+            logger.exception("Fallo procesando alerta programada %s", alert.get("id"))
+
+    if created_notifications:
+        logger.info(
+            "Alertas programadas procesadas. Notificaciones creadas: %s",
+            created_notifications,
+        )
+    else:
+        logger.info("Alertas programadas procesadas sin nuevas notificaciones")
+
+    return created_notifications
+
+
+def deliver_pending_notifications(db: Any, now: datetime | None = None) -> int:
+    """Intenta enviar por email las notificaciones que siguen pendientes."""
+    app_db = db.db_app
+    timestamp = now or utc_now()
+    delivered = 0
+
+    cursor = app_db["notifications"].find(
+        {"email_status": "pending"},
+        {"_id": 0},
+    ).sort("created_at", 1)
+    for notification_doc in cursor:
+        try:
+            alert = app_db["alerts"].find_one(
+                {"id": notification_doc["alert_id"]},
+                {"_id": 0},
+            ) or {
+                "id": notification_doc["alert_id"],
+                "user_id": notification_doc["user_id"],
+                "name": f"alerta {notification_doc['alert_id']}",
+            }
+            if _send_email_for_notification(app_db, alert, notification_doc, timestamp):
+                delivered += 1
+        except Exception:
+            logger.exception(
+                "Fallo entregando notificacion pendiente %s",
+                notification_doc.get("id"),
+            )
+
+    if delivered:
+        logger.info("Notificaciones pendientes enviadas por email: %s", delivered)
+    else:
+        logger.info("No habia notificaciones pendientes enviables por email")
+
+    return delivered
+
+
+def _process_single_alert(
+    app_db: Any,
+    alert: dict,
+    timestamp: datetime,
+    next_run_at: datetime | None = None,
+) -> bool:
     descriptors = clean_descriptors(alert.get("descriptors"))
     # Si la alerta es nueva, empezamos a contar desde su creacion para no incluir historico previo.
     since = alert.get("last_checked_at") or alert.get("created_at") or timestamp
@@ -69,19 +149,52 @@ def _process_single_alert(app_db: Any, alert: dict, timestamp: datetime) -> bool
     if matches:
         # Una notificacion por alerta y ciclo agrupa todas las noticias detectadas.
         notification_id = _next_sequence(app_db, "notifications", timestamp)
-        app_db["notifications"].insert_one(
-            build_notification_doc(
-                notification_id=notification_id,
-                alert=alert,
-                matches=matches,
-                timestamp=timestamp,
-                descriptors_count=len(descriptors),
-            )
+        notification_doc = build_notification_doc(
+            notification_id=notification_id,
+            alert=alert,
+            matches=matches,
+            timestamp=timestamp,
+            descriptors_count=len(descriptors),
         )
+        app_db["notifications"].insert_one(notification_doc)
+        _deliver_notification(app_db, alert, notification_doc, timestamp)
         created = True
 
-    _mark_alert_checked(app_db, alert["id"], timestamp)
+    _mark_alert_checked(app_db, alert["id"], timestamp, next_run_at)
     return created
+
+
+def _initialize_unscheduled_alerts(app_db: Any, timestamp: datetime) -> None:
+    unscheduled_cursor = app_db["alerts"].find(
+        {
+            "enabled": True,
+            "$or": [
+                {"next_run_at": None},
+                {"next_run_at": {"$exists": False}},
+            ],
+        }
+    )
+    for alert in unscheduled_cursor:
+        try:
+            next_run = next_run_on_or_after(alert["cron_expression"], timestamp)
+            app_db["alerts"].update_one(
+                {"id": alert["id"]},
+                {
+                    "$set": {
+                        "next_run_at": next_run,
+                        "updated_at": timestamp,
+                    }
+                },
+            )
+        except Exception:
+            logger.exception(
+                "No se pudo inicializar next_run_at para alerta %s",
+                alert.get("id"),
+            )
+
+
+def _next_alert_run(alert: dict, timestamp: datetime) -> datetime:
+    return next_run_after(alert["cron_expression"], timestamp)
 
 
 def _entry_already_notified(app_db: Any, alert_id: int, rss_entry_hash: str | None) -> bool:
@@ -107,6 +220,49 @@ def _source_name(app_db: Any, entry: dict, source_cache: dict[Any, str | None]) 
     return source_cache[source_id]
 
 
+def _deliver_notification(
+    app_db: Any,
+    alert: dict,
+    notification_doc: dict,
+    timestamp: datetime,
+) -> None:
+    if "email" not in (notification_doc.get("delivery_channels") or []):
+        return
+
+    _send_email_for_notification(app_db, alert, notification_doc, timestamp)
+
+
+def _send_email_for_notification(
+    app_db: Any,
+    alert: dict,
+    notification_doc: dict,
+    timestamp: datetime,
+) -> bool:
+    if "email" not in (notification_doc.get("delivery_channels") or []):
+        return False
+
+    user = app_db["users"].find_one({"id": alert["user_id"]}, {"email": 1, "_id": 0})
+    email = None if not user else user.get("email")
+    body = build_email_body(alert, notification_doc.get("matches", []), timestamp)
+    sent, error = send_notification_email_with_error(
+        email or "",
+        notification_doc.get("subject", "Actualizacion de alerta"),
+        body,
+    )
+
+    update_fields = {
+        "updated_at": timestamp,
+        "email_status": "sent" if sent else "failed",
+        "email_error": error,
+    }
+    update_fields["email_sent_at"] = timestamp if sent else None
+    app_db["notifications"].update_one(
+        {"id": notification_doc["id"]},
+        {"$set": update_fields},
+    )
+    return sent
+
+
 def _next_sequence(app_db: Any, counter_name: str, timestamp: datetime) -> int:
     result = app_db["counters"].find_one_and_update(
         {"_id": counter_name},
@@ -120,14 +276,21 @@ def _next_sequence(app_db: Any, counter_name: str, timestamp: datetime) -> int:
     return int(result["seq"])
 
 
-def _mark_alert_checked(app_db: Any, alert_id: int, timestamp: datetime) -> None:
+def _mark_alert_checked(
+    app_db: Any,
+    alert_id: int,
+    timestamp: datetime,
+    next_run_at: datetime | None,
+) -> None:
+    update_fields = {
+        "last_checked_at": timestamp,
+        "last_run_at": timestamp,
+        "updated_at": timestamp,
+    }
+    if next_run_at is not None:
+        update_fields["next_run_at"] = next_run_at
+
     app_db["alerts"].update_one(
         {"id": alert_id},
-        {
-            "$set": {
-                "last_checked_at": timestamp,
-                "last_run_at": timestamp,
-                "updated_at": timestamp,
-            }
-        },
+        {"$set": update_fields},
     )

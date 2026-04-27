@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import TopNavBar from '../components/TopNavBar'
 import SideNavBar from '../components/SideNavBar'
 import MobileNav from '../components/MobileNav'
 
 function ProfilePage() {
+  const { t } = useTranslation()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const timeoutRef = useRef(null)
@@ -32,7 +34,7 @@ function ProfilePage() {
         <div className="max-w-6xl mx-auto">
           <header className="mb-10">
             <h1 className="text-3xl font-extrabold text-primary tracking-tight mb-2">
-              Configuración de Perfil
+              {t('profile.pageTitle')}
             </h1>
           </header>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -48,7 +50,7 @@ function ProfilePage() {
                   john.doe@globalnews.org
                 </p>
                 <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase rounded-full">
-                  Activo
+                  {t('profile.statusActive')}
                 </span>
               </div>
             </div>
@@ -57,7 +59,7 @@ function ProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
                     <label className="block text-xs font-bold uppercase text-slate-500">
-                      Nombre
+                      {t('profile.firstName')}
                     </label>
                     <input
                       className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
@@ -66,7 +68,7 @@ function ProfilePage() {
                   </div>
                   <div className="space-y-2">
                     <label className="block text-xs font-bold uppercase text-slate-500">
-                      Apellido
+                      {t('profile.lastName')}
                     </label>
                     <input
                       className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
@@ -76,7 +78,7 @@ function ProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <label className="block text-xs font-bold uppercase text-slate-500">
-                    Correo
+                    {t('profile.email')}
                   </label>
                   <input
                     className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
@@ -91,13 +93,13 @@ function ProfilePage() {
                     <span className="material-symbols-outlined text-[18px]">
                       delete
                     </span>
-                    Borrar Perfil
+                    {t('profile.deleteButton')}
                   </button>
                   <button
                     onClick={handleSave}
                     className="px-10 py-3 bg-primary text-white rounded-lg text-sm font-bold shadow-md hover:opacity-90 transition-opacity"
                   >
-                    Guardar Perfil
+                    {t('profile.saveButton')}
                   </button>
                 </div>
               </div>
@@ -113,7 +115,7 @@ function ProfilePage() {
           <span className="material-symbols-outlined text-[20px]">
             check_circle
           </span>
-          <span className="font-medium">Perfil guardado exitosamente</span>
+          <span className="font-medium">{t('profile.savedMessage')}</span>
         </div>
       )}
 
@@ -129,29 +131,28 @@ function ProfilePage() {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-slate-900">
-                  Eliminar Perfil
+                  {t('profile.deleteModalTitle')}
                 </h3>
                 <p className="text-sm text-slate-500">
-                  Esta acción no se puede deshacer
+                  {t('profile.deleteModalWarning')}
                 </p>
               </div>
             </div>
             <p className="text-slate-600 mb-8">
-              ¿Estás seguro de que deseas eliminar tu perfil? Todos tus datos,
-              alertas y configuraciones serán eliminados permanentemente.
+              {t('profile.deleteModalBody')}
             </p>
             <div className="flex gap-4 justify-end">
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors"
               >
-                Cancelar
+                {t('profile.deleteModalCancel')}
               </button>
               <button
                 onClick={handleDeleteConfirm}
                 className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
               >
-                Sí, eliminar
+                {t('profile.deleteModalConfirm')}
               </button>
             </div>
           </div>

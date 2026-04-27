@@ -35,10 +35,10 @@ def main() -> int:
 
 
 def test_uvicorn():
-    from Entorno import Entorno
+    from EntornoRSS import EntornoRSS
     import requests
 
-    entorno = Entorno()
+    entorno = EntornoRSS()
     url = f"http://localhost:{entorno.puerto_uvicorn}/fuentes"
     data = {
         "medio": "Test Media",
