@@ -62,9 +62,14 @@ class ColeccionRssCategoriasIPTC(Coleccion):
             self._collection.replace_one({"_id": doc["_id"]}, doc, upsert=True)
 
     def id_por_nombre(self, nombre: str) -> int | None:
-        query = {"descripciones.nombre": {"$regex": f"^{nombre}$", "$options": "i"}}
+        from pymongo.collation import Collation
+        query = {"descripciones.nombre": nombre}
         
-        resultado = self._collection.find_one(query, {"_id": 1})
+        resultado = self._collection.find_one(
+            query, 
+            {"_id": 1},
+            collation=Collation(locale="es", strength=2)
+        )
         
         if resultado:
             return resultado["_id"]

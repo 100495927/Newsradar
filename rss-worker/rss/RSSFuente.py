@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from typing import Type
+from feedparser import parse
 
 from .RSSEntrada import RSSEntrada
 
@@ -29,8 +30,6 @@ class RSSFuente:
         self.categoria_iptc = categoria_iptc
 
     def obtener_entradas(self) -> list[RSSEntrada]:
-        from feedparser import parse
-
         entradas = parse(self.url).entries
         entradas_parseadas = []
         for entrada in entradas:

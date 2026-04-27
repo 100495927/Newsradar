@@ -132,5 +132,17 @@ class ColeccionRssFuentes(Coleccion):
                     },
                 )
 
+    def actualizar_categoria_fuentes_nulas(self):
+        query = {"categoria_iptc": None}
+        
+        fuentes_nulas = self._collection.find(query, {"url": 1})
+        
+        count = 0
+        for fuente in fuentes_nulas:
+            url = fuente.get("url")
+            if url:
+                self.actualizar_categoria_fuente(url)
+                count += 1
+
 
 __all__ = ["ColeccionRssFuentes"]

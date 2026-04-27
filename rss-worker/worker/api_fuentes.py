@@ -21,12 +21,16 @@ class FuenteJSON(BaseModel):
 @app.post("/fuentes")
 async def actualizar_fuente(fuente: FuenteJSON):
     try:
+        if fuente.categoria_iptc:
+            cat = db.col_rss_cat_iptc.id_por_nombre(fuente.categoria_iptc)
+        else:
+            cat = None
         objecto_fuente = RSSFuente(
             fuente.medio,
             fuente.rss,
             fuente.url,
             fuente.activo,
-            categoria_iptc=db.col_rss_cat_iptc.id_por_nombre(fuente.categoria_iptc),
+            categoria_iptc=cat,
         )
         db.col_rss_fuentes.insertar(objecto_fuente)
 
