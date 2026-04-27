@@ -63,9 +63,9 @@ def test_create_seed_data_creates_default_users_once(monkeypatch):
         "reader",
     }
     assert {doc["email"] for doc in fake_users_col.docs} == {
-        "AdminDefault@newsradar.local",
-        "GestorDefault@newsradar.local",
-        "LectorDefault@newsradar.local",
+        "AdminDefault@newsradar.com",
+        "GestorDefault@newsradar.com",
+        "LectorDefault@newsradar.com",
     }
     assert len(fake_users_col.docs) == 3
     assert sum(doc["role"] == "manager" for doc in fake_users_col.docs) == 2
@@ -112,6 +112,6 @@ def test_create_seed_data_converts_existing_admin_default_to_manager(monkeypatch
 
     app_module.create_seed_data()
 
-    admin_default = fake_users_col.find_one({"email": "AdminDefault@newsradar.local"})
+    admin_default = fake_users_col.find_one({"email": "AdminDefault@newsradar.com"})
     assert admin_default["role"] == "manager"
     assert admin_default["role_ids"] == [1]

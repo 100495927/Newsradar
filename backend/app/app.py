@@ -22,7 +22,8 @@ API_PREFIX = "/api/v1"
 
 DEFAULT_USERS = (
     {
-        "email": "AdminDefault@newsradar.local",
+        "email": "AdminDefault@newsradar.com",
+        "legacy_emails": ["AdminDefault@newsradar.local"],
         "first_name": "AdminDefault",
         "last_name": "NewsRadar",
         "organization": "NewsRadar",
@@ -30,7 +31,8 @@ DEFAULT_USERS = (
         "stored_role": "manager",
     },
     {
-        "email": "GestorDefault@newsradar.local",
+        "email": "GestorDefault@newsradar.com",
+        "legacy_emails": ["GestorDefault@newsradar.local"],
         "first_name": "GestorDefault",
         "last_name": "NewsRadar",
         "organization": "NewsRadar",
@@ -38,7 +40,8 @@ DEFAULT_USERS = (
         "stored_role": "manager",
     },
     {
-        "email": "LectorDefault@newsradar.local",
+        "email": "LectorDefault@newsradar.com",
+        "legacy_emails": ["LectorDefault@newsradar.local"],
         "first_name": "LectorDefault",
         "last_name": "NewsRadar",
         "organization": "NewsRadar",
@@ -86,27 +89,44 @@ def _get_role_id(role_name: str) -> int | None:
     return None
 
 
+def _next_seed_id(counter_key: str) -> int:
+    value = counters[counter_key]
+    counters[counter_key] += 1
+    return value
+
+
 def _ensure_role(role_name: str) -> int:
     role_id = _get_role_id(role_name)
     if role_id is not None:
         return role_id
 
-    role_id = next_id("roles")
+    role_id = _next_seed_id("roles")
     roles_store[role_id] = Role(id=role_id, name=role_name)
     return role_id
 
 
-def _seed_default_user(user_data: dict[str, str]) -> None:
+def _find_seeded_user(user_data: dict[str, object]) -> dict | None:
+    email_candidates = [user_data["email"], *user_data.get("legacy_emails", [])]
+    for email in email_candidates:
+        existing_user = users_col.find_one({"email": email})
+        if existing_user:
+            return existing_user
+    return None
+
+
+def _seed_default_user(user_data: dict[str, object]) -> None:
     role_id = _get_role_id(user_data["role_name"])
     if role_id is None:
         return
 
     now = datetime.now(timezone.utc)
-    if users_col.find_one({"email": user_data["email"]}):
+    existing_user = _find_seeded_user(user_data)
+    if existing_user:
         users_col.update_one(
-            {"email": user_data["email"]},
+            {"email": existing_user["email"]},
             {
                 "$set": {
+                    "email": user_data["email"],
                     "role_ids": [role_id],
                     "role": user_data["stored_role"],
                     "updated_at": now,
@@ -115,7 +135,7 @@ def _seed_default_user(user_data: dict[str, str]) -> None:
         )
         return
 
-    user_id = next_id("users")
+    user_id = _next_seed_id("users")
     users_col.insert_one(
         {
             "id": user_id,

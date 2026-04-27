@@ -13,6 +13,26 @@ from .store import roles_store, users_col
 
 security = HTTPBearer(auto_error=False)
 
+LEGACY_DEFAULT_EMAILS = {
+    "AdminDefault@newsradar.local": "AdminDefault@newsradar.com",
+    "GestorDefault@newsradar.local": "GestorDefault@newsradar.com",
+    "LectorDefault@newsradar.local": "LectorDefault@newsradar.com",
+}
+
+
+def normalize_legacy_user_doc(doc: dict) -> dict:
+    """Migra en lectura los usuarios semilla antiguos con email .local."""
+    normalized_doc = {k: v for k, v in doc.items() if k != "_id"}
+    legacy_email = normalized_doc.get("email")
+    canonical_email = LEGACY_DEFAULT_EMAILS.get(legacy_email)
+    if canonical_email:
+        normalized_doc["email"] = canonical_email
+        users_col.update_one(
+            {"id": normalized_doc["id"], "email": legacy_email},
+            {"$set": {"email": canonical_email}},
+        )
+    return normalized_doc
+
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -30,7 +50,7 @@ def get_current_user(
     if not doc:
         raise HTTPException(status_code=401, detail="Usuario inválido")
 
-    doc = {k: v for k, v in doc.items() if k != "_id"}
+    doc = normalize_legacy_user_doc(doc)
     return UserInDB(**doc)
 
 
