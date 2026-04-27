@@ -31,7 +31,7 @@ class ColeccionRssFuentes(Coleccion):
                 "url": {"bsonType": "string"},
                 "tipo": {"enum": ["source", "channel", None]},
                 "activo": {"bsonType": "bool"},
-                "categoria_iptc": {"bsonType": ["string", "null"]},
+                "categoria_iptc": {"bsonType": ["int", "null"]},
                 "deleted_at": {"bsonType": ["date", "null"]},
                 "creado": {"bsonType": "date"},
                 "actualizado": {"bsonType": "date"},
@@ -93,6 +93,56 @@ class ColeccionRssFuentes(Coleccion):
             "deleted_at": {"$exists": False},
         }
         return [RSSFuente.de_mongo(doc) for doc in self._collection.find(query)]
+
+    def obtener_categoria_frecuente(self, id_fuente_obj):
+        """
+        Busca la categoría IPTC (int) más común entre las entradas de una fuente.
+        """
+        pipeline = [
+            {"$match": {"id_fuente": id_fuente_obj}},
+            {"$unwind": "$categorias"},
+            {"$group": {"_id": "$categorias", "conteo": {"$sum": 1}}},
+            {"$sort": {"conteo": -1}},
+            {"$limit": 1},
+        ]
+
+        resultado = list(
+            self._db_padre.col_rss_entradas._collection.aggregate(pipeline)
+        )
+
+        if resultado:
+            return resultado[0]["_id"]
+        return None
+
+    def actualizar_categoria_fuente(self, url: str):
+        fuente_doc = self._collection.find_one({"url": url})
+
+        if fuente_doc and fuente_doc.get("categoria_iptc") is None:
+            id_fuente = fuente_doc["_id"]
+            categoria_sugerida = self.obtener_categoria_frecuente(id_fuente)
+
+            if categoria_sugerida:
+                self._collection.update_one(
+                    {"_id": id_fuente},
+                    {
+                        "$set": {
+                            "categoria_iptc": categoria_sugerida,
+                            "actualizado": datetime.now(timezone.utc),
+                        }
+                    },
+                )
+
+    def actualizar_categoria_fuentes_nulas(self):
+        query = {"categoria_iptc": None}
+        
+        fuentes_nulas = self._collection.find(query, {"url": 1})
+        
+        count = 0
+        for fuente in fuentes_nulas:
+            url = fuente.get("url")
+            if url:
+                self.actualizar_categoria_fuente(url)
+                count += 1
 
 
 __all__ = ["ColeccionRssFuentes"]

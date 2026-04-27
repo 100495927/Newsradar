@@ -5,10 +5,10 @@ from pydantic import BaseModel
 
 from rss import RSSFuente
 from shared.mongo import Database
-from rss_worker.settings import RssWorkerSettings
-
+from EntornoRSS import EntornoRSS
 
 app = FastAPI()
+entorno = EntornoRSS()
 db: Database | None = None
 
 
@@ -29,26 +29,31 @@ class FuenteJSON(BaseModel):
 
 @app.post("/fuentes")
 async def actualizar_fuente(fuente: FuenteJSON):
+    db = get_db()
     try:
+        if fuente.categoria_iptc:
+            cat = db.col_rss_cat_iptc.id_por_nombre(fuente.categoria_iptc)
+        else:
+            cat = None
         objecto_fuente = RSSFuente(
             fuente.medio,
             fuente.rss,
             fuente.url,
             fuente.activo,
-            categoria_iptc=fuente.categoria_iptc,
+            categoria_iptc=cat,
         )
-        get_db().col_rss_fuentes.insertar(objecto_fuente)
+        db.col_rss_fuentes.insertar(objecto_fuente)
 
         return {"message": "Fuente insertada"}
     except Exception as e:
         return {"message": str(e)}
 
 
+
 def api_task():
     import uvicorn
 
-    settings = RssWorkerSettings.from_env()
-    uvicorn.run(app, host="0.0.0.0", port=settings.puerto_uvicorn)
+    uvicorn.run(app, host="0.0.0.0", port=entorno.puerto_uvicorn)
 
 
 __all__ = ["api_task"]

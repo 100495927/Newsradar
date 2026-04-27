@@ -1,6 +1,4 @@
 import sys
-
-from rss_worker.settings import RssWorkerSettings
 from shared.mongo import Database
 
 
@@ -12,12 +10,16 @@ def main() -> int:
         cols_req = [
             db.col_rss_entradas.NOMBRE_COLECCION,
             db.col_rss_fuentes.NOMBRE_COLECCION,
+            db.col_rss_cat_iptc.NOMBRE_COLECCION,
             db.col_user_sesions.NOMBRE_COLECCION,
             db.col_users.NOMBRE_COLECCION,
+            db.col_alertas.NOMBRE_COLECCION,
+            db.col_notifications.NOMBRE_COLECCION,
+            db.col_counters.NOMBRE_COLECCION,
         ]
 
         for col in cols_req:
-            if col not in cols_ext:
+            if not col in cols_ext:
                 raise ValueError(f"Colecion {col} no encontradas")
     except Exception as exc:
         print(f"Healthcheck Error: {exc}", file=sys.stderr)
@@ -33,10 +35,11 @@ def main() -> int:
 
 
 def test_uvicorn():
+    from EntornoRSS import EntornoRSS
     import requests
 
-    settings = RssWorkerSettings.from_env()
-    url = f"http://localhost:{settings.puerto_uvicorn}/fuentes"
+    entorno = EntornoRSS()
+    url = f"http://localhost:{entorno.puerto_uvicorn}/fuentes"
     data = {
         "medio": "Test Media",
         "rss": "https://example.com/rss",

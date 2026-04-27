@@ -1,12 +1,13 @@
 from .api_fuentes import api_task
 from .healthcheck import main as healthcheck_main
-from .main import fetch_de_entradas, main
-from .settings import RssWorkerSettings
+from .main import main
+from .fetch_pipeline import fetch_entradas_task
+from .EntornoRSS import EntornoRSS
 
 __all__ = [
-    "RssWorkerSettings",
     "api_task",
-    "fetch_de_entradas",
+    "fetch_entradas_task",
     "healthcheck_main",
+    "EntornoRSS",
     "main",
 ]

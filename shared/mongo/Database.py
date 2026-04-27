@@ -21,7 +21,9 @@ class Database:
             f"?authSource={self.__entorno.root_db_name}"
         )
         self.__cliente_admin: pymongo.MongoClient = pymongo.MongoClient(uri)
-        self.__db__admin: pymongo.Database = self.__cliente_admin[self.__entorno.app_db_name]
+        self.__db__admin: pymongo.Database = self.__cliente_admin[
+            self.__entorno.app_db_name
+        ]
 
     def login_como_app(self):
         usuario_app = quote_plus(self.__entorno.app_usuario)
@@ -39,6 +41,7 @@ class Database:
 
         self.col_rss_entradas = colecciones.ColeccionRssEntradas(self)
         self.col_rss_fuentes = colecciones.ColeccionRssFuentes(self)
+        self.col_rss_cat_iptc = colecciones.ColeccionRssCategoriasIPTC(self)
         self.col_users = colecciones.ColeccionUsers(self)
         self.col_user_sesions = colecciones.ColeccionUserSessions(self)
         self.col_alertas = colecciones.ColeccionAlerts(self)
@@ -59,4 +62,3 @@ class Database:
     @property
     def db_app(self):
         return self.__db_app
-

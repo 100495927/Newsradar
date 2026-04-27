@@ -5,7 +5,7 @@ from time import sleep
 
 from alerts import deliver_pending_notifications, process_due_alerts
 from alert_worker.settings import AlertWorkerSettings
-from runtime_common import configure_logging, run_preflight
+from runtime_common import configure_logging
 from shared.mongo.Database import Database
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,6 @@ def main() -> None:
     configure_logging("alert-worker")
     settings = AlertWorkerSettings.from_env()
     db = Database()
-    run_preflight(db)
 
     if settings.alert_run_once == "true":
         process_due_alerts_safely(db)

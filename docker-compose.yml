@@ -151,7 +151,7 @@ services:
       PYTHONUNBUFFERED: "1"
       MONGO_HOST: mongodb
       MONGO_PORT: 27017
-      ALERT_WORKER_INTERVAL_SECONDS: "60"
+      ALERT_WORKER_INTERVAL_SECONDS: "60" # Usar el .env que para algo esta
       ALERT_WORKER_RUN_ONCE: "false"
     command: ["python", "/app/rss-worker/alert_worker/main.py"]
     healthcheck:
