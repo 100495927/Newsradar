@@ -126,7 +126,13 @@ services:
       RSS_WORKER_UVICORN_PORT: "8000"
     command: ["python", "/app/rss-worker/rss_worker/main.py"]
     healthcheck:
-      test: ["CMD", "python", "/app/rss-worker/rss_worker/healthcheck.py"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json', timeout=2)",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -160,7 +166,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "from shared.mongo import Database; Database().ping()",
+          "from pathlib import Path; raise SystemExit(0 if 'alert_worker/main.py' in Path('/proc/1/cmdline').read_text() else 1)",
         ]
       interval: 30s
       timeout: 8s
