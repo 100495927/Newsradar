@@ -38,6 +38,8 @@ def _doc_to_alert(doc: dict) -> Alert:
         name=doc["name"],
         descriptors=doc.get("descriptors", []),
         categories=doc.get("categories", []),
+        rss_channels_ids=doc.get("rss_channels_ids", []),
+        information_sources_ids=doc.get("information_sources_ids", []),
         cron_expression=doc["cron_expression"],
         enabled=doc.get("enabled", True),
     )

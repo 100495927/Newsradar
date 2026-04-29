@@ -1,6 +1,6 @@
 # Contrato API Backend NewsRadar
 
-Fecha: 2026-04-26
+Fecha: 2026-04-29
 
 ## 1. Objetivo
 
@@ -134,6 +134,11 @@ Nota: en la implementacion actual `organization` puede venir como `null` u omiti
 
 ### 4.3 Alertas y notificaciones
 
+Actualizacion contractual aplicada el `2026-04-29`:
+
+- `Alert`, `AlertCreate` y `AlertUpdate` incorporan los campos `rss_channels_ids` e `information_sources_ids`.
+- En esta fase el contrato publico ya refleja esos campos, aunque su explotacion funcional interna puede evolucionar despues.
+
 `AlertCategoryItem`
 
 ```json
@@ -154,7 +159,39 @@ Nota: en la implementacion actual `organization` puede venir como `null` u omiti
   "categories": [
     { "code": "politics", "label": "Politics" }
   ],
+  "rss_channels_ids": ["rss-elpais-politica", "rss-rtve-nacional"],
+  "information_sources_ids": ["elpais", "rtve"],
   "cron_expression": "0 0 * * *"
+}
+```
+
+`AlertCreate`
+
+```json
+{
+  "name": "Elecciones",
+  "descriptors": ["congreso", "senado"],
+  "categories": [
+    { "code": "politics", "label": "Politics" }
+  ],
+  "rss_channels_ids": ["rss-elpais-politica", "rss-rtve-nacional"],
+  "information_sources_ids": ["elpais", "rtve"],
+  "cron_expression": "0 0 * * *"
+}
+```
+
+`AlertUpdate`
+
+```json
+{
+  "name": "Elecciones Europa",
+  "descriptors": ["parlamento europeo"],
+  "categories": [
+    { "code": "politics", "label": "Politics" }
+  ],
+  "rss_channels_ids": ["rss-euronews-politics"],
+  "information_sources_ids": ["euronews"],
+  "cron_expression": "*/15 * * * *"
 }
 ```
 
