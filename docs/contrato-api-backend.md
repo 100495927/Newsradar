@@ -138,6 +138,8 @@ Actualizacion contractual aplicada el `2026-04-29`:
 
 - `Alert`, `AlertCreate` y `AlertUpdate` incorporan los campos `rss_channels_ids` e `information_sources_ids`.
 - En esta fase el contrato publico ya refleja esos campos, aunque su explotacion funcional interna puede evolucionar despues.
+- Aunque `categories` se modela como lista por compatibilidad y futura extension, funcionalmente la alerta debe llevar por ahora una sola categoria IPTC.
+- Si la alerta selecciona `rss_channels_ids` o `information_sources_ids`, esos canales o fuentes deben ser compatibles con la categoria de la alerta; en caso contrario la API respondera `400 Bad Request`.
 
 `AlertCategoryItem`
 
@@ -304,9 +306,9 @@ Actualizacion contractual aplicada el `2026-04-29`:
 | Metodo | Ruta | Auth | Request | Response | Notas |
 |---|---|---|---|---|---|
 | GET | `/api/v1/users/{user_id}/alerts` | Si | Path param `user_id` | `List[Alert]` | |
-| POST | `/api/v1/users/{user_id}/alerts` | Si | `AlertCreate` | `Alert` | `201 Created`; requiere rol `manager` |
+| POST | `/api/v1/users/{user_id}/alerts` | Si | `AlertCreate` | `Alert` | `201 Created`; requiere rol `manager`; `400` si la alerta no tiene exactamente una categoria valida o si sus fuentes/canales no son compatibles con ella |
 | GET | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | Path params | `Alert` | |
-| PUT | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | `AlertUpdate` | `Alert` | |
+| PUT | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | `AlertUpdate` | `Alert` | `400` si deja la alerta con categorias/fuentes incompatibles |
 | DELETE | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | Path params | Sin body | `204 No Content`; borra notificaciones asociadas |
 
 ### 5.6 Notificaciones
