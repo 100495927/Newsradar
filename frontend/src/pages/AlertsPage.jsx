@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import TopNavBar from '../components/TopNavBar'
 import SideNavBar from '../components/SideNavBar'
 import MobileNav from '../components/MobileNav'
+import MultiSelectSearch from '../components/MultiSelectSearch'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../api/apiClient'
 
@@ -14,6 +15,7 @@ function toLocal(a) {
     cat: a.categories?.[0]?.code ?? '',
     cron: a.cron_expression,
     enabled: a.enabled ?? true,
+    rssChannelIds: (a.rss_channels_ids ?? []).map(String),
   }
 }
 
@@ -23,8 +25,9 @@ function AlertsPage() {
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [newAlert, setNewAlert] = useState({ name: '', cat: 'FIN_MRKT', cron: '' })
+  const [newAlert, setNewAlert] = useState({ name: '', cat: 'FIN_MRKT', cron: '', rssChannelIds: [] })
   const [error, setError] = useState('')
+  const [rssChannels, setRssChannels] = useState([])
 
   const categories = [
     { value: 'FIN_MRKT', label: t('categories.FIN_MRKT') },
@@ -36,7 +39,30 @@ function AlertsPage() {
 
   useEffect(() => {
     if (user?.id) fetchAlerts()
+    fetchRssChannels()
   }, [user?.id])
+
+  const fetchRssChannels = async () => {
+    try {
+      const res = await apiFetch('/api/v1/information-sources')
+      if (!res.ok) return
+      const sources = await res.json()
+      const channelLists = await Promise.all(
+        sources.map(async (src) => {
+          const r = await apiFetch(`/api/v1/information-sources/${src.id}/rss-channels`)
+          if (!r.ok) return []
+          const channels = await r.json()
+          return channels.map((ch) => ({
+            id: String(ch.id),
+            label: `${src.name} — ${ch.url}`,
+          }))
+        }),
+      )
+      setRssChannels(channelLists.flat())
+    } catch {
+      // silencioso si la API no está disponible
+    }
+  }
 
   const fetchAlerts = async () => {
     try {
@@ -71,6 +97,7 @@ function AlertsPage() {
         categories: categories
           .filter((c) => c.value === alert.cat)
           .map((c) => ({ code: c.value, label: c.label })),
+        rss_channels_ids: alert.rssChannelIds ?? [],
       }),
     })
   }
@@ -86,6 +113,7 @@ function AlertsPage() {
       cron_expression: newAlert.cron,
       descriptors: [newAlert.name],
       categories: catInfo ? [{ code: catInfo.value, label: catInfo.label }] : [],
+      rss_channels_ids: newAlert.rssChannelIds,
     }
 
     try {
@@ -99,7 +127,7 @@ function AlertsPage() {
       }
       const saved = await res.json()
       setAlerts([...alerts, toLocal(saved)])
-      setNewAlert({ name: '', cat: 'FIN_MRKT', cron: '' })
+      setNewAlert({ name: '', cat: 'FIN_MRKT', cron: '', rssChannelIds: [] })
       setShowModal(false)
     } catch (err) {
       setError(err.message)
@@ -250,6 +278,18 @@ function AlertsPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase text-slate-500">
+                  {t('alerts.rssChannelsLabel', 'Canales RSS')}
+                </label>
+                <MultiSelectSearch
+                  options={rssChannels}
+                  selected={newAlert.rssChannelIds}
+                  onChange={(ids) => setNewAlert({ ...newAlert, rssChannelIds: ids })}
+                  placeholder="Buscar canales RSS..."
+                />
               </div>
 
               <div className="space-y-2">
