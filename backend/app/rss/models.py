@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -40,3 +40,13 @@ class RSSChannelUpdate(BaseModel):
 class RSSChannel(RSSChannelBase):
     id: int
     information_source_id: int
+
+
+class RSSPreviewRequest(BaseModel):
+    url: HttpUrl
+
+
+class RSSPreviewResponse(BaseModel):
+    status: Literal["ok", "no_category", "parse_error"]
+    detected_categories: list[str] = []
+    error: str = ""

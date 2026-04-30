@@ -7,7 +7,7 @@ Run with: `uvicorn app.app:app --reload` from the `backend/` directory.
 
 ## Folder Structure
 
-```
+```text
 backend/app/
 ├── app.py               # FastAPI app: registers all routers, seed data, /health
 ├── store.py             # Shared state: in-memory stores + MongoDB connection
@@ -47,20 +47,21 @@ Shared persistence and runtime state.
 
 | Export | Description |
 |--------|-------------|
-| `roles_store` | `Dict[int, Role]` in-memory store |
-| `alerts_store` | `Dict[int, Alert]` in-memory store |
+| `roles_store` | `Dict[int, Role]` in-memory store used only for API compatibility |
 | `categories_store` | `Dict[int, Category]` in-memory store |
-| `notifications_store` | `Dict[int, Notification]` in-memory store |
 | `users_col` | PyMongo collection for users |
-| `sources_col` | PyMongo collection for information sources |
-| `channels_col` | PyMongo collection for RSS channels |
+| `rss_fuentes_col` | Canonical PyMongo collection for information sources and RSS channels |
 | `stats_col` | PyMongo collection for stats |
+| `alerts_col` | PyMongo collection for alerts |
+| `notifications_col` | PyMongo collection for notifications |
+| `counters_col` | PyMongo collection for persistent integer counters |
 | `next_id(key)` | Auto-increment ID generator per entity type |
+| `next_mongo_id(key)` | Persistent MongoDB-backed ID generator |
 
 Current persistence split:
 
-- MongoDB: users, information sources, RSS channels, stats
-- In-memory: roles, alerts, categories, notifications
+- MongoDB: users, RSS sources/channels in `rss_fuentes`, alerts, notifications, stats and counters
+- In-memory: categories and a canonical `manager` role used only for compatibility
 
 ### `dependencies.py`
 FastAPI dependencies imported by all route modules.
@@ -70,14 +71,14 @@ FastAPI dependencies imported by all route modules.
 | `get_current_user` | Resolves the authenticated user from a JWT Bearer token |
 | `sanitize_user` | Returns a public `User` view (no password) |
 | `es_token_valido` | Checks that a token timestamp is within 24 hours |
-| `ensure_gestor_role` | Raises 403 if the current user lacks the `admin` or `manager` role |
+| `ensure_gestor_role` | Compatibility dependency; no longer blocks authenticated users |
 
 ### `app.py`
 
 - Registers the modular routers under `/api/v1`
 - Configures CORS for `http://localhost:5173`
 - Exposes `GET /api/v1/health`
-- Contains seed helpers, but the current startup hook is temporarily bypassed and does not load initial data automatically
+- Contains seed helpers that normalize all users to the functional `manager` role and create/update the default `AdminDefault`, `GestorDefault` and `LectorDefault` users accordingly.
 
 ---
 
@@ -102,25 +103,25 @@ All routes are prefixed with `/api/v1`.
 | `GET` | `/users` | List all users (no passwords) |
 | `POST` | `/users` | Create a user (authenticated) |
 | `GET` | `/users/{user_id}` | Get user by ID |
-| `PUT` | `/users/{user_id}` | Update user profile (own profile or admin only) |
+| `PUT` | `/users/{user_id}` | Update user profile (own profile only) |
 | `DELETE` | `/users/{user_id}` | Delete user + cascade delete alerts and notifications |
 
 ### Roles — `auth/routes.py`
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/roles` | List all roles |
-| `POST` | `/roles` | Create a role |
-| `GET` | `/roles/{role_id}` | Get role by ID |
-| `PUT` | `/roles/{role_id}` | Update a role |
-| `DELETE` | `/roles/{role_id}` | Delete role (fails if assigned to any user) |
+| `GET` | `/roles` | Return the canonical `manager` role |
+| `POST` | `/roles` | Compatibility no-op that returns `manager` |
+| `GET` | `/roles/{role_id}` | Compatibility read; echoes the requested ID as `manager` |
+| `PUT` | `/roles/{role_id}` | Compatibility no-op that returns `manager` |
+| `DELETE` | `/roles/{role_id}` | Compatibility no-op with `204 No Content` |
 
 ### Alertas — `alertas/routes.py`
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/users/{user_id}/alerts` | List alerts for a user |
-| `POST` | `/users/{user_id}/alerts` | Create alert (requires `admin` or `manager` role) |
+| `POST` | `/users/{user_id}/alerts` | Create alert |
 | `GET` | `/users/{user_id}/alerts/{alert_id}` | Get a specific alert |
 | `PUT` | `/users/{user_id}/alerts/{alert_id}` | Update an alert |
 | `DELETE` | `/users/{user_id}/alerts/{alert_id}` | Delete alert + cascade delete notifications |
@@ -184,6 +185,16 @@ All routes are prefixed with `/api/v1`.
 | `GET` | `/api/v1/health` | Healthcheck — returns status and UTC timestamp |
 
 ---
+
+## Current Status: Alerts and Notifications
+
+The backend keeps the original AG contract for `Alert` and `Notification`, and stores the worker-facing alert state in MongoDB.
+
+- `alerts` now persists `cron_expression`, `enabled`, `last_checked_at`, `last_run_at` and `next_run_at`
+- `notifications` persists the generated matches plus internal delivery fields such as `delivery_channels`, `email_status`, `email_sent_at`, `email_error` and `read_at`
+- the normal contractual routes are still available for alerts and notifications
+- the delivery configuration per alert and the user mailbox routes are documented as backend extensions outside the original contract in `docs/contrato-api-backend.md`
+- the backend writes alert state to MongoDB, while `alert-worker` is responsible for processing due alerts and delivering notifications
 
 ## Notes
 

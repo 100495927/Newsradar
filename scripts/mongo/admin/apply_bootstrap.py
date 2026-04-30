@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from urllib.parse import quote_plus
 
 import pymongo
 
 from shared.mongo.EntornoDB import EntornoDB
-from shared.mongo.bootstrap_spec import COLLECTION_SPECS
+from shared.mongo.bootstrap_spec import COLLECTION_SPECS, COUNTER_SEEDS
 
 
 def build_root_uri(entorno: EntornoDB) -> str:
@@ -59,6 +60,18 @@ def ensure_indexes(app_db: pymongo.database.Database, name: str, indexes: list[d
         print(f"[mongo-admin] Indice asegurado: {name}.{index['kwargs']['name']}")
 
 
+def ensure_counter_seeds(app_db: pymongo.database.Database) -> None:
+    now = datetime.now(timezone.utc)
+    counters = app_db["counters"]
+    for seed in COUNTER_SEEDS:
+        counters.update_one(
+            {"_id": seed["_id"]},
+            {"$setOnInsert": {**seed, "updated_at": now}},
+            upsert=True,
+        )
+        print(f"[mongo-admin] Contador asegurado: {seed['_id']}")
+
+
 def main() -> int:
     entorno = EntornoDB(require_root=True)
     client = pymongo.MongoClient(build_root_uri(entorno))
@@ -71,6 +84,8 @@ def main() -> int:
     for spec in COLLECTION_SPECS:
         ensure_collection(admin_db, spec["name"], spec["validator"])
         ensure_indexes(admin_db, spec["name"], spec["indexes"])
+
+    ensure_counter_seeds(admin_db)
 
     print("[mongo-admin] Bootstrap aplicado correctamente")
     return 0

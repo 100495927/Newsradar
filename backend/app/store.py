@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 from typing import Any, Dict
 
-from pymongo import MongoClient
+from pymongo import MongoClient, ReturnDocument
 
 # -- MongoDB --
 MONGODB_URI = os.getenv(
@@ -19,18 +20,16 @@ MONGODB_URI = os.getenv(
 client = MongoClient(MONGODB_URI)
 db = client[os.getenv("MONGO_APP_DB", "newsradar")]
 users_col = db["users"]
-sources_col = db["information_sources"]
-channels_col = db["rss_channels"]
+rss_fuentes_col = db["rss_fuentes"]
+rss_entradas_col = db["rss_entradas"]
 stats_col = db["stats"]
+alerts_col = db["alerts"]
+notifications_col = db["notifications"]
+counters_col = db["counters"]
 
-# -- In-memory stores (usuarios migrados a MongoDB) --
+# -- In-memory stores for contract entities that are still not persisted --
 roles_store: Dict[int, Any] = {}
-alerts_store: Dict[int, Any] = {}
 categories_store: Dict[int, Any] = {}
-notifications_store: Dict[int, Any] = {}
-information_sources_store: Dict[int, Any] = {}
-rss_channels_store: Dict[int, Any] = {}
-stats_store: Dict[int, Any] = {}
 
 counters: Dict[str, int] = {
     "roles": 1,
@@ -49,3 +48,17 @@ def next_id(counter_key: str) -> int:
     value = counters[counter_key]
     counters[counter_key] += 1
     return value
+
+
+def next_mongo_id(counter_key: str) -> int:
+    """Genera IDs enteros compartidos entre API y workers usando MongoDB."""
+    result = counters_col.find_one_and_update(
+        {"_id": counter_key},
+        {
+            "$inc": {"seq": 1},
+            "$set": {"updated_at": datetime.now(timezone.utc)},
+        },
+        upsert=True,
+        return_document=ReturnDocument.AFTER,
+    )
+    return int(result["seq"])

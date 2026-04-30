@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;DOSS - Dudas NEWSRADAR;;;;;;;;;;;;;;;;;;;;;;;;
 ;Curso 2025 . 26 - Leganes;;;;;;;;;;;;;;;;;;;;;;;;
-;versión: 15 abril 2026;;;;;;;;;;;;;;;;;;;;;;;;
+;versión: 22 abril 2026;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;FECHA;ORIGEN;DUDA;RESPUESTA;;;;;;;;;;;;;;;;;;;;;
 ;23-mar-26;"81-5 
@@ -42,6 +42,37 @@ Otra solución plausible se basa en eliminar por completo el rol de lector, de ma
 ";El rol lector efectivamente recibiría todo. Entonces, es conveniente tener el rol aunque en la práctica no lo vamos a utilizar.;;;;;;;;;;;;;;;;;;;;;
 ;14-abr-26;"81-x  
 preguntada en clase";¿Las fuentes y las RSS las puede darde alta cualquier usuario registrado gestor o solo un usuario administrador?;Los usuarios gestores;;;;;;;;;;;;;;;;;;;;;
+;15-abr-26;"85-7
+ADRIAN GYURCA
+en clase";El rol lector ¿Puede crear fuentes?;ACTUALIZACIÓN: DESAPARECE EL ROL (ver ADENDA al documento de especificaciones) ;;;;;;;;;;;;;;;;;;;;;
+;21-abr-26;"81-x 
+GONZALO HITA
+mail";"La primera y más importante es sobre el grado de cumplimiento con la
+api que se nos proporciona. ¿Como de estricto debe de ser el
+cumplimiento de la api? ¿Todas las estructuras de datos de
+request/response han de ser idénticas al proporcionado?";Se debe cumplir exactamente. Si se necesita alguna otra operación para el interfaz gráfico se puede añadir pero las operaciones y modelos de datos actuales no se pueden cambiar.;;;;;;;;;;;;;;;;;;;;;
+;21-abr-26;"81-x 
+GONZALO HITA
+mail";"Otra duda es sobre las estadísticas y demás visualizaciones, como por
+ejemplo la nube de palabras. ¿Deben de ser sobre todas las noticias
+recopiladas en la DB? ¿Solo sobre las alertas?¿sobre las noticias que
+hayan hecho ""match"" con alguna alerta?";Las nubes de palabras se generan con las noticias que encajan en alguna alerta. ;;;;;;;;;;;;;;;;;;;;;
+;21-abr-26;"81-x 
+GONZALO HITA
+mail";"Tal y como hemos hablado, nuestro diseño se basa en un rss worker que
+periódicamente lee las fuentes rss y guarda todas las noticias nuevas
+en mongodb. Luego otro worker comprobará periódicamente en función del
+cron expression determinado si alguna de las alertas configuradas y
+gestionará las notificaciones como sea necesario. No sé hasta qué
+punto este es el pipeline/workflow es el ideal o es similar al del
+resto de grupos.";Es una implementación posible aunque el proceso debería ser atómico: se lanza el proceso de captura, se traen las noticias, se analizan, se guardan las que encajan;;;;;;;;;;;;;;;;;;;;;
+;21-abr-26;"81-x 
+GONZALO HITA
+mail";"Por ultimo, entendemos que el administrador del que se habla en el
+enunciado es simplemente un gestor que está desde el principio creado
+en el sistema ¿es así? Entendemos que no es un rol aparte.";Exacto;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;

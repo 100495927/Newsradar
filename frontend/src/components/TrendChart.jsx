@@ -1,76 +1,89 @@
-const bars = [
-  40, 45, 60, 85, 70, 95, 100, 80, 65, 50, 40, 35,
-]
+function TrendChart({ data, loading }) {
+  const maxVal = data.length > 0 ? Math.max(...data.map((d) => d.total)) : 1
 
-function TrendChart() {
+  const bars = data.slice(-30)
+
+  // X-axis labels: show first, middle and last date only
+  const firstLabel = bars[0]?.fecha?.slice(5) ?? ''
+  const midLabel = bars[Math.floor(bars.length / 2)]?.fecha?.slice(5) ?? ''
+  const lastLabel = bars[bars.length - 1]?.fecha?.slice(5) ?? ''
+
+  const W = 800
+  const H = 320
+  const PAD = { top: 16, right: 16, bottom: 8, left: 8 }
+
+  const toX = (i) => PAD.left + (i / (bars.length - 1 || 1)) * (W - PAD.left - PAD.right)
+  const toY = (val) => PAD.top + (1 - val / maxVal) * (H - PAD.top - PAD.bottom)
+
+  const points = bars.map((d, i) => `${toX(i)},${toY(d.total)}`).join(' ')
+  const areaPoints = [
+    `${toX(0)},${H - PAD.bottom}`,
+    ...bars.map((d, i) => `${toX(i)},${toY(d.total)}`),
+    `${toX(bars.length - 1)},${H - PAD.bottom}`,
+  ].join(' ')
+
   return (
     <section className="lg:col-span-8 bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-10 gap-4">
         <div>
           <h2 className="text-lg font-extrabold headline-font text-slate-900 uppercase tracking-tight">
-            Evolución de Captura Temporal
+            Noticias Capturadas por Día
           </h2>
           <p className="text-xs text-slate-500 font-medium">
-            Volumen histórico de noticias (Ventana 24h)
+            Volumen de ingesta diaria (últimos 30 días)
           </p>
         </div>
-        <div className="flex bg-slate-100 p-1 rounded-lg">
-          {['24H', '7D', '30D'].map((label, index) => (
-            <button
-              key={label}
-              className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-wider ${
-                index === 0
-                  ? 'bg-white shadow-sm text-slate-900 rounded-md'
-                  : 'text-slate-500 hover:text-slate-900 transition-colors'
-              }`}
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
+      </div>
+
+      {loading ? (
+        <div className="h-[320px] bg-slate-50 rounded-lg animate-pulse" />
+      ) : bars.length === 0 ? (
+        <div className="h-[320px] flex items-center justify-center text-slate-400 text-sm font-medium uppercase tracking-widest">
+          Sin datos de captura disponibles
         </div>
-      </div>
-      <div className="relative h-[320px] w-full chart-grid border-l border-b border-slate-200">
-        <div className="absolute bottom-0 left-0 w-full h-full flex items-end px-4 gap-2">
-          {bars.map((height, index) => (
-            <div
-              key={`${height}-${index}`}
-              className={`flex-1 rounded-t transition-all ${
-                index === 6
-                  ? 'bg-slate-900 hover:bg-black'
-                  : index === 3 || index === 7
-                    ? 'bg-slate-300 hover:bg-slate-400'
-                    : index === 11
-                      ? 'bg-slate-100 hover:bg-slate-200'
-                      : 'bg-slate-200/60 hover:bg-slate-300'
-              }`}
-              style={{ height: `${height}%` }}
-            ></div>
-          ))}
-        </div>
-        <svg
-          className="absolute top-0 left-0 w-full h-full pointer-events-none"
-          preserveAspectRatio="none"
-          viewBox="0 0 1000 320"
-          aria-hidden="true"
-        >
-          <path
-            d="M 0 200 Q 150 160 300 100 T 600 20 T 900 120 L 1000 140"
-            fill="none"
-            opacity="0.3"
-            stroke="#0f172a"
-            strokeDasharray="4"
-            strokeWidth="1.5"
-          />
-        </svg>
-      </div>
-      <div className="flex justify-between mt-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-        <span>00:00</span>
-        <span>06:00</span>
-        <span>12:00</span>
-        <span>18:00</span>
-        <span>23:59</span>
-      </div>
+      ) : (
+        <>
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            className="w-full h-[320px] border-l border-b border-slate-200"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="lineArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#1e293b" stopOpacity="0.15" />
+                <stop offset="100%" stopColor="#1e293b" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <polygon points={areaPoints} fill="url(#lineArea)" />
+            <polyline
+              points={points}
+              fill="none"
+              stroke="#1e293b"
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            {bars.map((d, i) => (
+              <circle
+                key={d.fecha}
+                cx={toX(i)}
+                cy={toY(d.total)}
+                r="3"
+                fill={d.total === maxVal ? '#0f172a' : '#64748b'}
+                stroke="white"
+                strokeWidth="1.5"
+              >
+                <title>{`${d.fecha}: ${d.total.toLocaleString('es-ES')} noticias`}</title>
+              </circle>
+            ))}
+          </svg>
+          <div className="flex justify-between mt-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">
+            <span>{firstLabel}</span>
+            <span>{midLabel}</span>
+            <span>{lastLabel}</span>
+          </div>
+        </>
+      )}
     </section>
   )
 }

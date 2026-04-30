@@ -1,15 +1,17 @@
 import { Link, useLocation } from 'react-router-dom'
-
-const navItems = [
-  { id: 'dashboard', label: 'Panel de Control', icon: 'dashboard', path: '/dashboard' },
-  { id: 'summary', label: 'Mi Resumen', icon: 'auto_stories', path: '/summary' },
-  { id: 'alerts', label: 'Alertas', icon: 'notifications_active', path: '/alerts' },
-  { id: 'sources', label: 'Fuentes', icon: 'rss_feed', path: '/sources' },
-]
+import { useTranslation } from 'react-i18next'
 
 function SideNavBar() {
   const location = useLocation()
+  const { t } = useTranslation()
   const isActive = (path) => location.pathname === path
+
+  const navItems = [
+    { id: 'dashboard', label: t('nav.dashboard'), icon: 'dashboard', path: '/dashboard' },
+    { id: 'summary', label: t('nav.summary'), icon: 'auto_stories', path: '/summary' },
+    { id: 'alerts', label: t('nav.alerts'), icon: 'notifications_active', path: '/alerts' },
+    { id: 'sources', label: t('nav.sources'), icon: 'rss_feed', path: '/sources' },
+  ]
 
   return (
     <aside className="fixed left-0 top-0 h-full flex flex-col pt-20 pb-6 px-4 bg-slate-50 w-64 hidden lg:flex border-r border-slate-200 z-40">
@@ -18,7 +20,7 @@ function SideNavBar() {
           NewsRadar
         </h2>
         <p className="text-xs text-slate-500 font-medium uppercase tracking-widest opacity-70">
-          Lente de Inteligencia
+          {t('nav.brandTagline')}
         </p>
       </div>
       <nav className="flex flex-col gap-1 flex-1">
@@ -45,7 +47,7 @@ function SideNavBar() {
           <span className="material-symbols-outlined text-[20px]">
             settings
           </span>
-          <span className="text-sm">Configuración</span>
+          <span className="text-sm">{t('nav.settings')}</span>
         </Link>
       </nav>
     </aside>

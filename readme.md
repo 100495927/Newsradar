@@ -5,7 +5,7 @@
 ### Estructura actual
 La estructura operativa del repo queda separada en:
 * `backend/`: API FastAPI.
-* `rss-worker/`: worker de ingesta RSS.
+* `rss-worker/`: contiene la logica RSS y los runtimes `rss_worker/` y `alert_worker/`.
 * `shared/`: utilidades y acceso compartido a MongoDB.
 * `scripts/mongo/`: bootstrap inicial y utilidades administrativas de Mongo.
 
@@ -46,8 +46,24 @@ Este es el comando que garantiza que el contrato entre servicios se cumple
 
 Si se necesita probar funcionalidades específicas de extracción o de persistencia:
 
-  * **Verificar el worker RSS:** `docker exec newsradar-rss-worker python /app/rss-worker/worker/test.py`
+  * **Verificar el worker RSS:** `docker exec newsradar-rss-worker python /app/rss-worker/rss_worker/healthcheck.py`
   * **Reaplicar bootstrap de Mongo sobre una BD existente:** `docker exec newsradar-backend python /app/scripts/mongo/admin/apply_bootstrap.py`
+
+### Estado actual de alertas y notificaciones
+
+La funcionalidad de alertas y notificaciones queda actualmente asi:
+
+* Las alertas se persisten en MongoDB en la coleccion `alerts`.
+* Cada alerta guarda `cron_expression`, `enabled`, `last_checked_at`, `last_run_at` y `next_run_at`.
+* El `alert-worker` procesa periodicamente solo las alertas vencidas.
+* Las coincidencias encontradas se persisten en la coleccion `notifications`.
+* El propio documento de `notifications` sirve como base del buzón interno de la aplicación.
+* Si la configuracion de la alerta incluye canal `email`, el `alert-worker` intenta enviar el correo y actualiza `email_status`, `email_sent_at` y `email_error`.
+* El contrato original de la API AG se mantiene en alertas y notificaciones; la configuracion de entrega y el buzón global quedan documentados como extensiones en `docs/contrato-api-backend.md`.
+
+Documento detallado del workflow:
+
+- `docs/workflow-alertas-notificaciones.md`
 
 ### Bootstrap de MongoDB
 
@@ -87,4 +103,3 @@ Para limpiar los datastores persistidos y forzar un nuevo bootstrap:
 **Nota:** Los logs detallados de la ejecución de las pruebas se encuentran en la pestaña *Actions* del repositorio.
 
 </details>
-

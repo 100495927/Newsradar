@@ -1,0 +1,133 @@
+{
+  "nav": {
+    "dashboard": "Panel de Control",
+    "summary": "Mi Resumen",
+    "alerts": "Alertas",
+    "sources": "Fuentes",
+    "settings": "Configuración",
+    "brandTagline": "Lente de Inteligencia"
+  },
+  "mobileNav": {
+    "dashboard": "Panel",
+    "summary": "Resumen",
+    "alerts": "Alertas",
+    "profile": "Perfil"
+  },
+  "topNav": {
+    "searchPlaceholder": "Búsqueda Global..."
+  },
+  "pageHeader": {
+    "title": "Resumen Global",
+    "subtitle": "Extracción de inteligencia en tiempo real del panorama informativo mundial.",
+    "statusActive": "Sistema Activo",
+    "lastUpdate": "Última Actualización",
+    "lastUpdateValue": "hace 2 min"
+  },
+  "dashboard": {
+    "totalNews": "Noticias Totales",
+    "activeSources": "Fuentes Activas",
+    "alerts": "Alertas",
+    "rssChannels": "Canales RSS",
+    "activeBadge": "Activas"
+  },
+  "login": {
+    "tagline": "El Lente Informado",
+    "subtitle": "Accede a tu panel de inteligencia",
+    "emailLabel": "Usuario",
+    "emailPlaceholder": "nombre@newsradar.com",
+    "passwordLabel": "Contraseña",
+    "submitLoading": "Iniciando...",
+    "submit": "Iniciar Sesión",
+    "noAccount": "¿No tienes cuenta?",
+    "requestAccess": "Solicitar acceso"
+  },
+  "register": {
+    "heroTitle": "El lente informado para la inteligencia global.",
+    "heroSubtitle": "Accede a análisis editoriales profundos y alertas de noticias en tiempo real impulsadas por procesamiento neuronal.",
+    "feature1Title": "Precisión Editorial",
+    "feature1Desc": "Información curada que filtra el ruido de la señal.",
+    "feature2Title": "Conciencia Instantánea",
+    "feature2Desc": "Sé el primero en ver los cambios globales mientras ocurren.",
+    "copyright": "© 2026 Inteligencia NewsRadar",
+    "formTitle": "Crea tu cuenta",
+    "formSubtitle": "Únete a nuestra red de analistas profesionales.",
+    "firstName": "Nombre",
+    "lastName": "Apellidos",
+    "email": "Correo Electrónico",
+    "organization": "Organización",
+    "organizationPlaceholder": "Nombre de tu organización",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Mínimo 6 caracteres",
+    "submitLoading": "Registrando...",
+    "submit": "Registrarse",
+    "hasAccount": "¿Ya tienes una cuenta?",
+    "loginLink": "Inicia sesión en NewsRadar"
+  },
+  "alerts": {
+    "pageTitle": "Gestión de Alertas",
+    "pageSubtitle": "Configure sus disparadores de inteligencia.",
+    "createButton": "Crear Nueva Alerta",
+    "colName": "Nombre de Alerta",
+    "colCategory": "Categoría",
+    "colFrequency": "Frecuencia",
+    "colStatus": "Estado",
+    "loading": "Cargando alertas...",
+    "empty": "No hay alertas configuradas",
+    "modalTitle": "Nueva Alerta",
+    "namePlaceholder": "Ej: Volatilidad del Mercado",
+    "cronLabel": "Frecuencia (Cron)",
+    "cronHint": "Ejemplos: */15 * * * * (cada 15 min), 0 9 * * 1-5 (9AM L-V)",
+    "cancel": "Cancelar",
+    "createSubmit": "Crear Alerta",
+    "errorLoad": "Error al cargar alertas",
+    "errorCreate": "Error al crear alerta"
+  },
+  "categories": {
+    "FIN_MRKT": "Finanzas y Mercados",
+    "SEC_POL": "Seguridad Política",
+    "TECH": "Tecnología",
+    "ENERGY": "Energía",
+    "HEALTH": "Salud"
+  },
+  "profile": {
+    "pageTitle": "Configuración de Perfil",
+    "statusActive": "Activo",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Correo",
+    "deleteButton": "Borrar Perfil",
+    "saveButton": "Guardar Perfil",
+    "savedMessage": "Perfil guardado exitosamente",
+    "deleteModalTitle": "Eliminar Perfil",
+    "deleteModalWarning": "Esta acción no se puede deshacer",
+    "deleteModalBody": "¿Estás seguro de que deseas eliminar tu perfil? Todos tus datos, alertas y configuraciones serán eliminados permanentemente.",
+    "deleteModalCancel": "Cancelar",
+    "deleteModalConfirm": "Sí, eliminar"
+  },
+  "sources": {
+    "pageTitle": "Fuentes y RSS",
+    "activeSources": "Canales RSS Activos",
+    "loading": "Cargando fuentes...",
+    "empty": "No hay fuentes RSS configuradas",
+    "addTitle": "Añadir Fuente",
+    "urlLabel": "URL RSS",
+    "urlPlaceholder": "https://dominio.com/feed.xml",
+    "connectButton": "Conectar Stream",
+    "defaultSourceName": "Nueva Fuente"
+  },
+  "summary": {
+    "pageTitle": "Resumen de Inteligencia",
+    "pageSubtitle": "Temas más candentes por categoría extraídos de los canales RSS monitorizados.",
+    "globalCloud": "Nube Global de Palabras Clave",
+    "globalCloudSub": "Todas las categorías · top 80 términos",
+    "byCategory": "Palabras Clave por Categoría",
+    "newsCount": "{{count}} noticias",
+    "noData": "Sin datos",
+    "noNewsProcessed": "No hay noticias procesadas todavía"
+  },
+  "language": {
+    "select": "Seleccionar idioma",
+    "es": "Español",
+    "en": "English"
+  }
+}

@@ -59,6 +59,8 @@ class UserInDB(UserBase):
 
     id: int = 0
     role_ids: List[int] = []
+    role: Optional[str] = None
+    status: Optional[str] = None
     password_hash: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

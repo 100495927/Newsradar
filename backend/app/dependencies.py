@@ -9,9 +9,29 @@ from jose import JWTError
 
 from .auth.jwt_utils import decode_access_token
 from .auth.user import User, UserInDB
-from .store import roles_store, users_col
+from .store import users_col
 
 security = HTTPBearer(auto_error=False)
+
+LEGACY_DEFAULT_EMAILS = {
+    "AdminDefault@newsradar.local": "AdminDefault@newsradar.com",
+    "GestorDefault@newsradar.local": "GestorDefault@newsradar.com",
+    "LectorDefault@newsradar.local": "LectorDefault@newsradar.com",
+}
+
+
+def normalize_legacy_user_doc(doc: dict) -> dict:
+    """Migra en lectura los usuarios semilla antiguos con email .local."""
+    normalized_doc = {k: v for k, v in doc.items() if k != "_id"}
+    legacy_email = normalized_doc.get("email")
+    canonical_email = LEGACY_DEFAULT_EMAILS.get(legacy_email)
+    if canonical_email:
+        normalized_doc["email"] = canonical_email
+        users_col.update_one(
+            {"id": normalized_doc["id"], "email": legacy_email},
+            {"$set": {"email": canonical_email}},
+        )
+    return normalized_doc
 
 
 def get_current_user(
@@ -30,7 +50,7 @@ def get_current_user(
     if not doc:
         raise HTTPException(status_code=401, detail="Usuario inválido")
 
-    doc = {k: v for k, v in doc.items() if k != "_id"}
+    doc = normalize_legacy_user_doc(doc)
     return UserInDB(**doc)
 
 
@@ -46,6 +66,21 @@ def sanitize_user(user: UserInDB) -> User:
     )
 
 
+def user_has_manager_role(user: UserInDB) -> bool:
+    """La logica de roles esta desactivada: todo usuario autenticado opera como gestor."""
+    return True
+
+
+def ensure_user_can_access(target_user_id: int, user: UserInDB) -> None:
+    """Permite acceso solo al propio usuario para evitar privilegios transversales."""
+    if user.id == target_user_id:
+        return
+    raise HTTPException(
+        status_code=403,
+        detail="No tienes permiso para acceder a los recursos de este usuario",
+    )
+
+
 def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
     """Valida el requisito de caducidad de 24 horas."""
     if not fecha_creacion:
@@ -54,11 +89,5 @@ def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
 
 
 def ensure_gestor_role(user: UserInDB = Depends(get_current_user)) -> UserInDB:
-    """Verifica que el usuario tenga rol de admin o manager."""
-    user_role_names = {roles_store[r_id].name for r_id in user.role_ids if r_id in roles_store}
-    if not user_role_names.intersection({"admin", "manager"}):
-        raise HTTPException(
-            status_code=403,
-            detail="Acceso denegado: Se requiere rol de Gestor de NewsRadar",
-        )
+    """Mantiene compatibilidad con las dependencias antiguas de rol sin bloquear."""
     return user

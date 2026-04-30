@@ -5,17 +5,19 @@ from datetime import datetime, timezone
 from typing import List
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+import pymongo
+from fastapi import APIRouter, Depends, HTTPException, Response
 
 from ..dependencies import (
     es_token_valido,
     get_current_user,
+    normalize_legacy_user_doc,
     sanitize_user,
 )
 from ..store import (
-    alerts_store,
+    alerts_col,
     next_id,
-    notifications_store,
+    notifications_col,
     roles_store,
     users_col,
 )
@@ -33,6 +35,8 @@ from .user import (
 )
 
 router = APIRouter()
+ROLELESS_DEFAULT_ROLE_ID = 1
+ROLELESS_DEFAULT_ROLE_NAME = "manager"
 
 
 # ---------------------------------------------------------------------------
@@ -41,18 +45,42 @@ router = APIRouter()
 
 def _doc_to_userindb(doc: dict) -> UserInDB:
     """Convierte un documento MongoDB en UserInDB eliminando el _id de Mongo."""
-    doc = {k: v for k, v in doc.items() if k != "_id"}
+    doc = normalize_legacy_user_doc(doc)
     return UserInDB(**doc)
 
 
+def _sync_user_counter_from_mongo() -> None:
+    """Evita IDs duplicados cuando el contador en memoria arranca desfasado."""
+    max_doc = users_col.find_one(sort=[("id", pymongo.DESCENDING)])
+    if max_doc and isinstance(max_doc.get("id"), int):
+        from .. import store
+
+        store.counters["users"] = max(store.counters["users"], max_doc["id"] + 1)
+
+
+def _ensure_manager_role() -> Role:
+    """Garantiza un rol canonico de gestor para compatibilidad del contrato."""
+    role = roles_store.get(ROLELESS_DEFAULT_ROLE_ID)
+    if isinstance(role, Role) and role.name == ROLELESS_DEFAULT_ROLE_NAME:
+        return role
+
+    canonical_role = Role(id=ROLELESS_DEFAULT_ROLE_ID, name=ROLELESS_DEFAULT_ROLE_NAME)
+    roles_store[ROLELESS_DEFAULT_ROLE_ID] = canonical_role
+    return canonical_role
+
+
+def _default_role_ids() -> list[int]:
+    return [_ensure_manager_role().id]
+
+
 def ensure_role_ids_exist(role_ids: List[int]) -> None:
-    """Valida que los IDs de rol enviados existan en el store de roles."""
-    missing = [r for r in role_ids if r not in roles_store]
-    if missing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Roles no encontrados: {missing}",
-        )
+    """Se acepta por compatibilidad, pero ya no condiciona nada."""
+    return None
+
+
+def ensure_role_name_allowed(role_name: str) -> None:
+    """Los endpoints de roles se normalizan a gestor sin restricciones funcionales."""
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -70,35 +98,34 @@ def login(payload: LoginRequest) -> TokenResponse:
     return TokenResponse(access_token=token)
 
 
-@router.post("/auth/register", response_model=User, status_code=201, tags=["auth"])
-def register(payload: UserCreate) -> User:
-    """Registra un usuario nuevo en MongoDB y devuelve el usuario creado."""
+@router.post("/auth/register", response_model=TokenResponse, status_code=201, tags=["auth"])
+def register(payload: UserCreate) -> TokenResponse:
+    """Registra un usuario nuevo en MongoDB y devuelve un JWT para login automático."""
     if users_col.find_one({"email": payload.email}):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
-    if payload.role_ids:
-        ensure_role_ids_exist(payload.role_ids)
-
+    _sync_user_counter_from_mongo()
     now = datetime.now(timezone.utc)
     user_id = next_id("users")
+    role_ids = _default_role_ids()
     users_col.insert_one({
         "id": user_id,
         "email": payload.email,
         "first_name": payload.first_name,
         "last_name": payload.last_name,
         "organization": payload.organization,
-        "role_ids": payload.role_ids,
+        "role_ids": role_ids,
         "password_hash": hash_password(payload.password),
         "created_at": now,
         "updated_at": now,
         "verification_token": str(uuid4()),
         "token_created_at": now,
-        "role": "reader",      
+        "role": ROLELESS_DEFAULT_ROLE_NAME,
         "status": "active"
     })
 
-    doc = users_col.find_one({"id": user_id})
-    return sanitize_user(_doc_to_userindb(doc))
+    token = create_access_token(user_id)
+    return TokenResponse(access_token=token)
 
 
 @router.get("/auth/verify/{token}", tags=["auth"])
@@ -170,13 +197,29 @@ def list_users(_: UserInDB = Depends(get_current_user)) -> List[User]:
 
 @router.post("/users", response_model=User, status_code=201, tags=["users"])
 def create_user(payload: UserCreate, _: UserInDB = Depends(get_current_user)) -> User:
-    """Crea usuario administrativo autenticado por token."""
+    """Crea usuario autenticado por token."""
     if users_col.find_one({"email": payload.email}):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
-    ensure_role_ids_exist(payload.role_ids)
+    _sync_user_counter_from_mongo()
+    now = datetime.now(timezone.utc)
     user_id = next_id("users")
-    users_col.insert_one({"id": user_id, **payload.model_dump(), "is_verified": False})
+    users_col.insert_one(
+        {
+            "id": user_id,
+            "email": payload.email,
+            "first_name": payload.first_name,
+            "last_name": payload.last_name,
+            "organization": payload.organization,
+            "role_ids": _default_role_ids(),
+            "password_hash": hash_password(payload.password),
+            "created_at": now,
+            "updated_at": now,
+            "role": ROLELESS_DEFAULT_ROLE_NAME,
+            "status": "active",
+            "is_verified": False,
+        }
+    )
     doc = users_col.find_one({"id": user_id})
     return sanitize_user(_doc_to_userindb(doc))
 
@@ -196,24 +239,20 @@ def update_user(
     payload: UserUpdate,
     current_user: UserInDB = Depends(get_current_user),
 ) -> User:
-    """Actualiza el perfil con restricciones de seguridad; persiste en MongoDB."""
-    is_admin = any(
-        roles_store[r_id].name == "admin"
-        for r_id in current_user.role_ids
-        if r_id in roles_store
-    )
-    if current_user.id != user_id and not is_admin:
+    """Actualiza el propio perfil; la logica de roles ya no altera permisos."""
+    if current_user.id != user_id:
         raise HTTPException(status_code=403, detail="No tienes permiso para editar este perfil")
 
     if not users_col.find_one({"id": user_id}):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     data = payload.model_dump(exclude_unset=True)
-    if not is_admin:
-        data.pop("role_ids", None)
-        data.pop("email", None)
+    data.pop("role_ids", None)
+    if "password" in data:
+        data["password_hash"] = hash_password(data.pop("password"))
 
     if data:
+        data["updated_at"] = datetime.now(timezone.utc)
         users_col.update_one({"id": user_id}, {"$set": data})
 
     updated = users_col.find_one({"id": user_id})
@@ -232,12 +271,10 @@ def delete_user(user_id: int, _: UserInDB = Depends(get_current_user)) -> None:
     if not users_col.find_one({"id": user_id}):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    alert_ids = [a.id for a in alerts_store.values() if a.user_id == user_id]
+    alert_ids = [doc["id"] for doc in alerts_col.find({"user_id": user_id}, {"id": 1})]
     for alert_id in alert_ids:
-        notification_ids = [n.id for n in notifications_store.values() if n.alert_id == alert_id]
-        for nid in notification_ids:
-            notifications_store.pop(nid, None)
-        alerts_store.pop(alert_id, None)
+        notifications_col.delete_many({"alert_id": alert_id})
+    alerts_col.delete_many({"user_id": user_id})
 
     users_col.delete_one({"id": user_id})
 
@@ -248,26 +285,22 @@ def delete_user(user_id: int, _: UserInDB = Depends(get_current_user)) -> None:
 
 @router.get("/roles", response_model=List[Role], tags=["roles"])
 def list_roles(_: UserInDB = Depends(get_current_user)) -> List[Role]:
-    """Lista todos los roles."""
-    return list(roles_store.values())
+    """Expone un unico rol canonico sin efecto funcional."""
+    return [_ensure_manager_role()]
 
 
 @router.post("/roles", response_model=Role, status_code=201, tags=["roles"])
 def create_role(payload: RoleCreate, _: UserInDB = Depends(get_current_user)) -> Role:
-    """Crea un rol nuevo."""
-    role_id = next_id("roles")
-    role = Role(id=role_id, **payload.model_dump())
-    roles_store[role_id] = role
-    return role
+    """Acepta la operacion por compatibilidad, normalizando siempre a gestor."""
+    ensure_role_name_allowed(payload.name)
+    return _ensure_manager_role()
 
 
 @router.get("/roles/{role_id}", response_model=Role, tags=["roles"])
 def get_role(role_id: int, _: UserInDB = Depends(get_current_user)) -> Role:
-    """Obtiene rol por ID."""
-    role = roles_store.get(role_id)
-    if not role:
-        raise HTTPException(status_code=404, detail="Rol no encontrado")
-    return role
+    """Responde satisfactoriamente para cualquier role_id sin efectos laterales."""
+    _ensure_manager_role()
+    return Role(id=role_id, name=ROLELESS_DEFAULT_ROLE_NAME)
 
 
 @router.put("/roles/{role_id}", response_model=Role, tags=["roles"])
@@ -276,13 +309,11 @@ def update_role(
     payload: RoleUpdate,
     _: UserInDB = Depends(get_current_user),
 ) -> Role:
-    """Actualiza los campos de un rol existente."""
-    role = roles_store.get(role_id)
-    if not role:
-        raise HTTPException(status_code=404, detail="Rol no encontrado")
-    updated = role.model_copy(update=payload.model_dump(exclude_unset=True))
-    roles_store[role_id] = updated
-    return updated
+    """Acepta la operacion por compatibilidad sin modificar el backend."""
+    if payload.name is not None:
+        ensure_role_name_allowed(payload.name)
+    _ensure_manager_role()
+    return Role(id=role_id, name=ROLELESS_DEFAULT_ROLE_NAME)
 
 
 @router.delete(
@@ -293,15 +324,5 @@ def update_role(
     tags=["roles"],
 )
 def delete_role(role_id: int, _: UserInDB = Depends(get_current_user)) -> None:
-    """Elimina rol si no está asignado a ningún usuario."""
-    if role_id not in roles_store:
-        raise HTTPException(status_code=404, detail="Rol no encontrado")
-
-    assigned = users_col.find_one({"role_ids": role_id})
-    if assigned:
-        raise HTTPException(
-            status_code=409,
-            detail="No se puede eliminar un rol asignado a usuarios",
-        )
-
-    roles_store.pop(role_id, None)
+    """Acepta el borrado por compatibilidad sin tocar permisos ni persistencia."""
+    _ensure_manager_role()
