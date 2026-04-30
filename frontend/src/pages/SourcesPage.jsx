@@ -10,7 +10,6 @@ function SourcesPage() {
   const [sources, setSources] = useState([])
   const [newUrl, setNewUrl] = useState('')
   const [loading, setLoading] = useState(true)
-  const [validating, setValidating] = useState(false)
   const [submitError, setSubmitError] = useState(null)
 
   // Category modal state (shown when feed has no detectable category)
@@ -105,38 +104,12 @@ function SourcesPage() {
     fetchSources()
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
     if (!newUrl.trim()) return
     setSubmitError(null)
-    setValidating(true)
-
-    try {
-      const res = await apiFetch('/api/v1/rss/preview', {
-        method: 'POST',
-        body: JSON.stringify({ url: newUrl }),
-      })
-      const data = await res.json()
-
-      if (data.status === 'parse_error') {
-        setSubmitError(data.error || 'No se pudo analizar el feed RSS')
-      } else if (data.status === 'ok') {
-        const match = categories.find((c) => c.name === data.detected_categories[0])
-        if (!match) {
-          setPendingUrl(newUrl)
-          setShowCategoryModal(true)
-        } else {
-          await createSourceAndChannel(newUrl, match.id)
-        }
-      } else {
-        setPendingUrl(newUrl)
-        setShowCategoryModal(true)
-      }
-    } catch (err) {
-      setSubmitError(err.message || 'Error al verificar la URL')
-    } finally {
-      setValidating(false)
-    }
+    setPendingUrl(newUrl)
+    setShowCategoryModal(true)
   }
 
   const handleModalConfirm = async () => {
@@ -231,10 +204,9 @@ function SourcesPage() {
                   </div>
                   <button
                     type="submit"
-                    disabled={validating}
-                    className="w-full bg-white text-primary-container font-black py-4 rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
+                    className="w-full bg-white text-primary-container font-black py-4 rounded-lg hover:bg-slate-100 transition-colors"
                   >
-                    {validating ? '...' : t('sources.connectButton')}
+                    {t('sources.connectButton')}
                   </button>
                 </form>
               </section>
@@ -263,8 +235,7 @@ function SourcesPage() {
               </button>
             </div>
             <p className="text-slate-500 mb-6">
-              No se detectó categoría automáticamente para este feed. Selecciona una para
-              clasificar sus artículos.
+              Selecciona una categoría para clasificar los artículos de este feed.
             </p>
             <select
               value={selectedCategoryId}
