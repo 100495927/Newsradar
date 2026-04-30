@@ -39,6 +39,7 @@ def read_word_cloud(categoria: str, _: UserInDB = Depends(get_current_user)):
     return service.get_word_cloud_data(categoria)
 
 
+
 # ---------------------------------------------------------------------------
 # CRUD contract routes (api_ag_comentado.py)
 # /{stats_id} is last so literal path segments above take priority.
