@@ -28,6 +28,9 @@ function AlertsPage() {
   const [newAlert, setNewAlert] = useState({ name: '', cat: 'FIN_MRKT', cron: '', rssChannelIds: [] })
   const [error, setError] = useState('')
   const [rssChannels, setRssChannels] = useState([])
+  const [synonymSuggestions, setSynonymSuggestions] = useState([])
+  const [acceptedSynonyms, setAcceptedSynonyms] = useState([])
+  const [loadingSynonyms, setLoadingSynonyms] = useState(false)
 
   const categories = [
     { value: 'FIN_MRKT', label: t('categories.FIN_MRKT') },
@@ -102,6 +105,29 @@ function AlertsPage() {
     })
   }
 
+  const handleFetchSynonyms = async () => {
+    if (!newAlert.name.trim()) return
+    setLoadingSynonyms(true)
+    setSynonymSuggestions([])
+    setAcceptedSynonyms([])
+    try {
+      const res = await apiFetch(`/api/v1/synonyms?word=${encodeURIComponent(newAlert.name.trim())}`)
+      if (!res.ok) return
+      const data = await res.json()
+      setSynonymSuggestions(data)
+    } catch {
+      // silencioso
+    } finally {
+      setLoadingSynonyms(false)
+    }
+  }
+
+  const toggleSynonym = (word) => {
+    setAcceptedSynonyms((prev) =>
+      prev.includes(word) ? prev.filter((w) => w !== word) : [...prev, word]
+    )
+  }
+
   const handleCreateAlert = async (e) => {
     e.preventDefault()
     setError('')
@@ -111,7 +137,7 @@ function AlertsPage() {
     const payload = {
       name: newAlert.name,
       cron_expression: newAlert.cron,
-      descriptors: [newAlert.name],
+      descriptors: [newAlert.name, ...acceptedSynonyms],
       categories: catInfo ? [{ code: catInfo.value, label: catInfo.label }] : [],
       rss_channels_ids: newAlert.rssChannelIds,
     }
@@ -128,6 +154,8 @@ function AlertsPage() {
       const saved = await res.json()
       setAlerts([...alerts, toLocal(saved)])
       setNewAlert({ name: '', cat: 'FIN_MRKT', cron: '', rssChannelIds: [] })
+      setSynonymSuggestions([])
+      setAcceptedSynonyms([])
       setShowModal(false)
     } catch (err) {
       setError(err.message)
@@ -242,7 +270,7 @@ function AlertsPage() {
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-slate-900">{t('alerts.modalTitle')}</h3>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setSynonymSuggestions([]); setAcceptedSynonyms([]) }}
                 className="material-symbols-outlined text-slate-400 hover:text-slate-600"
               >
                 close
@@ -254,13 +282,56 @@ function AlertsPage() {
                 <label className="block text-xs font-bold uppercase text-slate-500">
                   {t('alerts.colName')}
                 </label>
-                <input
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
-                  placeholder={t('alerts.namePlaceholder')}
-                  value={newAlert.name}
-                  onChange={(e) => setNewAlert({ ...newAlert, name: e.target.value })}
-                  required
-                />
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
+                    placeholder={t('alerts.namePlaceholder')}
+                    value={newAlert.name}
+                    onChange={(e) => {
+                      setNewAlert({ ...newAlert, name: e.target.value })
+                      setSynonymSuggestions([])
+                      setAcceptedSynonyms([])
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={handleFetchSynonyms}
+                    disabled={!newAlert.name.trim() || loadingSynonyms}
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-colors disabled:opacity-40 whitespace-nowrap flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      {loadingSynonyms ? 'progress_activity' : 'auto_awesome'}
+                    </span>
+                    {t('alerts.suggestSynonyms', 'Sinónimos')}
+                  </button>
+                </div>
+                {synonymSuggestions.length > 0 && (
+                  <div className="pt-1">
+                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-2">
+                      {t('alerts.synonymsHint', 'Selecciona los que quieras incluir como descriptores')}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {synonymSuggestions.map((word) => {
+                        const accepted = acceptedSynonyms.includes(word)
+                        return (
+                          <button
+                            key={word}
+                            type="button"
+                            onClick={() => toggleSynonym(word)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                              accepted
+                                ? 'bg-primary-container text-white border-primary-container'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-primary-container'
+                            }`}
+                          >
+                            {accepted && '✓ '}{word}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
