@@ -16,7 +16,7 @@ class ColeccionUsers(Coleccion):
                 "first_name": {"bsonType": "string"},
                 "last_name": {"bsonType": "string"},
                 "organization": {"bsonType": ["string", "null"]},
-                "role": {"enum": ["manager", "reader"]},
+                "role": {"enum": ["manager"]},
                 "status": {"enum": ["pending_verification", "active", "disabled"]},
                 "password_hash": {"bsonType": ["string", "null"]},
                 "email_verified_at": {"bsonType": ["date", "null"]},

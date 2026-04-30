@@ -19,6 +19,8 @@ from .rss.iptc_utils import IPTC_TOP_LEVEL_CATEGORIES
 from .store import categories_store, counters, next_id, roles_store, users_col
 
 API_PREFIX = "/api/v1"
+ROLELESS_DEFAULT_ROLE_ID = 1
+ROLELESS_DEFAULT_ROLE_NAME = "manager"
 
 DEFAULT_USERS = (
     {
@@ -45,8 +47,8 @@ DEFAULT_USERS = (
         "first_name": "LectorDefault",
         "last_name": "NewsRadar",
         "organization": "NewsRadar",
-        "role_name": "reader",
-        "stored_role": "reader",
+        "role_name": "manager",
+        "stored_role": "manager",
     },
 )
 
@@ -82,27 +84,21 @@ def _sync_user_counter_from_mongo() -> None:
         counters["users"] = max_doc["id"] + 1
 
 
-def _get_role_id(role_name: str) -> int | None:
-    for role_id, role in roles_store.items():
-        if role.name == role_name:
-            return role_id
-    return None
-
-
 def _next_seed_id(counter_key: str) -> int:
     value = counters[counter_key]
     counters[counter_key] += 1
     return value
 
 
-def _ensure_role(role_name: str) -> int:
-    role_id = _get_role_id(role_name)
-    if role_id is not None:
-        return role_id
-
-    role_id = _next_seed_id("roles")
-    roles_store[role_id] = Role(id=role_id, name=role_name)
-    return role_id
+def _ensure_manager_role() -> int:
+    """Mantiene un unico rol funcional de gestor para compatibilidad."""
+    roles_store.clear()
+    roles_store[ROLELESS_DEFAULT_ROLE_ID] = Role(
+        id=ROLELESS_DEFAULT_ROLE_ID,
+        name=ROLELESS_DEFAULT_ROLE_NAME,
+    )
+    counters["roles"] = max(counters["roles"], ROLELESS_DEFAULT_ROLE_ID + 1)
+    return ROLELESS_DEFAULT_ROLE_ID
 
 
 def _find_seeded_user(user_data: dict[str, object]) -> dict | None:
@@ -115,10 +111,7 @@ def _find_seeded_user(user_data: dict[str, object]) -> dict | None:
 
 
 def _seed_default_user(user_data: dict[str, object]) -> None:
-    role_id = _get_role_id(user_data["role_name"])
-    if role_id is None:
-        return
-
+    role_id = ROLELESS_DEFAULT_ROLE_ID
     now = datetime.now(timezone.utc)
     existing_user = _find_seeded_user(user_data)
     if existing_user:
@@ -154,6 +147,32 @@ def _seed_default_user(user_data: dict[str, object]) -> None:
     )
 
 
+def _set_all_users_as_manager(role_id: int) -> None:
+    """Normaliza usuarios existentes al unico rol funcional de gestor."""
+    now = datetime.now(timezone.utc)
+    if hasattr(users_col, "update_many"):
+        users_col.update_many(
+            {},
+            {
+                "$set": {
+                    "role_ids": [role_id],
+                    "role": ROLELESS_DEFAULT_ROLE_NAME,
+                    "updated_at": now,
+                }
+            },
+        )
+        return
+
+    for doc in getattr(users_col, "docs", []):
+        doc.update(
+            {
+                "role_ids": [role_id],
+                "role": ROLELESS_DEFAULT_ROLE_NAME,
+                "updated_at": now,
+            }
+        )
+
+
 def _seed_iptc_categories() -> None:
     """Populates categories_store with the 15 standard IPTC top-level categories."""
     if categories_store:
@@ -167,9 +186,8 @@ def create_seed_data() -> None:
     """Carga roles base y usuarios por defecto en el arranque si no existen."""
     _sync_user_counter_from_mongo()
     _seed_iptc_categories()
-
-    for role_name in ("manager", "reader"):
-        _ensure_role(role_name)
+    role_id = _ensure_manager_role()
+    _set_all_users_as_manager(role_id)
 
     for user_data in DEFAULT_USERS:
         _seed_default_user(user_data)

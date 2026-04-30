@@ -47,7 +47,7 @@ Shared persistence and runtime state.
 
 | Export | Description |
 |--------|-------------|
-| `roles_store` | `Dict[int, Role]` in-memory store |
+| `roles_store` | `Dict[int, Role]` in-memory store used only for API compatibility |
 | `categories_store` | `Dict[int, Category]` in-memory store |
 | `users_col` | PyMongo collection for users |
 | `rss_fuentes_col` | Canonical PyMongo collection for information sources and RSS channels |
@@ -61,7 +61,7 @@ Shared persistence and runtime state.
 Current persistence split:
 
 - MongoDB: users, RSS sources/channels in `rss_fuentes`, alerts, notifications, stats and counters
-- In-memory: roles and categories
+- In-memory: categories and a canonical `manager` role used only for compatibility
 
 ### `dependencies.py`
 FastAPI dependencies imported by all route modules.
@@ -71,14 +71,14 @@ FastAPI dependencies imported by all route modules.
 | `get_current_user` | Resolves the authenticated user from a JWT Bearer token |
 | `sanitize_user` | Returns a public `User` view (no password) |
 | `es_token_valido` | Checks that a token timestamp is within 24 hours |
-| `ensure_gestor_role` | Raises 403 if the current user lacks the `manager` role |
+| `ensure_gestor_role` | Compatibility dependency; no longer blocks authenticated users |
 
 ### `app.py`
 
 - Registers the modular routers under `/api/v1`
 - Configures CORS for `http://localhost:5173`
 - Exposes `GET /api/v1/health`
-- Contains seed helpers that create the base roles and the default `AdminDefault`, `GestorDefault` and `LectorDefault` users on first startup when the roles are available. `AdminDefault` and `GestorDefault` both use the functional `manager` role.
+- Contains seed helpers that normalize all users to the functional `manager` role and create/update the default `AdminDefault`, `GestorDefault` and `LectorDefault` users accordingly.
 
 ---
 
@@ -103,25 +103,25 @@ All routes are prefixed with `/api/v1`.
 | `GET` | `/users` | List all users (no passwords) |
 | `POST` | `/users` | Create a user (authenticated) |
 | `GET` | `/users/{user_id}` | Get user by ID |
-| `PUT` | `/users/{user_id}` | Update user profile (own profile or manager only) |
+| `PUT` | `/users/{user_id}` | Update user profile (own profile only) |
 | `DELETE` | `/users/{user_id}` | Delete user + cascade delete alerts and notifications |
 
 ### Roles — `auth/routes.py`
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/roles` | List all roles |
-| `POST` | `/roles` | Create a role |
-| `GET` | `/roles/{role_id}` | Get role by ID |
-| `PUT` | `/roles/{role_id}` | Update a role |
-| `DELETE` | `/roles/{role_id}` | Delete role (fails if assigned to any user) |
+| `GET` | `/roles` | Return the canonical `manager` role |
+| `POST` | `/roles` | Compatibility no-op that returns `manager` |
+| `GET` | `/roles/{role_id}` | Compatibility read; echoes the requested ID as `manager` |
+| `PUT` | `/roles/{role_id}` | Compatibility no-op that returns `manager` |
+| `DELETE` | `/roles/{role_id}` | Compatibility no-op with `204 No Content` |
 
 ### Alertas — `alertas/routes.py`
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/users/{user_id}/alerts` | List alerts for a user |
-| `POST` | `/users/{user_id}/alerts` | Create alert (requires `manager` role) |
+| `POST` | `/users/{user_id}/alerts` | Create alert |
 | `GET` | `/users/{user_id}/alerts/{alert_id}` | Get a specific alert |
 | `PUT` | `/users/{user_id}/alerts/{alert_id}` | Update an alert |
 | `DELETE` | `/users/{user_id}/alerts/{alert_id}` | Delete alert + cascade delete notifications |

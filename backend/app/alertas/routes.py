@@ -98,7 +98,7 @@ def create_user_alert(
     payload: AlertCreate,
     current_user: UserInDB = Depends(ensure_gestor_role),
 ) -> Alert:
-    """Crea una alerta para un usuario (requiere rol gestor)."""
+    """Crea una alerta para un usuario autenticado."""
     ensure_user_can_access(user_id, current_user)
     ensure_user_exists(user_id)
 

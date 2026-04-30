@@ -58,18 +58,15 @@ def test_create_seed_data_creates_default_users_once(monkeypatch):
     app_module.create_seed_data()
     app_module.create_seed_data()
 
-    assert {role.name for role in app_module.roles_store.values()} == {
-        "manager",
-        "reader",
-    }
+    assert {role.name for role in app_module.roles_store.values()} == {"manager"}
     assert {doc["email"] for doc in fake_users_col.docs} == {
         "AdminDefault@newsradar.com",
         "GestorDefault@newsradar.com",
         "LectorDefault@newsradar.com",
     }
     assert len(fake_users_col.docs) == 3
-    assert sum(doc["role"] == "manager" for doc in fake_users_col.docs) == 2
-    assert sum(doc["role"] == "reader" for doc in fake_users_col.docs) == 1
+    assert sum(doc["role"] == "manager" for doc in fake_users_col.docs) == 3
+    assert all(doc["role_ids"] == [1] for doc in fake_users_col.docs)
     assert all(doc["password_hash"] for doc in fake_users_col.docs)
     assert all(doc["status"] == "active" for doc in fake_users_col.docs)
     assert all(doc["is_verified"] is True for doc in fake_users_col.docs)

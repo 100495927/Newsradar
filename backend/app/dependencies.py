@@ -9,7 +9,7 @@ from jose import JWTError
 
 from .auth.jwt_utils import decode_access_token
 from .auth.user import User, UserInDB
-from .store import roles_store, users_col
+from .store import users_col
 
 security = HTTPBearer(auto_error=False)
 
@@ -67,19 +67,13 @@ def sanitize_user(user: UserInDB) -> User:
 
 
 def user_has_manager_role(user: UserInDB) -> bool:
-    """Indica si el usuario autenticado puede operar como gestor."""
-    if user.role == "manager":
-        return True
-    return any(
-        roles_store[r_id].name == "manager"
-        for r_id in user.role_ids
-        if r_id in roles_store
-    )
+    """La logica de roles esta desactivada: todo usuario autenticado opera como gestor."""
+    return True
 
 
 def ensure_user_can_access(target_user_id: int, user: UserInDB) -> None:
-    """Permite acceso al propio usuario o a un gestor."""
-    if user.id == target_user_id or user_has_manager_role(user):
+    """Permite acceso solo al propio usuario para evitar privilegios transversales."""
+    if user.id == target_user_id:
         return
     raise HTTPException(
         status_code=403,
@@ -95,10 +89,5 @@ def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
 
 
 def ensure_gestor_role(user: UserInDB = Depends(get_current_user)) -> UserInDB:
-    """Verifica que el usuario tenga rol de gestor."""
-    if not user_has_manager_role(user):
-        raise HTTPException(
-            status_code=403,
-            detail="Acceso denegado: Se requiere rol de Gestor de NewsRadar",
-        )
+    """Mantiene compatibilidad con las dependencias antiguas de rol sin bloquear."""
     return user

@@ -35,7 +35,7 @@ class FakeCollection:
 def _manager_user() -> UserInDB:
     return UserInDB(
         id=1,
-        email="manager@example.test",
+        email="manager@example.com",
         first_name="Manager",
         last_name="NewsRadar",
         organization="NewsRadar",
