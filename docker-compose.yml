@@ -7,7 +7,9 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${FRONTEND_NODE_ENV:-development}
+      # URL publica que recibira el navegador del usuario.
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+      # URL interna usada por el contenedor frontend para hacer proxy al backend.
       BACKEND_URL: http://backend:8000
       FRONTEND_PORT: ${FRONTEND_PORT:-5173}
     ports:
@@ -44,8 +46,14 @@ services:
       APP_PORT: ${APP_PORT:-8000}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       PYTHONUNBUFFERED: "1"
+      MONGO_APP_USER: ${MONGO_APP_USER:-newsradar_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-change_me_app_pwd}
+      MONGO_APP_DB: ${MONGO_APP_DB:-newsradar}
+      # Host interno de Docker para el backend. No depende de valores locales tipo localhost.
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
       # URI usada por el backend para conectar con Mongo usando el usuario de aplicacion.
-      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@${MONGO_HOST:-mongodb}:${MONGO_PORT:-27017}/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_APP_DB:-newsradar}
+      MONGODB_URI: mongodb://${MONGO_APP_USER:-newsradar_app}:${MONGO_APP_PASSWORD:-change_me_app_pwd}@mongodb:27017/${MONGO_APP_DB:-newsradar}?authSource=${MONGO_APP_DB:-newsradar}
       MONGO_DB_NAME: ${MONGO_APP_DB:-newsradar}
       ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://elasticsearch:9200}
       ELASTICSEARCH_INDEX_ENTRADAS: ${ELASTICSEARCH_INDEX_ENTRADAS:-rss_entradas_idx}
@@ -121,9 +129,15 @@ services:
       PYTHONUNBUFFERED: "1"
       MONGO_HOST: mongodb
       MONGO_PORT: 27017
-      RSS_WORKER_INTERVAL_SECONDS: "60"
-      RSS_WORKER_RUN_ONCE: "false"
-      RSS_WORKER_UVICORN_PORT: "8000"
+      MONGO_APP_USER: ${MONGO_APP_USER:-newsradar_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-change_me_app_pwd}
+      MONGO_APP_DB: ${MONGO_APP_DB:-newsradar}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-newsradar_root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-change_me_root_pwd}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-admin}
+      RSS_WORKER_INTERVAL_SECONDS: ${RSS_WORKER_INTERVAL_SECONDS:-300}
+      RSS_WORKER_RUN_ONCE: ${RSS_WORKER_RUN_ONCE:-false}
+      RSS_WORKER_UVICORN_PORT: ${RSS_WORKER_UVICORN_PORT:-8000}
     command: ["python", "/app/rss-worker/rss_worker/main.py"]
     healthcheck:
       test:
@@ -157,8 +171,14 @@ services:
       PYTHONUNBUFFERED: "1"
       MONGO_HOST: mongodb
       MONGO_PORT: 27017
-      ALERT_WORKER_INTERVAL_SECONDS: "60" # Usar el .env que para algo esta
-      ALERT_WORKER_RUN_ONCE: "false"
+      MONGO_APP_USER: ${MONGO_APP_USER:-newsradar_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-change_me_app_pwd}
+      MONGO_APP_DB: ${MONGO_APP_DB:-newsradar}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-newsradar_root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-change_me_root_pwd}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-admin}
+      ALERT_WORKER_INTERVAL_SECONDS: ${ALERT_WORKER_INTERVAL_SECONDS:-60}
+      ALERT_WORKER_RUN_ONCE: ${ALERT_WORKER_RUN_ONCE:-false}
     command: ["python", "/app/rss-worker/alert_worker/main.py"]
     healthcheck:
       test:

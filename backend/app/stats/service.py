@@ -19,32 +19,53 @@ STOPWORDS = {
     "que",
     "una",
     "uno",
+    "este", 
+    "esta", 
+    "estos", 
+    "estas", 
+    "pero", 
+    "sus", 
+    "les",
+    "desde", 
+    "entre", 
+    "cuando", 
+    "todo", 
+    "todos", 
+    "sobre", 
+    "haber", 
+    "donde", 
+    "está", 
+    "están", 
+    "tiene", 
+    "tienen", 
+    "hace", 
+    "hacer"
 }
 
 
 def get_global_stats() -> dict[str, Any]:
-    """Realiza agregaciones en MongoDB para el dashboard global."""
+    """Realiza agregaciones para el dashboard global (Objetivo 6.b)."""
+    # 1. Agregación de Alertas por categoría
     alertas_por_categoria = list(
-        alerts_col.aggregate(
-            [
-                {"$unwind": "$categories"},
-                {"$group": {"_id": "$categories.label", "total": {"$sum": 1}}},
-                {"$project": {"_id": 0, "id": "$_id", "total": 1}},
-                {"$sort": {"total": -1, "id": 1}},
-            ]
-        )
+        alerts_col.aggregate([
+            {"$unwind": "$categories"},
+            {"$group": {"_id": "$categories.label", "total": {"$sum": 1}}},
+            {"$project": {"_id": 0, "id": "$_id", "total": 1}},
+            {"$sort": {"total": -1, "id": 1}},
+        ])
     )
+    
+    # 2. Agregación de Noticias por categoría
     noticias_por_categoria = list(
-        rss_entradas_col.aggregate(
-            [
-                {"$unwind": "$categorias"},
-                {"$group": {"_id": "$categorias", "total": {"$sum": 1}}},
-                {"$project": {"_id": 0, "id": "$_id", "total": 1}},
-                {"$sort": {"total": -1, "id": 1}},
-            ]
-        )
+        rss_entradas_col.aggregate([
+            {"$unwind": "$categorias"},
+            {"$group": {"_id": "$categorias", "total": {"$sum": 1}}},
+            {"$project": {"_id": 0, "id": "$_id", "total": 1}},
+            {"$sort": {"total": -1, "id": 1}},
+        ])
     )
 
+    # Respuesta completa con recuentos de fuentes, canales, noticias y alertas
     return {
         "n_fuentes": _count_active_feed_channels(),
         "n_canales_rss": _count_all_rss_channels(),
@@ -55,8 +76,8 @@ def get_global_stats() -> dict[str, Any]:
     }
 
 
-def get_feed_stats(feed_id: int) -> dict[str, int]:
-    """Calcula estadisticas para un canal RSS del contrato API."""
+def get_feed_stats(feed_id: int) -> dict[str, Any]:
+    """Calcula estadísticas para un canal RSS específico."""
     fuente = rss_fuentes_col.find_one(
         {
             "tipo": "channel",
@@ -65,16 +86,18 @@ def get_feed_stats(feed_id: int) -> dict[str, int]:
         },
         {"_id": 1},
     )
+    
     noticias_query = {"id_fuente": fuente["_id"]} if fuente else {"_id": "__missing__"}
+    
     return {
         "feed_id": feed_id,
         "n_noticias": rss_entradas_col.count_documents(noticias_query),
-        "n_alertas": alerts_col.count_documents({"rss_channel_ids": feed_id}),
+        "n_alertas": alerts_col.count_documents({"rss_channel_ids": feed_id})
     }
 
 
 def get_word_cloud_data(categoria: str) -> list[dict[str, int | str]]:
-    """Genera una nube de palabras desde noticias RSS de una categoria."""
+    """Genera nube de palabras limpia de HTML y basura (Objetivo 6.a)."""
     category_values = [categoria]
     if categoria.isdigit():
         category_values.append(int(categoria))
@@ -83,13 +106,26 @@ def get_word_cloud_data(categoria: str) -> list[dict[str, int | str]]:
         {"categorias": {"$in": category_values}},
         {"titulo": 1, "resumen": 1},
     )
-    texto_completo = " ".join(
-        f"{entry.get('titulo', '')} {entry.get('resumen', '')}" for entry in cursor
-    )
 
-    palabras = re.findall(r"\w+", texto_completo.lower())
+    textos = []
+    for entry in cursor:
+        raw_text = f"{entry.get('titulo', '')} {entry.get('resumen', '')}"
+        
+        # 1. Eliminar etiquetas HTML
+        text_no_html = re.sub(r'<.*?>', '', raw_text)
+        # 2. Eliminar entidades HTML (ej: &nbsp;)
+        text_no_entities = re.sub(r'&[a-z0-9]+;', ' ', text_no_html)
+        textos.append(text_no_entities)
+
+    texto_completo = " ".join(textos).lower()
+    
+    # Extraer palabras alfanuméricas
+    palabras = re.findall(r"\w+", texto_completo)
+    
+    # Filtrado: longitud > 3, no números sueltos y no stopwords
     palabras_filtradas = [
-        palabra for palabra in palabras if palabra not in STOPWORDS and len(palabra) > 3
+        p for p in palabras 
+        if p not in STOPWORDS and len(p) > 3 and not p.isdigit()
     ]
 
     return [
@@ -99,49 +135,43 @@ def get_word_cloud_data(categoria: str) -> list[dict[str, int | str]]:
 
 
 def get_timeline_stats() -> list[dict[str, Any]]:
-    """Noticias ingestionadas por dia agrupadas por fecha (ultimos 30 dias)."""
+    """Noticias capturadas por día en los últimos 30 días."""
     return list(
-        rss_entradas_col.aggregate(
-            [
-                {
-                    "$group": {
-                        "_id": {
-                            "$dateToString": {
-                                "format": "%Y-%m-%d",
-                                "date": "$fecha_ingestion",
-                            }
-                        },
-                        "total": {"$sum": 1},
-                    }
-                },
-                {"$project": {"_id": 0, "fecha": "$_id", "total": 1}},
-                {"$sort": {"fecha": 1}},
-                {"$limit": 30},
-            ]
-        )
+        rss_entradas_col.aggregate([
+            {
+                "$group": {
+                    "_id": {
+                        "$dateToString": {
+                            "format": "%Y-%m-%d",
+                            "date": "$fecha_ingestion",
+                        }
+                    },
+                    "total": {"$sum": 1},
+                }
+            },
+            {"$project": {"_id": 0, "fecha": "$_id", "total": 1}},
+            {"$sort": {"fecha": 1}},
+            {"$limit": 30},
+        ])
     )
-
 
 def _count_active_feed_channels() -> int:
-    return rss_fuentes_col.count_documents(
-        {
-            "activo": True,
-            "$or": [{"tipo": "channel"}, {"tipo": {"$exists": False}}],
-            "deleted_at": {"$exists": False},
-        }
-    )
-
+    """Cuenta canales RSS que están activos y no borrados."""
+    return rss_fuentes_col.count_documents({
+        "activo": True,
+        "$or": [{"tipo": "channel"}, {"tipo": {"$exists": False}}],
+        "deleted_at": {"$exists": False},
+    })
 
 def _count_all_rss_channels() -> int:
-    return rss_fuentes_col.count_documents(
-        {
-            "$or": [{"tipo": "channel"}, {"tipo": {"$exists": False}}],
-            "deleted_at": {"$exists": False},
-        }
-    )
-
+    """Cuenta todos los canales RSS no borrados."""
+    return rss_fuentes_col.count_documents({
+        "$or": [{"tipo": "channel"}, {"tipo": {"$exists": False}}],
+        "deleted_at": {"$exists": False},
+    })
 
 def _stringify_category_ids(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Asegura que los IDs de categoría sean strings para el frontend."""
     for item in items:
         item["id"] = str(item.get("id", ""))
     return items
