@@ -26,6 +26,10 @@ Leyenda:
 | F-08 | ¿El alta de un canal RSS queda vinculada a su fuente y categoría? | `backend/app/rss/routes.py`, `docs/api -añadir-fuentes-rss.md` | | | X | | Debe respetar la relación fuente-canal |
 | F-09 | ¿MongoDB crea toda la estructura necesaria desde el bootstrap inicial? | `scripts/mongo/init-mongo.js`, `scripts/mongo/init-mongo.sh` | | | X | | Las colecciones no deben surgir en runtime |
 | F-10 | ¿Backend y workers operan con el usuario de aplicación de MongoDB? | `shared/mongo/Database.py`, `docker-compose.yml`, `.env.example` | | | X | | Requisito posterior a cerrar el bootstrap |
+| F-11 | ¿La pasada por canales RSS actualiza `fecha_ingestion` solo en las entradas nuevas y no en todas las existentes? | `rss-worker/rss_worker/fetch_pipeline.py`, `shared/mongo/colecciones/ColeccionRssEntradas.py` | | | X | | Hay que revisar que una reingesta no sobrescriba la fecha de todas las entradas |
+| F-12 | ¿Una alerta solo se dispara si la noticia fue publicada después de crear la alerta? | `rss-worker/alerts/processor.py`, `backend/app/alertas/routes.py`, `docs/decision-pipeline-categorias-alertas-2026-04-27.md` | | | X | | Verificar que no se notifiquen noticias anteriores a la creación de la alerta |
+| F-13 | ¿Los mensajes de log de alertas y notificaciones están claros y son coherentes? | `rss-worker/alerts/processor.py`, `rss-worker/alerts/notifications.py`, `rss-worker/rss_worker/main.py` | | | X | | Revisar mensajes, niveles y textos ambiguos o inconsistentes |
+| F-14 | ¿El `rss-worker` no se encarga del procesamiento de alertas? | `rss-worker/rss_worker/fetch_pipeline.py`, `rss-worker/rss_worker/main.py`, `rss-worker/alerts/processor.py` | | | X | | Asegurarse de que la orquestación de alertas quede en el componente correcto |
 
 ## Notas
 
