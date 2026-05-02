@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .alertas.routes import router as alertas_router
 from .auth.routes import router as auth_router
+from .synonyms.routes import router as synonyms_router
 from .auth.user import Role  # noqa: F401 – usado en roles_store
 from .category.routes import router as category_router
 from .category.models import Category
@@ -52,6 +53,7 @@ app.include_router(alertas_router, prefix=API_PREFIX)
 app.include_router(notificaciones_router, prefix=API_PREFIX)
 app.include_router(rss_router, prefix=API_PREFIX)
 app.include_router(category_router, prefix=API_PREFIX)
+app.include_router(synonyms_router, prefix=API_PREFIX)
 app.include_router(stats_router, prefix=f"{API_PREFIX}/stats")
 
 

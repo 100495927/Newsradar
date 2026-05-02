@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import TopNavBar from '../components/TopNavBar'
 import SideNavBar from '../components/SideNavBar'
 import MobileNav from '../components/MobileNav'
+import MultiSelectSearch from '../components/MultiSelectSearch'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../api/apiClient'
 
@@ -12,9 +13,9 @@ function toLocal(a) {
     id: a.id,
     name: a.name,
     cat: a.categories?.[0]?.code ?? '',
-    catLabel: a.categories?.[0]?.label ?? a.categories?.[0]?.code ?? '',
     cron: a.cron_expression,
     enabled: a.enabled ?? true,
+    rssChannelIds: (a.rss_channels_ids ?? []).map(String),
   }
 }
 
@@ -22,32 +23,49 @@ function AlertsPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [alerts, setAlerts] = useState([])
-  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [newAlert, setNewAlert] = useState({ name: '', cat: '', cron: '' })
+  const [newAlert, setNewAlert] = useState({ name: '', cat: 'FIN_MRKT', cron: '', rssChannelIds: [] })
   const [error, setError] = useState('')
+  const [rssChannels, setRssChannels] = useState([])
+  const [synonymSuggestions, setSynonymSuggestions] = useState([])
+  const [acceptedSynonyms, setAcceptedSynonyms] = useState([])
+  const [loadingSynonyms, setLoadingSynonyms] = useState(false)
+
+  const categories = [
+    { value: 'FIN_MRKT', label: t('categories.FIN_MRKT') },
+    { value: 'SEC_POL', label: t('categories.SEC_POL') },
+    { value: 'TECH', label: t('categories.TECH') },
+    { value: 'ENERGY', label: t('categories.ENERGY') },
+    { value: 'HEALTH', label: t('categories.HEALTH') },
+  ]
 
   useEffect(() => {
     if (user?.id) fetchAlerts()
+    fetchRssChannels()
   }, [user?.id])
 
-  useEffect(() => {
-    apiFetch('/api/v1/categories')
-      .then((res) => res.json())
-      .then((data) => {
-        const normalized = data.map((item) => ({
-          value: String(item.id),
-          label: item.name,
-        }))
-        setCategories(normalized)
-        setNewAlert((current) => ({
-          ...current,
-          cat: current.cat || normalized[0]?.value || '',
-        }))
-      })
-      .catch(() => {})
-  }, [])
+  const fetchRssChannels = async () => {
+    try {
+      const res = await apiFetch('/api/v1/information-sources')
+      if (!res.ok) return
+      const sources = await res.json()
+      const channelLists = await Promise.all(
+        sources.map(async (src) => {
+          const r = await apiFetch(`/api/v1/information-sources/${src.id}/rss-channels`)
+          if (!r.ok) return []
+          const channels = await r.json()
+          return channels.map((ch) => ({
+            id: String(ch.id),
+            label: `${src.name} — ${ch.url}`,
+          }))
+        }),
+      )
+      setRssChannels(channelLists.flat())
+    } catch {
+      // silencioso si la API no está disponible
+    }
+  }
 
   const fetchAlerts = async () => {
     try {
@@ -82,21 +100,46 @@ function AlertsPage() {
         categories: categories
           .filter((c) => c.value === alert.cat)
           .map((c) => ({ code: c.value, label: c.label })),
+        rss_channels_ids: alert.rssChannelIds ?? [],
       }),
     })
+  }
+
+  const handleFetchSynonyms = async () => {
+    if (!newAlert.name.trim()) return
+    setLoadingSynonyms(true)
+    setSynonymSuggestions([])
+    setAcceptedSynonyms([])
+    try {
+      const res = await apiFetch(`/api/v1/synonyms?word=${encodeURIComponent(newAlert.name.trim())}`)
+      if (!res.ok) return
+      const data = await res.json()
+      setSynonymSuggestions(data)
+    } catch {
+      // silencioso
+    } finally {
+      setLoadingSynonyms(false)
+    }
+  }
+
+  const toggleSynonym = (word) => {
+    setAcceptedSynonyms((prev) =>
+      prev.includes(word) ? prev.filter((w) => w !== word) : [...prev, word]
+    )
   }
 
   const handleCreateAlert = async (e) => {
     e.preventDefault()
     setError('')
-    if (!newAlert.name.trim() || !newAlert.cron.trim() || !newAlert.cat) return
+    if (!newAlert.name.trim() || !newAlert.cron.trim()) return
 
     const catInfo = categories.find((c) => c.value === newAlert.cat)
     const payload = {
       name: newAlert.name,
       cron_expression: newAlert.cron,
-      descriptors: [newAlert.name],
+      descriptors: [newAlert.name, ...acceptedSynonyms],
       categories: catInfo ? [{ code: catInfo.value, label: catInfo.label }] : [],
+      rss_channels_ids: newAlert.rssChannelIds,
     }
 
     try {
@@ -110,7 +153,9 @@ function AlertsPage() {
       }
       const saved = await res.json()
       setAlerts([...alerts, toLocal(saved)])
-      setNewAlert({ name: '', cat: categories[0]?.value || '', cron: '' })
+      setNewAlert({ name: '', cat: 'FIN_MRKT', cron: '', rssChannelIds: [] })
+      setSynonymSuggestions([])
+      setAcceptedSynonyms([])
       setShowModal(false)
     } catch (err) {
       setError(err.message)
@@ -185,8 +230,8 @@ function AlertsPage() {
                     </div>
                   </div>
                   <div className="col-span-2">
-                    <span className="text-xs bg-surface-variant px-2 py-1 rounded">
-                      {a.catLabel || a.cat}
+                    <span className="text-xs font-mono bg-surface-variant px-2 py-1 rounded">
+                      {a.cat}
                     </span>
                   </div>
                   <div className="col-span-3 font-mono text-xs">{a.cron}</div>
@@ -225,7 +270,7 @@ function AlertsPage() {
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-slate-900">{t('alerts.modalTitle')}</h3>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setSynonymSuggestions([]); setAcceptedSynonyms([]) }}
                 className="material-symbols-outlined text-slate-400 hover:text-slate-600"
               >
                 close
@@ -237,13 +282,56 @@ function AlertsPage() {
                 <label className="block text-xs font-bold uppercase text-slate-500">
                   {t('alerts.colName')}
                 </label>
-                <input
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
-                  placeholder={t('alerts.namePlaceholder')}
-                  value={newAlert.name}
-                  onChange={(e) => setNewAlert({ ...newAlert, name: e.target.value })}
-                  required
-                />
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
+                    placeholder={t('alerts.namePlaceholder')}
+                    value={newAlert.name}
+                    onChange={(e) => {
+                      setNewAlert({ ...newAlert, name: e.target.value })
+                      setSynonymSuggestions([])
+                      setAcceptedSynonyms([])
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={handleFetchSynonyms}
+                    disabled={!newAlert.name.trim() || loadingSynonyms}
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-colors disabled:opacity-40 whitespace-nowrap flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      {loadingSynonyms ? 'progress_activity' : 'auto_awesome'}
+                    </span>
+                    {t('alerts.suggestSynonyms', 'Sinónimos')}
+                  </button>
+                </div>
+                {synonymSuggestions.length > 0 && (
+                  <div className="pt-1">
+                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-2">
+                      {t('alerts.synonymsHint', 'Selecciona los que quieras incluir como descriptores')}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {synonymSuggestions.map((word) => {
+                        const accepted = acceptedSynonyms.includes(word)
+                        return (
+                          <button
+                            key={word}
+                            type="button"
+                            onClick={() => toggleSynonym(word)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                              accepted
+                                ? 'bg-primary-container text-white border-primary-container'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-primary-container'
+                            }`}
+                          >
+                            {accepted && '✓ '}{word}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -261,6 +349,18 @@ function AlertsPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase text-slate-500">
+                  {t('alerts.rssChannelsLabel', 'Canales RSS')}
+                </label>
+                <MultiSelectSearch
+                  options={rssChannels}
+                  selected={newAlert.rssChannelIds}
+                  onChange={(ids) => setNewAlert({ ...newAlert, rssChannelIds: ids })}
+                  placeholder="Buscar canales RSS..."
+                />
               </div>
 
               <div className="space-y-2">

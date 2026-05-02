@@ -4,7 +4,6 @@ import hashlib
 from datetime import datetime, timezone
 from typing import List
 
-import feedparser
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pymongo.errors import DuplicateKeyError
 
@@ -19,26 +18,9 @@ from .models import (
     RSSChannel,
     RSSChannelCreate,
     RSSChannelUpdate,
-    RSSPreviewRequest,
-    RSSPreviewResponse,
 )
 
 router = APIRouter(tags=["information-sources", "rss-channels"])
-
-
-@router.post("/rss/preview", response_model=RSSPreviewResponse)
-def preview_rss_url(
-    payload: RSSPreviewRequest,
-    _: UserInDB = Depends(get_current_user),
-) -> RSSPreviewResponse:
-    """Parse an RSS URL without attempting category autodetection."""
-    feed = feedparser.parse(str(payload.url))
-
-    if feed.bozo and not feed.entries:
-        error_msg = str(feed.bozo_exception) if feed.bozo_exception else "No se pudo analizar el feed RSS"
-        return RSSPreviewResponse(status="parse_error", error=error_msg)
-    return RSSPreviewResponse(status="no_category")
-
 
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
