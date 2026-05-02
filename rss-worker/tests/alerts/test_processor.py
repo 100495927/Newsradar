@@ -99,6 +99,7 @@ def test_process_alerts_creates_grouped_notification_and_avoids_duplicates(monke
                     {
                         "_id": "entry-1",
                         "id_fuente": "source-1",
+                        "category_id": 8,
                         "titulo": "Nueva crisis de energia",
                         "resumen": "Resumen",
                         "link": "https://example.test/1",
@@ -154,6 +155,7 @@ def test_process_alerts_without_matches_updates_alert_but_creates_no_notificatio
                 [
                     {
                         "titulo": "Deportes",
+                        "category_id": 7,
                         "resumen": "Resultado",
                         "hash_deduplicado": "hash-1",
                         "fecha_ingestion": now - timedelta(hours=1),
@@ -199,6 +201,7 @@ def test_process_alerts_new_alert_only_matches_entries_after_created_at() -> Non
                     {
                         "_id": "entry-old",
                         "id_fuente": "source-1",
+                        "category_id": 8,
                         "titulo": "Crisis de energia de ayer",
                         "resumen": "Resumen",
                         "link": "https://example.test/old",
@@ -209,6 +212,7 @@ def test_process_alerts_new_alert_only_matches_entries_after_created_at() -> Non
                     {
                         "_id": "entry-new",
                         "id_fuente": "source-1",
+                        "category_id": 8,
                         "titulo": "Nueva crisis de energia",
                         "resumen": "Resumen",
                         "link": "https://example.test/new",
@@ -273,6 +277,7 @@ def test_process_due_alerts_only_runs_due_alerts_and_sets_next_run() -> None:
                     {
                         "_id": "entry-1",
                         "id_fuente": "source-1",
+                        "category_id": 8,
                         "titulo": "Nueva crisis de energia",
                         "resumen": "Resumen",
                         "link": "https://example.test/1",
@@ -296,6 +301,53 @@ def test_process_due_alerts_only_runs_due_alerts_and_sets_next_run() -> None:
     assert app_db["alerts"].docs[0]["last_run_at"] == now
     assert app_db["alerts"].docs[0]["next_run_at"] == now + timedelta(minutes=5)
     assert app_db["alerts"].docs[1].get("last_run_at") is None
+
+
+def test_process_alerts_filters_entries_by_alert_category() -> None:
+    now = datetime(2026, 4, 19, 12, 0, tzinfo=timezone.utc)
+    app_db = FakeAppDb(
+        {
+            "alerts": FakeCollection(
+                [
+                    {
+                        "id": 10,
+                        "user_id": 3,
+                        "name": "Energia",
+                        "descriptors": ["energia"],
+                        "category_id": 8,
+                        "notification_channels": ["app"],
+                        "enabled": True,
+                        "last_checked_at": None,
+                        "created_at": now - timedelta(hours=3),
+                    }
+                ]
+            ),
+            "rss_entradas": FakeCollection(
+                [
+                    {
+                        "_id": "entry-1",
+                        "id_fuente": "source-1",
+                        "category_id": 7,
+                        "titulo": "Nueva crisis de energia",
+                        "resumen": "Resumen",
+                        "link": "https://example.test/1",
+                        "hash_deduplicado": "hash-1",
+                        "fecha_publicacion": now - timedelta(hours=2),
+                        "fecha_ingestion": now - timedelta(hours=1),
+                    }
+                ]
+            ),
+            "rss_fuentes": FakeCollection([{"_id": "source-1", "medio": "medio-test"}]),
+            "users": FakeCollection([{"id": 3, "email": "manager@example.test"}]),
+            "notifications": FakeCollection([]),
+            "counters": FakeCollection([{"_id": "notifications", "seq": 0}]),
+        }
+    )
+
+    created = process_alerts(FakeDb(app_db), now)
+
+    assert created == 0
+    assert app_db["notifications"].docs == []
 
 
 def test_process_due_alerts_initializes_missing_next_run_without_running() -> None:

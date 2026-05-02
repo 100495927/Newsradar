@@ -12,8 +12,7 @@ class RSSEntrada:
     titulo: str
     autores: list[str] | None
     link: str
-    categorias: list[int] | None
-    categorias_raw: list[str] | None
+    category_id: int | None
     fecha_publicacion: int  # Unix timestamp
     resumen: str | None = None
 
@@ -22,7 +21,7 @@ class RSSEntrada:
         {self.titulo}
         {self.autores}
         {self.link}
-        {self.categorias}
+        {self.category_id}
         {datetime.fromtimestamp(self.fecha_publicacion).strftime('%H:%M %d/%m/%Y')}
         """
 
@@ -33,8 +32,7 @@ class RSSEntrada:
             "titulo": self.titulo,
             "autores": self.autores,
             "link": self.link,
-            "categorias": self.categorias,
-            "categorias_raw": self.categorias_raw,
+            "category_id": self.category_id,
             "resumen": self.resumen,
             "fecha_publicacion": datetime.fromtimestamp(
                 self.fecha_publicacion, tz=timezone.utc

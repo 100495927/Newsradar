@@ -121,12 +121,14 @@ def _process_single_alert(
     descriptors = clean_descriptors(alert.get("descriptors"))
     # Si la alerta es nueva, empezamos a contar desde su creacion para no incluir historico previo.
     since = alert.get("last_checked_at") or alert.get("created_at") or timestamp
+    query = {"fecha_ingestion": {"$gt": since}}
+    category_id = alert.get("category_id")
+    if category_id is not None:
+        query["category_id"] = category_id
 
     matches: list[dict] = []
     source_cache: dict[Any, str | None] = {}
-    cursor = app_db["rss_entradas"].find({"fecha_ingestion": {"$gt": since}}).sort(
-        "fecha_ingestion", 1
-    )
+    cursor = app_db["rss_entradas"].find(query).sort("fecha_ingestion", 1)
 
     if descriptors:
         for entry in cursor:
@@ -141,7 +143,7 @@ def _process_single_alert(
                     entry,
                     matched_descriptors,
                     source=_source_name(app_db, entry, source_cache),
-                    category_id=alert.get("category_id"),
+                    category_id=entry.get("category_id"),
                 )
             )
 

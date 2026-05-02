@@ -17,7 +17,7 @@ class RSSFuente:
         url: str,
         activo: bool = True,
         mongo_id: str | None = None,
-        categoria_iptc: int | None = None,
+        category_id: int | None = None,
     ):
         from .parsers import url_a_parser
 
@@ -27,7 +27,7 @@ class RSSFuente:
         self.parser = url_a_parser(url)
         self.activo = activo
         self.mongo_id = mongo_id
-        self.categoria_iptc = categoria_iptc
+        self.category_id = category_id
 
     def obtener_entradas(self) -> list[RSSEntrada]:
         entradas = parse(self.url).entries
@@ -49,20 +49,10 @@ class RSSFuente:
             "url": self.url,
             "tipo": "channel",
             "activo": self.activo,
-            "categoria_iptc": self.categoria_iptc,
+            "category_id": self.category_id,
             "creado": datetime.now(timezone.utc),
             "actualizado": datetime.now(timezone.utc),
         }
-
-    def categoria_iptc_string(self) -> str | None:
-        from feedparser import parse
-
-        d = parse(self.url)
-
-        if hasattr(d.feed, "tags") and len(d.feed.tags) > 0:
-            return d.feed.tags[0].term
-
-        return None
 
     @classmethod
     def de_mongo(cls, mongo_dict: dict) -> "RSSFuente":
@@ -80,7 +70,7 @@ class RSSFuente:
             url=url,
             activo=activo,
             mongo_id=mongo_dict.get("_id"),
-            categoria_iptc=mongo_dict.get("categoria_iptc"),
+            category_id=mongo_dict.get("category_id"),
         )
 
     @property

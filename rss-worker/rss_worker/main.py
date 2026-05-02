@@ -8,6 +8,12 @@ from api_fuentes import api_task
 LOGGER_NOMBRE = "rssworker"
 logger = logging.getLogger(LOGGER_NOMBRE)
 
+
+def fetch_de_entradas() -> None:
+    from fetch_pipeline import fetch_de_entradas as _fetch_de_entradas
+
+    _fetch_de_entradas()
+
 def configure_logging() -> None:
     logging.basicConfig(
         level=logging.INFO,
