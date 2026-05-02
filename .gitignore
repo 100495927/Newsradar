@@ -16,3 +16,4 @@ data/elasticsearch/config/*
 !data/elasticsearch/config/.gitkeep
 !data/elasticsearch/config/elasticsearch.yml
 
+newsradar_api/
