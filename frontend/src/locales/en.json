@@ -28,7 +28,13 @@
     "activeSources": "Active Sources",
     "alerts": "Alerts",
     "rssChannels": "RSS Channels",
-    "activeBadge": "Active"
+    "activeBadge": "Active",
+    "chartTitle": "News Captured per Day",
+    "chartSubtitle": "Daily ingestion volume (last 30 days)",
+    "noCapture": "No capture data available",
+    "volumeByCategory": "Volume by Category",
+    "noData": "No data available",
+    "newsTooltip": "{{date}}: {{count}} news"
   },
   "login": {
     "tagline": "The Informed Lens",
@@ -85,7 +91,11 @@
     "cancel": "Cancel",
     "createSubmit": "Create Alert",
     "errorLoad": "Error loading alerts",
-    "errorCreate": "Error creating alert"
+    "errorCreate": "Error creating alert",
+    "rssChannelsLabel": "RSS Channels",
+    "rssChannelsPlaceholder": "Search RSS channels...",
+    "suggestSynonyms": "Synonyms",
+    "synonymsHint": "Select those you want to include as descriptors"
   },
   "categories": {
     "01000000": "Arts, Culture & Entertainment",
@@ -130,7 +140,11 @@
     "urlLabel": "RSS URL",
     "urlPlaceholder": "https://domain.com/feed.xml",
     "connectButton": "Connect Stream",
-    "defaultSourceName": "New Source"
+    "defaultSourceName": "New Source",
+    "categoryModalTitle": "Select category",
+    "categoryModalDesc": "Select a category to classify articles from this feed.",
+    "categoryPlaceholder": "-- Choose a category --",
+    "addButton": "Add source"
   },
   "summary": {
     "pageTitle": "Intelligence Summary",
@@ -140,7 +154,8 @@
     "byCategory": "Keywords by Category",
     "newsCount": "{{count}} news",
     "noData": "No data",
-    "noNewsProcessed": "No news processed yet"
+    "noNewsProcessed": "No news processed yet",
+    "appearances": "{{count}} appearances"
   },
   "language": {
     "select": "Select language",

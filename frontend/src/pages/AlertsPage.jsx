@@ -380,7 +380,7 @@ function AlertsPage() {
                   options={rssChannels}
                   selected={newAlert.rssChannelIds}
                   onChange={(ids) => setNewAlert({ ...newAlert, rssChannelIds: ids })}
-                  placeholder="Buscar canales RSS..."
+                  placeholder={t('alerts.rssChannelsPlaceholder')}
                 />
               </div>
 

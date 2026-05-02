@@ -28,7 +28,13 @@
     "activeSources": "Fuentes Activas",
     "alerts": "Alertas",
     "rssChannels": "Canales RSS",
-    "activeBadge": "Activas"
+    "activeBadge": "Activas",
+    "chartTitle": "Noticias Capturadas por Día",
+    "chartSubtitle": "Volumen de ingesta diaria (últimos 30 días)",
+    "noCapture": "Sin datos de captura disponibles",
+    "volumeByCategory": "Volumen por Categoría",
+    "noData": "Sin datos disponibles",
+    "newsTooltip": "{{date}}: {{count}} noticias"
   },
   "login": {
     "tagline": "El Lente Informado",
@@ -85,7 +91,11 @@
     "cancel": "Cancelar",
     "createSubmit": "Crear Alerta",
     "errorLoad": "Error al cargar alertas",
-    "errorCreate": "Error al crear alerta"
+    "errorCreate": "Error al crear alerta",
+    "rssChannelsLabel": "Canales RSS",
+    "rssChannelsPlaceholder": "Buscar canales RSS...",
+    "suggestSynonyms": "Sinónimos",
+    "synonymsHint": "Selecciona los que quieras incluir como descriptores"
   },
   "categories": {
     "01000000": "Arte, cultura y entretenimiento",
@@ -130,7 +140,11 @@
     "urlLabel": "URL RSS",
     "urlPlaceholder": "https://dominio.com/feed.xml",
     "connectButton": "Conectar Stream",
-    "defaultSourceName": "Nueva Fuente"
+    "defaultSourceName": "Nueva Fuente",
+    "categoryModalTitle": "Seleccionar categoría",
+    "categoryModalDesc": "Selecciona una categoría para clasificar los artículos de este feed.",
+    "categoryPlaceholder": "-- Elige una categoría --",
+    "addButton": "Añadir fuente"
   },
   "summary": {
     "pageTitle": "Resumen de Inteligencia",
@@ -140,7 +154,8 @@
     "byCategory": "Palabras Clave por Categoría",
     "newsCount": "{{count}} noticias",
     "noData": "Sin datos",
-    "noNewsProcessed": "No hay noticias procesadas todavía"
+    "noNewsProcessed": "No hay noticias procesadas todavía",
+    "appearances": "{{count}} apariciones"
   },
   "language": {
     "select": "Seleccionar idioma",

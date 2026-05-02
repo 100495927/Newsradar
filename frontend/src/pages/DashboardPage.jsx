@@ -55,12 +55,12 @@ function buildStatCards(data, t) {
   ]
 }
 
-function buildCategories(noticiasPorCategoria) {
+function buildCategories(noticiasPorCategoria, t) {
   const top = noticiasPorCategoria.slice(0, 8)
   const total = top.reduce((sum, c) => sum + c.total, 0) || 1
   return top.map((cat, i) => ({
     id: cat.id,
-    label: cat.id,
+    label: t(`categories.${cat.id.padStart(8, '0')}`, cat.id),
     value: Math.round((cat.total / total) * 100),
     color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
   }))
@@ -83,7 +83,7 @@ function DashboardPage() {
   }, [])
 
   const statCards = stats ? buildStatCards(stats, t) : []
-  const categories = stats ? buildCategories(stats.noticias_por_categoria) : []
+  const categories = stats ? buildCategories(stats.noticias_por_categoria, t) : []
 
   return (
     <div className="bg-surface text-on-surface min-h-screen">

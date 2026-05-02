@@ -1,4 +1,7 @@
+import { useTranslation } from 'react-i18next'
+
 function TrendChart({ data, loading }) {
+  const { t } = useTranslation()
   const maxVal = data.length > 0 ? Math.max(...data.map((d) => d.total)) : 1
 
   const bars = data.slice(-30)
@@ -27,10 +30,10 @@ function TrendChart({ data, loading }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-10 gap-4">
         <div>
           <h2 className="text-lg font-extrabold headline-font text-slate-900 uppercase tracking-tight">
-            Noticias Capturadas por Día
+            {t('dashboard.chartTitle')}
           </h2>
           <p className="text-xs text-slate-500 font-medium">
-            Volumen de ingesta diaria (últimos 30 días)
+            {t('dashboard.chartSubtitle')}
           </p>
         </div>
       </div>
@@ -39,7 +42,7 @@ function TrendChart({ data, loading }) {
         <div className="h-[320px] bg-slate-50 rounded-lg animate-pulse" />
       ) : bars.length === 0 ? (
         <div className="h-[320px] flex items-center justify-center text-slate-400 text-sm font-medium uppercase tracking-widest">
-          Sin datos de captura disponibles
+          {t('dashboard.noCapture')}
         </div>
       ) : (
         <>
@@ -73,7 +76,7 @@ function TrendChart({ data, loading }) {
                 stroke="white"
                 strokeWidth="1.5"
               >
-                <title>{`${d.fecha}: ${d.total.toLocaleString('es-ES')} noticias`}</title>
+                <title>{t('dashboard.newsTooltip', { date: d.fecha, count: d.total.toLocaleString() })}</title>
               </circle>
             ))}
           </svg>

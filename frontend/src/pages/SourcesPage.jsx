@@ -15,16 +15,31 @@ function SourcesPage() {
   // Category modal state (shown when feed has no detectable category)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [pendingUrl, setPendingUrl] = useState(null)
-  const [categories, setCategories] = useState([])
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [modalError, setModalError] = useState(null)
 
+  const categories = [
+    { id: 1,  code: '01000000' },
+    { id: 2,  code: '02000000' },
+    { id: 3,  code: '03000000' },
+    { id: 4,  code: '04000000' },
+    { id: 5,  code: '05000000' },
+    { id: 6,  code: '06000000' },
+    { id: 7,  code: '07000000' },
+    { id: 8,  code: '08000000' },
+    { id: 9,  code: '09000000' },
+    { id: 10, code: '10000000' },
+    { id: 11, code: '11000000' },
+    { id: 12, code: '12000000' },
+    { id: 13, code: '13000000' },
+    { id: 14, code: '14000000' },
+    { id: 15, code: '15000000' },
+    { id: 16, code: '16000000' },
+    { id: 17, code: '17000000' },
+  ]
+
   useEffect(() => {
     fetchSources()
-    apiFetch('/api/v1/categories')
-      .then((r) => r.json())
-      .then(setCategories)
-      .catch(() => {})
   }, [])
 
   const fetchSources = async () => {
@@ -221,7 +236,7 @@ function SourcesPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-slate-800">Seleccionar categoría</h2>
+              <h2 className="text-xl font-bold text-slate-800">{t('sources.categoryModalTitle')}</h2>
               <button
                 onClick={() => {
                   setShowCategoryModal(false)
@@ -235,17 +250,17 @@ function SourcesPage() {
               </button>
             </div>
             <p className="text-slate-500 mb-6">
-              Selecciona una categoría para clasificar los artículos de este feed.
+              {t('sources.categoryModalDesc')}
             </p>
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 mb-2 text-slate-800"
             >
-              <option value="">-- Elige una categoría --</option>
+              <option value="">{t('sources.categoryPlaceholder')}</option>
               {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
+                <option key={c.code} value={c.id}>
+                  {t(`categories.${c.code}`)}
                 </option>
               ))}
             </select>
@@ -255,7 +270,7 @@ function SourcesPage() {
               onClick={handleModalConfirm}
               className="w-full mt-4 bg-primary-container text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
             >
-              Añadir fuente
+              {t('sources.addButton')}
             </button>
           </div>
         </div>
