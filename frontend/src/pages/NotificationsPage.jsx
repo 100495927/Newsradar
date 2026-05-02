@@ -23,14 +23,16 @@ function NotificationsPage() {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [clearing, setClearing] = useState(false)
+  const [expanded, setExpanded] = useState(new Set())
 
   useEffect(() => {
-    if (user?.id) fetchAllNotifications()
+    if (user?.id) fetchNotifications()
   }, [user?.id])
 
-  const fetchAllNotifications = async () => {
+  const fetchNotifications = async () => {
     try {
       setLoading(true)
+      // Contrato: GET /users/{uid}/alerts → por cada alerta GET .../notifications
       const alertsRes = await apiFetch(`/api/v1/users/${user.id}/alerts`)
       if (!alertsRes.ok) return
       const alerts = await alertsRes.json()
@@ -44,16 +46,15 @@ function NotificationsPage() {
           const items = await res.json()
           return items.map((n) => ({
             ...n,
-            alertId: alert.id,
-            alertName: alert.name,
+            alert_id: alert.id,
+            subject: `Actualización de ${alert.name} en ${new Date(n.timestamp).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
           }))
         }),
       )
 
-      const all = byAlert
-        .flat()
-        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-      setNotifications(all)
+      setNotifications(
+        byAlert.flat().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
+      )
     } catch (err) {
       console.error(err)
     } finally {
@@ -74,13 +75,21 @@ function NotificationsPage() {
     await Promise.all(
       notifications.map((n) =>
         apiFetch(
-          `/api/v1/users/${user.id}/alerts/${n.alertId}/notifications/${n.id}`,
+          `/api/v1/users/${user.id}/alerts/${n.alert_id}/notifications/${n.id}`,
           { method: 'DELETE' },
         ),
       ),
     )
     setNotifications([])
     setClearing(false)
+  }
+
+  const toggleExpand = (id) => {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
   }
 
   return (
@@ -115,10 +124,7 @@ function NotificationsPage() {
           {loading ? (
             <div className="space-y-3">
               {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-white border border-slate-200 rounded-xl p-5 animate-pulse h-24"
-                />
+                <div key={i} className="bg-white border border-slate-200 rounded-xl p-5 animate-pulse h-24" />
               ))}
             </div>
           ) : notifications.length === 0 ? (
@@ -132,59 +138,131 @@ function NotificationsPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className="bg-white border border-slate-200 rounded-xl p-5 flex items-start gap-4 hover:border-primary-container/30 transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="material-symbols-outlined text-primary-container text-[20px]">
-                      notifications_active
-                    </span>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-bold text-slate-900 text-sm">
-                          Actualización de{' '}
-                          <span className="text-primary-container">{n.alertName}</span>
-                        </p>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {new Date(n.timestamp).toLocaleString('es-ES', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}{' '}
-                          · {formatRelativeTime(n.timestamp)}
-                        </p>
+              {notifications.map((n) => {
+                const isOpen = expanded.has(n.id)
+                return (
+                  <div
+                    key={n.id}
+                    className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-primary-container/30 transition-colors"
+                  >
+                    {/* Header row */}
+                    <div className="flex items-start gap-4 p-5">
+                      <div className="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="material-symbols-outlined text-primary-container text-[20px]">
+                          notifications_active
+                        </span>
                       </div>
-                      <button
-                        onClick={() => handleDelete(n.alertId, n.id)}
-                        className="material-symbols-outlined text-slate-300 hover:text-red-500 transition-colors text-[20px] flex-shrink-0"
-                      >
-                        close
-                      </button>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 text-sm truncate">
+                              {n.subject}
+                            </p>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              {new Date(n.timestamp).toLocaleString('es-ES', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}{' '}
+                              · {formatRelativeTime(n.timestamp)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {n.matches?.length > 0 && (
+                              <button
+                                onClick={() => toggleExpand(n.id)}
+                                className="text-xs text-primary-container font-bold flex items-center gap-1 hover:opacity-70"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">
+                                  {isOpen ? 'expand_less' : 'expand_more'}
+                                </span>
+                                {n.matches.length} noticias
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDelete(n.alert_id, n.id)}
+                              className="material-symbols-outlined text-slate-300 hover:text-red-500 transition-colors text-[20px]"
+                            >
+                              close
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Metrics */}
+                        {n.metrics?.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {n.metrics.map((m) => (
+                              <span
+                                key={m.name}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-medium text-slate-600"
+                              >
+                                <span className="font-bold text-primary-container">{m.value}</span>
+                                {m.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    {n.metrics && n.metrics.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {n.metrics.map((m) => (
-                          <span
-                            key={m.name}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-medium text-slate-600"
-                          >
-                            <span className="font-bold text-primary-container">{m.value}</span>
-                            {m.name}
-                          </span>
+                    {/* Matches (noticias que dispararon la alerta) */}
+                    {isOpen && n.matches?.length > 0 && (
+                      <div className="border-t border-slate-100 divide-y divide-slate-50">
+                        {n.matches.map((match, i) => (
+                          <div key={i} className="px-5 py-3 bg-slate-50/60">
+                            <div className="flex items-start gap-3">
+                              <span className="material-symbols-outlined text-slate-300 text-sm mt-0.5">
+                                article
+                              </span>
+                              <div className="min-w-0">
+                                {match.link ? (
+                                  <a
+                                    href={match.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs font-semibold text-primary-container hover:underline line-clamp-2"
+                                  >
+                                    {match.title || match.link}
+                                  </a>
+                                ) : (
+                                  <p className="text-xs font-semibold text-slate-700 line-clamp-2">
+                                    {match.title}
+                                  </p>
+                                )}
+                                <div className="flex items-center gap-2 mt-1">
+                                  {match.source && (
+                                    <span className="text-[10px] text-slate-400">{match.source}</span>
+                                  )}
+                                  {match.published_at && (
+                                    <span className="text-[10px] text-slate-400">
+                                      {new Date(match.published_at).toLocaleDateString('es-ES')}
+                                    </span>
+                                  )}
+                                </div>
+                                {match.matched_descriptors?.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {match.matched_descriptors.map((d) => (
+                                      <span
+                                        key={d}
+                                        className="text-[9px] bg-primary-container/10 text-primary-container px-1.5 py-0.5 rounded font-mono"
+                                      >
+                                        {d}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         ))}
                       </div>
                     )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
