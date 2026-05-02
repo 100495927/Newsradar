@@ -19,7 +19,7 @@ def fetch_de_entradas() -> None:
             for entrada in fuente.obtener_entradas():
                 if db.col_rss_entradas.insertar(entrada) is not None:
                     total_nuevas += 1
-            
+
         except Exception:
             logger.exception("Error crítico en ingesta de fuente: %s", fuente.url)
 
@@ -50,4 +50,4 @@ def fetch_entradas_task():
             logger.exception("Fallo un ciclo completo de ingesta RSS")
 
 __all__ = ["fetch_entradas_task"]
-        
+
