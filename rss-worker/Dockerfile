@@ -14,6 +14,6 @@ COPY shared /app/shared
 
 ENV PYTHONPATH="/app:/app/rss-worker"
 
-WORKDIR /app/rss-worker
+WORKDIR /app
 
-CMD ["python", "/app/rss-worker/rss_worker/main.py"]
+CMD ["python", "-m", "rss_worker.main"]
