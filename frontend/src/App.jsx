@@ -8,6 +8,7 @@ import SummaryPage from './pages/SummaryPage'
 import AlertsPage from './pages/AlertsPage'
 import SourcesPage from './pages/SourcesPage'
 import ProfilePage from './pages/ProfilePage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Routes>
           <Route path="/" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/summary" element={<ProtectedRoute><SummaryPage /></ProtectedRoute>} />
           <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />

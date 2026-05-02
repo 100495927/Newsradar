@@ -68,6 +68,12 @@ function LoginPage() {
                   <label className="block text-xs font-bold uppercase tracking-[0.15em] text-on-surface-variant/80 font-label">
                     Contraseña
                   </label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-primary-container font-medium hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
                 </div>
                 <input
                   className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-5 py-4 text-sm font-medium"
