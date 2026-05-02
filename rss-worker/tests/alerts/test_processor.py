@@ -377,6 +377,86 @@ def test_process_alerts_filters_entries_by_selected_source_and_channel() -> None
     assert notification["matches"][0]["rss_entry_hash"] == "hash-1"
 
 
+def test_process_alerts_filters_entries_by_multiple_selected_channels() -> None:
+    now = datetime(2026, 4, 19, 12, 0, tzinfo=timezone.utc)
+    app_db = FakeAppDb(
+        {
+            "alerts": FakeCollection(
+                [
+                    {
+                        "id": 10,
+                        "user_id": 3,
+                        "name": "Energia",
+                        "descriptors": ["energia"],
+                        "category_id": 8,
+                        "rss_channel_ids": [101, 202],
+                        "notification_channels": ["app"],
+                        "enabled": True,
+                        "last_checked_at": None,
+                        "created_at": now - timedelta(hours=3),
+                    }
+                ]
+            ),
+            "rss_entradas": FakeCollection(
+                [
+                    {
+                        "_id": "entry-match-1",
+                        "information_source_id": 1,
+                        "rss_channel_id": 101,
+                        "source_name": "medio-test",
+                        "category_id": 8,
+                        "titulo": "Nueva crisis de energia",
+                        "resumen": "Resumen",
+                        "link": "https://example.test/1",
+                        "hash_deduplicado": "hash-1",
+                        "fecha_publicacion": now - timedelta(hours=2),
+                        "fecha_ingestion": now - timedelta(hours=1),
+                    },
+                    {
+                        "_id": "entry-match-2",
+                        "information_source_id": 1,
+                        "rss_channel_id": 202,
+                        "source_name": "medio-test",
+                        "category_id": 8,
+                        "titulo": "Plan de energia renovable",
+                        "resumen": "Resumen",
+                        "link": "https://example.test/2",
+                        "hash_deduplicado": "hash-2",
+                        "fecha_publicacion": now - timedelta(hours=2),
+                        "fecha_ingestion": now - timedelta(minutes=50),
+                    },
+                    {
+                        "_id": "entry-other-channel",
+                        "information_source_id": 1,
+                        "rss_channel_id": 999,
+                        "source_name": "medio-test",
+                        "category_id": 8,
+                        "titulo": "Nueva crisis de energia",
+                        "resumen": "Resumen",
+                        "link": "https://example.test/3",
+                        "hash_deduplicado": "hash-3",
+                        "fecha_publicacion": now - timedelta(hours=2),
+                        "fecha_ingestion": now - timedelta(minutes=40),
+                    },
+                ]
+            ),
+            "information_sources": FakeCollection([{"id": 1, "name": "medio-test"}]),
+            "users": FakeCollection([{"id": 3, "email": "manager@example.test"}]),
+            "notifications": FakeCollection([]),
+            "counters": FakeCollection([{"_id": "notifications", "seq": 0}]),
+        }
+    )
+
+    created = process_alerts(FakeDb(app_db), now)
+
+    assert created == 1
+    notification = app_db["notifications"].docs[0]
+    assert [match["rss_entry_hash"] for match in notification["matches"]] == [
+        "hash-1",
+        "hash-2",
+    ]
+
+
 def test_process_alerts_filters_entries_by_alert_category() -> None:
     now = datetime(2026, 4, 19, 12, 0, tzinfo=timezone.utc)
     app_db = FakeAppDb(
@@ -424,6 +504,92 @@ def test_process_alerts_filters_entries_by_alert_category() -> None:
 
     assert created == 0
     assert app_db["notifications"].docs == []
+
+
+def test_process_alerts_without_selected_channels_uses_all_channels_in_category() -> None:
+    now = datetime(2026, 4, 19, 12, 0, tzinfo=timezone.utc)
+    app_db = FakeAppDb(
+        {
+            "alerts": FakeCollection(
+                [
+                    {
+                        "id": 10,
+                        "user_id": 3,
+                        "name": "Energia",
+                        "descriptors": ["energia"],
+                        "category_id": 8,
+                        "notification_channels": ["app"],
+                        "enabled": True,
+                        "last_checked_at": None,
+                        "created_at": now - timedelta(hours=3),
+                    }
+                ]
+            ),
+            "rss_entradas": FakeCollection(
+                [
+                    {
+                        "_id": "entry-1",
+                        "information_source_id": 1,
+                        "rss_channel_id": 101,
+                        "source_name": "medio-a",
+                        "category_id": 8,
+                        "titulo": "Nueva crisis de energia",
+                        "resumen": "Resumen",
+                        "link": "https://example.test/1",
+                        "hash_deduplicado": "hash-1",
+                        "fecha_publicacion": now - timedelta(hours=2),
+                        "fecha_ingestion": now - timedelta(hours=1),
+                    },
+                    {
+                        "_id": "entry-2",
+                        "information_source_id": 2,
+                        "rss_channel_id": 202,
+                        "source_name": "medio-b",
+                        "category_id": 8,
+                        "titulo": "Plan de energia renovable",
+                        "resumen": "Resumen",
+                        "link": "https://example.test/2",
+                        "hash_deduplicado": "hash-2",
+                        "fecha_publicacion": now - timedelta(hours=2),
+                        "fecha_ingestion": now - timedelta(minutes=50),
+                    },
+                    {
+                        "_id": "entry-3",
+                        "information_source_id": 3,
+                        "rss_channel_id": 303,
+                        "source_name": "medio-c",
+                        "category_id": 7,
+                        "titulo": "Energia en deportes",
+                        "resumen": "Resumen",
+                        "link": "https://example.test/3",
+                        "hash_deduplicado": "hash-3",
+                        "fecha_publicacion": now - timedelta(hours=2),
+                        "fecha_ingestion": now - timedelta(minutes=40),
+                    },
+                ]
+            ),
+            "information_sources": FakeCollection(
+                [
+                    {"id": 1, "name": "medio-a"},
+                    {"id": 2, "name": "medio-b"},
+                    {"id": 3, "name": "medio-c"},
+                ]
+            ),
+            "users": FakeCollection([{"id": 3, "email": "manager@example.test"}]),
+            "notifications": FakeCollection([]),
+            "counters": FakeCollection([{"_id": "notifications", "seq": 0}]),
+        }
+    )
+
+    created = process_alerts(FakeDb(app_db), now)
+
+    assert created == 1
+    notification = app_db["notifications"].docs[0]
+    assert len(notification["matches"]) == 2
+    assert [match["rss_entry_hash"] for match in notification["matches"]] == [
+        "hash-1",
+        "hash-2",
+    ]
 
 
 def test_process_due_alerts_initializes_missing_next_run_without_running() -> None:

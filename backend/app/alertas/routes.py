@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from shared.utils import next_run_on_or_after, validate_minute_cron_expression
+from shared.utils import next_run_after, next_run_on_or_after, validate_minute_cron_expression
 
 from ..dependencies import ensure_gestor_role, ensure_user_can_access, get_current_user
 from ..auth.user import UserInDB
@@ -51,7 +51,6 @@ def _doc_to_alert(doc: dict) -> Alert:
             str(value) for value in doc.get("information_sources_ids", [])
         ],
         cron_expression=doc["cron_expression"],
-        enabled=doc.get("enabled", True),
     )
 
 
@@ -90,7 +89,12 @@ def _resolve_alert_category_or_400(categories: list[dict] | None) -> tuple[int, 
     if not categories:
         raise HTTPException(
             status_code=400,
-            detail="La alerta debe incluir una categoría IPTC",
+            detail="La alerta debe incluir exactamente una categoría IPTC",
+        )
+    if len(categories) != 1:
+        raise HTTPException(
+            status_code=400,
+            detail="La alerta debe incluir exactamente una categoría IPTC",
         )
 
     candidate = categories[0]
@@ -303,7 +307,7 @@ def create_user_alert(
         "enabled": True,
         "last_checked_at": None,
         "last_run_at": None,
-        "next_run_at": next_run_on_or_after(payload.cron_expression, now),
+        "next_run_at": next_run_after(payload.cron_expression, now),
         "created_at": now,
         "updated_at": now,
     }
@@ -344,7 +348,7 @@ def update_user_alert(
 
     if "cron_expression" in update_data:
         _validate_cron_or_400(update_data["cron_expression"])
-        update_data["next_run_at"] = next_run_on_or_after(update_data["cron_expression"], now)
+        update_data["next_run_at"] = next_run_after(update_data["cron_expression"], now)
 
     if "categories" in update_data:
         category_id, normalized_categories = _resolve_alert_category_or_400(update_data["categories"])
@@ -385,17 +389,6 @@ def update_user_alert(
         update_data["information_sources_ids"] = normalized_source_ids
         update_data.pop("rss_channels_ids", None)
         update_data.pop("information_sources_ids", None)
-
-    if update_data.get("enabled") is False:
-        update_data["next_run_at"] = None
-
-    if update_data.get("enabled") is True and "next_run_at" not in update_data:
-        current = alerts_col.find_one(
-            {"id": alert_id, "user_id": user_id},
-            {"cron_expression": 1, "next_run_at": 1, "_id": 0},
-        )
-        if current and current.get("next_run_at") is None:
-            update_data["next_run_at"] = next_run_on_or_after(current["cron_expression"], now)
 
     if update_data:
         update_data["updated_at"] = now

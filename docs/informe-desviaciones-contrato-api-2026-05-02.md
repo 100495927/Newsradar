@@ -28,7 +28,10 @@ La situacion actual es esta:
 
 - En alertas, notificaciones y RSS hay una alineacion estructural razonable con el contrato.
 - El contrato si describe correctamente que la version de la API usada ya incluye `categories`, `rss_channels_ids` e `information_sources_ids` en alertas.
-- Aun asi, siguen existiendo desviaciones funcionales y contractuales relevantes en `auth/register`, `roles`, `users`, `categories` y parte de `alerts`.
+- En alertas ya se han corregido dos puntos que estaban desviados en revisiones previas:
+  - la API rechaza alertas con mas de una categoria IPTC
+  - el modelo publico `Alert` ya no expone el campo interno `enabled`
+- Aun asi, siguen existiendo desviaciones funcionales y contractuales relevantes en `auth/register`, `roles`, `users` y `categories`.
 - Ademas, el backend expone endpoints reales de `stats` que no estan reflejados en el contrato actual.
 
 ## 3. Desviaciones vigentes
@@ -156,28 +159,7 @@ Impacto:
 
 - El contrato comunica una restriccion de autorizacion que no existe realmente.
 
-### 3.6 Cardinalidad real de `categories` en alertas
-
-Contrato declarado:
-
-- La alerta debe llevar exactamente una categoria IPTC valida
-
-Implementacion real:
-
-- El backend exige que exista al menos una categoria, pero no rechaza listas con varias.
-- Toma la primera categoria y descarta el resto de forma implicita.
-
-Referencias:
-
-- Contrato: `docs/contrato-api-backend.md`
-- Implementacion: `backend/app/alertas/routes.py`
-
-Impacto:
-
-- El comportamiento observable no coincide con la restriccion documentada.
-- Un cliente puede enviar varias categorias y obtener `201` o `200` cuando el contrato hacia esperar `400`.
-
-### 3.7 Endpoints de `stats` no documentados en el contrato actual
+### 3.6 Endpoints de `stats` no documentados en el contrato actual
 
 Contrato declarado:
 
@@ -201,7 +183,37 @@ Impacto:
 - El contrato actual es incompleto respecto a endpoints realmente publicados por el backend.
 - Esto no rompe compatibilidad hacia atras, pero si deja fuera parte de la superficie real de la API.
 
-## 4. Puntos que si parecen alineados en esta revision
+## 4. Correcciones aplicadas en alertas
+
+Estas correcciones se han aplicado durante la revision del `2026-05-02` para acercar la implementacion al contrato vigente.
+
+### 4.1 Cardinalidad de `categories`
+
+Situacion corregida:
+
+- antes se aceptaban listas con varias categorias y se usaba solo la primera
+- ahora la API devuelve `400 Bad Request` si la alerta no trae exactamente una categoria IPTC
+
+Implementacion:
+
+- `backend/app/alertas/routes.py`
+- `backend/tests/test_alert_scope_validation.py`
+- `backend/tests/test_alertas.py`
+
+### 4.2 Campo interno `enabled` fuera del contrato publico
+
+Situacion corregida:
+
+- antes `Alert` y `AlertUpdate` exponian `enabled` aunque el contrato publico no lo define
+- ahora `enabled` se mantiene solo como campo interno persistido en MongoDB y deja de formar parte del modelo publico de alertas
+
+Implementacion:
+
+- `backend/app/alertas/models.py`
+- `backend/app/alertas/routes.py`
+- `backend/tests/test_alert_scope_validation.py`
+
+## 5. Puntos que si parecen alineados en esta revision
 
 En esta revision no se han detectado desviaciones estructurales relevantes en estos bloques del contrato:
 
@@ -221,7 +233,7 @@ Nota:
 
 - Que un bloque este alineado en shape no implica que toda su logica de negocio coincida exactamente con el AG original; aqui solo se marca que no se ha encontrado una desviacion contractual mayor frente al contrato actual del repositorio.
 
-## 5. Recomendaciones
+## 6. Recomendaciones
 
 Opciones razonables para dejar de tener esta divergencia:
 
@@ -231,10 +243,9 @@ Opciones razonables para dejar de tener esta divergencia:
    - `roles`
    - `users`
    - `categories`
-   - validacion estricta de `categories` en alertas
 3. Si se mantiene la capa de compatibilidad actual, dejar explicitamente marcados `roles` y `categories` como endpoints de compatibilidad y no como recursos CRUD reales.
 
-## 6. Alcance de esta revision
+## 7. Alcance de esta revision
 
 Esta revision se ha hecho por inspeccion estatica de codigo y documentacion.
 

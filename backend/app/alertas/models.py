@@ -30,13 +30,11 @@ class AlertUpdate(BaseModel):
     rss_channels_ids: Optional[List[str]] = None
     information_sources_ids: Optional[List[str]] = None
     cron_expression: Optional[str] = Field(None, min_length=1, max_length=120)
-    enabled: Optional[bool] = None
 
 
 class Alert(AlertBase):
     id: int
     user_id: int
-    enabled: bool = True
 
 
 NotificationChannel = Literal["app", "email"]

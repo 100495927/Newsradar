@@ -163,7 +163,10 @@ La relacion correcta aqui es 1:N:
 ### Alert worker
 
 - Sigue funcionando.
-- Filtra entradas por `rss_channel_id` e `information_source_id`.
+- Filtra siempre por `category_id`.
+- Si la alerta trae `rss_channel_ids`, restringe ademas por `rss_channel_id`.
+- Si no trae `rss_channel_ids`, el alcance efectivo son todos los canales de la categoria de la alerta.
+- Si la alerta trae `information_sources_ids`, intersecta tambien por `information_source_id`.
 
 ## 7. Estado de las pruebas
 

@@ -79,6 +79,37 @@ def test_validate_alert_scope_rejects_channel_outside_selected_sources(monkeypat
     assert "no pertenecen a las fuentes" in str(exc_info.value.detail)
 
 
+def test_resolve_alert_category_rejects_multiple_categories() -> None:
+    with pytest.raises(HTTPException) as exc_info:
+        alert_routes._resolve_alert_category_or_400(
+            [
+                {"code": "11000000", "label": "Politica"},
+                {"code": "15000000", "label": "Deporte"},
+            ]
+        )
+
+    assert exc_info.value.status_code == 400
+    assert "exactamente una" in str(exc_info.value.detail).lower()
+
+
+def test_doc_to_alert_does_not_expose_internal_enabled_flag() -> None:
+    alert = alert_routes._doc_to_alert(
+        {
+            "id": 10,
+            "user_id": 7,
+            "name": "Energia",
+            "descriptors": ["energia"],
+            "categories": [{"code": "4000000", "label": "Economía, negocios y finanzas"}],
+            "rss_channel_ids": [101],
+            "information_sources_ids": [3],
+            "cron_expression": "*/15 * * * *",
+            "enabled": False,
+        }
+    )
+
+    assert "enabled" not in alert.model_dump()
+
+
 def _matches(doc: dict, query: dict) -> bool:
     for key, expected in query.items():
         actual = doc.get(key)
