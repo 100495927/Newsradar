@@ -12,6 +12,7 @@ function toLocal(a) {
     id: a.id,
     name: a.name,
     cat: a.categories?.[0]?.code ?? '',
+    catLabel: a.categories?.[0]?.label ?? a.categories?.[0]?.code ?? '',
     cron: a.cron_expression,
     enabled: a.enabled ?? true,
   }
@@ -21,22 +22,32 @@ function AlertsPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [alerts, setAlerts] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [newAlert, setNewAlert] = useState({ name: '', cat: 'FIN_MRKT', cron: '' })
+  const [newAlert, setNewAlert] = useState({ name: '', cat: '', cron: '' })
   const [error, setError] = useState('')
-
-  const categories = [
-    { value: 'FIN_MRKT', label: t('categories.FIN_MRKT') },
-    { value: 'SEC_POL', label: t('categories.SEC_POL') },
-    { value: 'TECH', label: t('categories.TECH') },
-    { value: 'ENERGY', label: t('categories.ENERGY') },
-    { value: 'HEALTH', label: t('categories.HEALTH') },
-  ]
 
   useEffect(() => {
     if (user?.id) fetchAlerts()
   }, [user?.id])
+
+  useEffect(() => {
+    apiFetch('/api/v1/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        const normalized = data.map((item) => ({
+          value: String(item.id),
+          label: item.name,
+        }))
+        setCategories(normalized)
+        setNewAlert((current) => ({
+          ...current,
+          cat: current.cat || normalized[0]?.value || '',
+        }))
+      })
+      .catch(() => {})
+  }, [])
 
   const fetchAlerts = async () => {
     try {
@@ -78,7 +89,7 @@ function AlertsPage() {
   const handleCreateAlert = async (e) => {
     e.preventDefault()
     setError('')
-    if (!newAlert.name.trim() || !newAlert.cron.trim()) return
+    if (!newAlert.name.trim() || !newAlert.cron.trim() || !newAlert.cat) return
 
     const catInfo = categories.find((c) => c.value === newAlert.cat)
     const payload = {
@@ -99,7 +110,7 @@ function AlertsPage() {
       }
       const saved = await res.json()
       setAlerts([...alerts, toLocal(saved)])
-      setNewAlert({ name: '', cat: 'FIN_MRKT', cron: '' })
+      setNewAlert({ name: '', cat: categories[0]?.value || '', cron: '' })
       setShowModal(false)
     } catch (err) {
       setError(err.message)
@@ -174,8 +185,8 @@ function AlertsPage() {
                     </div>
                   </div>
                   <div className="col-span-2">
-                    <span className="text-xs font-mono bg-surface-variant px-2 py-1 rounded">
-                      {a.cat}
+                    <span className="text-xs bg-surface-variant px-2 py-1 rounded">
+                      {a.catLabel || a.cat}
                     </span>
                   </div>
                   <div className="col-span-3 font-mono text-xs">{a.cron}</div>

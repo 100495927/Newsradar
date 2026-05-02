@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import TopNavBar from '../components/TopNavBar'
 import SideNavBar from '../components/SideNavBar'
 import MobileNav from '../components/MobileNav'
-import { getGlobalStats, getWordCloud } from '../api/apiClient'
+import { apiFetch, getGlobalStats, getWordCloud } from '../api/apiClient'
 
 const CATEGORY_COLORS = [
   'text-blue-700 bg-blue-50 border-blue-200',
@@ -58,13 +58,20 @@ function WordCloudDisplay({ words }) {
 function SummaryPage() {
   const { t } = useTranslation()
   const [categories, setCategories] = useState([])
+  const [categoryNames, setCategoryNames] = useState({})
   const [cloudByCategory, setCloudByCategory] = useState({})
   const [combinedCloud, setCombinedCloud] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getGlobalStats()
-      .then(async (global) => {
+    Promise.all([
+      getGlobalStats(),
+      apiFetch('/api/v1/categories').then((res) => res.json()).catch(() => []),
+    ])
+      .then(async ([global, categoryCatalog]) => {
+        setCategoryNames(
+          Object.fromEntries(categoryCatalog.map((category) => [String(category.id), category.name])),
+        )
         const topCats = global.noticias_por_categoria.slice(0, 8)
         setCategories(topCats)
 
@@ -162,7 +169,7 @@ function SummaryPage() {
                       >
                         <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
                           <h3 className="font-black text-xs uppercase tracking-widest text-slate-800">
-                            {cat.id}
+                            {categoryNames[cat.id] || cat.id}
                           </h3>
                           <span className="text-[10px] font-bold text-slate-400">
                             {t('summary.newsCount', { count: cat.total.toLocaleString() })}

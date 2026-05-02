@@ -9,22 +9,20 @@ function SourcesPage() {
   const { t } = useTranslation()
   const [sources, setSources] = useState([])
   const [newUrl, setNewUrl] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [validating, setValidating] = useState(false)
-  const [submitError, setSubmitError] = useState(null)
-
-  // Category modal state (shown when feed has no detectable category)
-  const [showCategoryModal, setShowCategoryModal] = useState(false)
-  const [pendingUrl, setPendingUrl] = useState(null)
-  const [categories, setCategories] = useState([])
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
-  const [modalError, setModalError] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState(null)
+  const [categories, setCategories] = useState([])
 
   useEffect(() => {
     fetchSources()
     apiFetch('/api/v1/categories')
       .then((r) => r.json())
-      .then(setCategories)
+      .then((data) => {
+        setCategories(data)
+        setSelectedCategoryId((current) => current || String(data[0]?.id ?? ''))
+      })
       .catch(() => {})
   }, [])
 
@@ -98,54 +96,21 @@ function SourcesPage() {
     }
 
     setNewUrl('')
-    setShowCategoryModal(false)
-    setPendingUrl(null)
-    setSelectedCategoryId('')
-    setModalError(null)
     fetchSources()
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!newUrl.trim()) return
+    if (!newUrl.trim() || !selectedCategoryId) return
     setSubmitError(null)
-    setValidating(true)
+    setSubmitting(true)
 
     try {
-      const res = await apiFetch('/api/v1/rss/preview', {
-        method: 'POST',
-        body: JSON.stringify({ url: newUrl }),
-      })
-      const data = await res.json()
-
-      if (data.status === 'parse_error') {
-        setSubmitError(data.error || 'No se pudo analizar el feed RSS')
-      } else if (data.status === 'ok') {
-        const match = categories.find((c) => c.name === data.detected_categories[0])
-        if (!match) {
-          setPendingUrl(newUrl)
-          setShowCategoryModal(true)
-        } else {
-          await createSourceAndChannel(newUrl, match.id)
-        }
-      } else {
-        setPendingUrl(newUrl)
-        setShowCategoryModal(true)
-      }
+      await createSourceAndChannel(newUrl, Number(selectedCategoryId))
     } catch (err) {
-      setSubmitError(err.message || 'Error al verificar la URL')
+      setSubmitError(err.message || 'Error al añadir la fuente')
     } finally {
-      setValidating(false)
-    }
-  }
-
-  const handleModalConfirm = async () => {
-    if (!selectedCategoryId) return
-    setModalError(null)
-    try {
-      await createSourceAndChannel(pendingUrl, Number(selectedCategoryId))
-    } catch (err) {
-      setModalError(err.message || 'Error al añadir la fuente')
+      setSubmitting(false)
     }
   }
 
@@ -229,12 +194,28 @@ function SourcesPage() {
                       <p className="text-red-300 text-xs mt-2">{submitError}</p>
                     )}
                   </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold mb-2">Categoría IPTC</label>
+                    <select
+                      className="w-full bg-slate-800/50 border-0 rounded-lg py-3 px-4 text-sm text-white"
+                      value={selectedCategoryId}
+                      onChange={(e) => setSelectedCategoryId(e.target.value)}
+                      required
+                    >
+                      <option value="" disabled>Selecciona una categoría</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <button
                     type="submit"
-                    disabled={validating}
+                    disabled={submitting || !selectedCategoryId}
                     className="w-full bg-white text-primary-container font-black py-4 rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
                   >
-                    {validating ? '...' : t('sources.connectButton')}
+                    {submitting ? '...' : t('sources.connectButton')}
                   </button>
                 </form>
               </section>
@@ -243,52 +224,6 @@ function SourcesPage() {
         </div>
       </main>
       <MobileNav />
-
-      {/* Category selection modal */}
-      {showCategoryModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-8">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-slate-800">Seleccionar categoría</h2>
-              <button
-                onClick={() => {
-                  setShowCategoryModal(false)
-                  setPendingUrl(null)
-                  setSelectedCategoryId('')
-                  setModalError(null)
-                }}
-                className="material-symbols-outlined text-slate-400 hover:text-slate-600"
-              >
-                close
-              </button>
-            </div>
-            <p className="text-slate-500 mb-6">
-              No se detectó categoría automáticamente para este feed. Selecciona una para
-              clasificar sus artículos.
-            </p>
-            <select
-              value={selectedCategoryId}
-              onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 mb-2 text-slate-800"
-            >
-              <option value="">-- Elige una categoría --</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            {modalError && <p className="text-red-500 text-sm mb-4">{modalError}</p>}
-            <button
-              disabled={!selectedCategoryId}
-              onClick={handleModalConfirm}
-              className="w-full mt-4 bg-primary-container text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
-            >
-              Añadir fuente
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

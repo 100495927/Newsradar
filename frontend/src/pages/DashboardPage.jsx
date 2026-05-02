@@ -7,7 +7,7 @@ import PageHeader from '../components/PageHeader'
 import StatsGrid from '../components/StatsGrid'
 import TrendChart from '../components/TrendChart'
 import CategoryVolumeCard from '../components/CategoryVolumeCard'
-import { getGlobalStats, getTimeline } from '../api/apiClient'
+import { apiFetch, getGlobalStats, getTimeline } from '../api/apiClient'
 
 const CATEGORY_COLORS = [
   'bg-blue-400',
@@ -55,12 +55,12 @@ function buildStatCards(data, t) {
   ]
 }
 
-function buildCategories(noticiasPorCategoria) {
+function buildCategories(noticiasPorCategoria, categoryNames) {
   const top = noticiasPorCategoria.slice(0, 8)
   const total = top.reduce((sum, c) => sum + c.total, 0) || 1
   return top.map((cat, i) => ({
     id: cat.id,
-    label: cat.id,
+    label: categoryNames[cat.id] || cat.id,
     value: Math.round((cat.total / total) * 100),
     color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
   }))
@@ -70,20 +70,28 @@ function DashboardPage() {
   const { t } = useTranslation()
   const [stats, setStats] = useState(null)
   const [timeline, setTimeline] = useState([])
+  const [categoryNames, setCategoryNames] = useState({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([getGlobalStats(), getTimeline()])
-      .then(([globalData, timelineData]) => {
+    Promise.all([
+      getGlobalStats(),
+      getTimeline(),
+      apiFetch('/api/v1/categories').then((res) => res.json()).catch(() => []),
+    ])
+      .then(([globalData, timelineData, categories]) => {
         setStats(globalData)
         setTimeline(timelineData)
+        setCategoryNames(
+          Object.fromEntries(categories.map((category) => [String(category.id), category.name])),
+        )
       })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
 
   const statCards = stats ? buildStatCards(stats, t) : []
-  const categories = stats ? buildCategories(stats.noticias_por_categoria) : []
+  const categories = stats ? buildCategories(stats.noticias_por_categoria, categoryNames) : []
 
   return (
     <div className="bg-surface text-on-surface min-h-screen">
