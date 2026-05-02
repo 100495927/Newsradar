@@ -1,6 +1,7 @@
 from .Coleccion import Coleccion
+from .ColeccionInformationSources import ColeccionInformationSources
 from .ColeccionRssEntradas import ColeccionRssEntradas
-from .ColeccionRssFuentes import ColeccionRssFuentes
+from .ColeccionRssChannels import ColeccionRssChannels
 from .ColeccionRssCategoriasIPTC import ColeccionRssCategoriasIPTC
 from .ColeccionUsers import ColeccionUsers
 from .ColeccionUserSessions import ColeccionUserSessions
@@ -10,8 +11,9 @@ from .ColeccionNotifications import ColeccionNotifications
 
 __all__ = [
     "Coleccion",
+    "ColeccionInformationSources",
+    "ColeccionRssChannels",
     "ColeccionRssEntradas",
-    "ColeccionRssFuentes",
     "ColeccionRssCategoriasIPTC",
     "ColeccionUsers",
     "ColeccionUserSessions",

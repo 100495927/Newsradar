@@ -15,17 +15,11 @@ class FakeEntradasCollection:
         return SimpleNamespace(upserted_id=None)
 
 
-class FakeFuentesCollection:
-    def find_one(self, query):
-        return {"_id": "fuente-id"}
-
-
 class FakeDatabase:
     def __init__(self, entradas_collection: FakeEntradasCollection) -> None:
         self._db_app = {
             ColeccionRssEntradas.NOMBRE_COLECCION: entradas_collection,
         }
-        self.col_rss_fuentes = SimpleNamespace(_collection=FakeFuentesCollection())
 
     @property
     def db_app(self):
@@ -39,6 +33,11 @@ def test_insertar_preserva_fecha_ingestion_original_en_duplicados() -> None:
     entrada = SimpleNamespace(
         fuente=SimpleNamespace(url="https://example.com/feed.xml"),
         a_mongo=lambda: {
+            "information_source_id": 1,
+            "rss_channel_id": 10,
+            "source_name": "Example Source",
+            "source_url": "https://example.com",
+            "channel_url": "https://example.com/feed.xml",
             "titulo": "Titulo",
             "autores": ["Autor"],
             "link": "https://example.com/noticia",

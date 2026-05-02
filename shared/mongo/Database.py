@@ -44,8 +44,9 @@ class Database:
     def iniciar_colecciones(self):
         from . import colecciones
 
+        self.col_information_sources = colecciones.ColeccionInformationSources(self)
+        self.col_rss_channels = colecciones.ColeccionRssChannels(self)
         self.col_rss_entradas = colecciones.ColeccionRssEntradas(self)
-        self.col_rss_fuentes = colecciones.ColeccionRssFuentes(self)
         self.col_rss_cat_iptc = colecciones.ColeccionRssCategoriasIPTC(self)
         self.col_users = colecciones.ColeccionUsers(self)
         self.col_user_sesions = colecciones.ColeccionUserSessions(self)
@@ -56,8 +57,9 @@ class Database:
     def verificar_colecciones(self):
         faltantes = self._missing_collection_names(
             (
+                self.col_information_sources.NOMBRE_COLECCION,
+                self.col_rss_channels.NOMBRE_COLECCION,
                 self.col_rss_entradas.NOMBRE_COLECCION,
-                self.col_rss_fuentes.NOMBRE_COLECCION,
                 self.col_rss_cat_iptc.NOMBRE_COLECCION,
                 self.col_user_sesions.NOMBRE_COLECCION,
                 self.col_users.NOMBRE_COLECCION,

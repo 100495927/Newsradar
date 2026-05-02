@@ -1,0 +1,101 @@
+medio|url|categoria_iptc|label
+El País|https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada|04000000|Economía
+El País|https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/internacional|11000000|Política
+El País|https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/deportes|15000000|Deporte
+El País|https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/cultura|01000000|Cultura
+El País|https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/tecnologia|13000000|Ciencia y tecnología
+El Mundo|https://www.elmundo.es/rss/portada.xml|11000000|Política
+El Mundo|https://www.elmundo.es/rss/espana.xml|11000000|Política
+El Mundo|https://www.elmundo.es/rss/economia.xml|04000000|Economía
+El Mundo|https://www.elmundo.es/rss/ciencia-y-salud.xml|07000000|Salud
+El Mundo|https://www.elmundo.es/rss/deportes.xml|15000000|Deporte
+ABC|https://www.abc.es/rss/2.0/portada/|11000000|Política
+ABC|https://www.abc.es/rss/2.0/internacional/|11002000|Diplomacia
+ABC|https://www.abc.es/rss/2.0/sociedad/|14000000|Asuntos sociales
+ABC|https://www.abc.es/rss/2.0/cultura/|01000000|Cultura
+ABC|https://www.abc.es/rss/2.0/ciencia/|13000000|Ciencia y tecnología
+RTVE|https://www.rtve.es/noticias/rss/noticias.xml|11000000|Política
+RTVE|https://www.rtve.es/noticias/rss/mundo.xml|11002000|Diplomacia
+RTVE|https://www.rtve.es/noticias/rss/tecnologia.xml|13000000|Ciencia y tecnología
+RTVE|https://www.rtve.es/noticias/rss/cultura.xml|01000000|Cultura
+RTVE|https://www.rtve.es/noticias/rss/deportes.xml|15000000|Deporte
+Xataka|https://www.xataka.com/feed|13000000|Ciencia y tecnología
+Xataka|https://www.xatakasensacine.com/feed|01000000|Cultura
+Xataka|https://www.xatakamovil.com/feed|13010000|Telecomunicaciones
+Xataka|https://www.xatakafoto.com/feed|01000000|Arte
+Xataka|https://www.xatakahome.com/feed|13000000|Ciencia y tecnología
+Cinco Días|https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.com/portada|04000000|Economía
+Cinco Días|https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.com/section/mercados|04008000|Mercados bursátiles
+Cinco Días|https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.com/section/companias|04016000|Empresas
+Cinco Días|https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.com/section/emprendedores|04000000|Economía
+Cinco Días|https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.com/section/fortuna|04000000|Economía
+Marca|https://e00-marca.uecdn.es/rss/portada.xml|15000000|Deporte
+Marca|https://e00-marca.uecdn.es/rss/futbol/primera-division.xml|15011000|Fútbol
+Marca|https://e00-marca.uecdn.es/rss/baloncesto.xml|15008000|Baloncesto
+Marca|https://e00-marca.uecdn.es/rss/motor/formula1.xml|15039000|Automovilismo
+Marca|https://e00-marca.uecdn.es/rss/tenis.xml|15065000|Tenis
+BBC News|https://feeds.bbci.co.uk/mundo/rss.xml|11002000|Diplomacia
+BBC News|https://feeds.bbci.co.uk/mundo/temas/america_latina/rss.xml|11000000|Política
+BBC News|https://feeds.bbci.co.uk/mundo/temas/internacional/rss.xml|11002000|Diplomacia
+BBC News|https://feeds.bbci.co.uk/mundo/temas/ciencia/rss.xml|13000000|Ciencia y tecnología
+BBC News|https://feeds.bbci.co.uk/mundo/temas/cultura/rss.xml|01000000|Cultura
+La Vanguardia|https://www.lavanguardia.com/rss/home.xml|11000000|Política
+La Vanguardia|https://www.lavanguardia.com/rss/politica.xml|11000000|Política
+La Vanguardia|https://www.lavanguardia.com/rss/economia.xml|04000000|Economía
+La Vanguardia|https://www.lavanguardia.com/rss/cultura.xml|01000000|Cultura
+La Vanguardia|https://www.lavanguardia.com/rss/deportes.xml|15000000|Deporte
+National Geographic|https://www.nationalgeographic.com.es/rss/ciencia.xml|13000000|Ciencia y tecnología
+National Geographic|https://www.nationalgeographic.com.es/rss/historia.xml|01000000|Historia
+National Geographic|https://www.nationalgeographic.com.es/rss/naturaleza.xml|06000000|Medio ambiente
+National Geographic|https://www.nationalgeographic.com.es/rss/viajes.xml|10000000|Estilo de vida
+National Geographic|https://www.nationalgeographic.com.es/rss/fotografia.xml|01000000|Arte
+El País|https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/ciencia|13000000|Ciencia y tecnología
+El País|https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/educacion|05000000|Educación
+El País|https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/opinion|11000000|Opinión
+El País|https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/sociedad|14000000|Asuntos sociales
+El País|https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/estilo|10000000|Estilo de vida
+El Mundo|https://www.elmundo.es/rss/internacional.xml|11002000|Diplomacia
+El Mundo|https://www.elmundo.es/rss/madrid.xml|11000000|Política
+El Mundo|https://www.elmundo.es/rss/cultura.xml|01000000|Cultura
+El Mundo|https://www.elmundo.es/rss/opinion.xml|11000000|Opinión
+El Mundo|https://www.elmundo.es/rss/television.xml|01000000|Entretenimiento
+ABC|https://www.abc.es/rss/2.0/economia/|04000000|Economía
+ABC|https://www.abc.es/rss/2.0/deportes/|15000000|Deporte
+ABC|https://www.abc.es/rss/2.0/estilo/|10000000|Estilo de vida
+ABC|https://www.abc.es/rss/2.0/tecnologia/|13000000|Ciencia y tecnología
+ABC|https://www.abc.es/rss/2.0/opinion/|11000000|Opinión
+El Confidencial|https://rss.elconfidencial.com/espana/|11000000|Política
+El Confidencial|https://rss.elconfidencial.com/mundo/|11002000|Diplomacia
+El Confidencial|https://rss.elconfidencial.com/economia/|04000000|Economía
+El Confidencial|https://rss.elconfidencial.com/tecnologia/|13000000|Ciencia y tecnología
+El Confidencial|https://rss.elconfidencial.com/deportes/|15000000|Deporte
+Infobae|https://www.infobae.com/feeds/rss/|11000000|Política
+Infobae|https://www.infobae.com/america/rss/|11002000|Diplomacia
+Infobae|https://www.infobae.com/economia/rss/|04000000|Economía
+Infobae|https://www.infobae.com/deportes/rss/|15000000|Deporte
+Infobae|https://www.infobae.com/teleshow/rss/|01000000|Cultura
+El Español|https://www.elespanol.com/rss/|11000000|Política
+El Español|https://www.elespanol.com/rss/espana/|11000000|Política
+El Español|https://www.elespanol.com/rss/economia/|04000000|Economía
+El Español|https://www.elespanol.com/rss/ciencia/|13000000|Ciencia y tecnología
+El Español|https://www.elespanol.com/rss/deportes/|15000000|Deporte
+El Diario.es|https://www.eldiario.es/rss/|11000000|Política
+El Diario.es|https://www.eldiario.es/rss/internacional/|11002000|Diplomacia
+El Diario.es|https://www.eldiario.es/rss/economia/|04000000|Economía
+El Diario.es|https://www.eldiario.es/rss/cultura/|01000000|Cultura
+El Diario.es|https://www.eldiario.es/rss/tecnologia/|13000000|Ciencia y tecnología
+20 Minutos|https://www.20minutos.es/rss/|11000000|Política
+20 Minutos|https://www.20minutos.es/rss/nacional/|11000000|Política
+20 Minutos|https://www.20minutos.es/rss/economia/|04000000|Economía
+20 Minutos|https://www.20minutos.es/rss/deportes/|15000000|Deporte
+20 Minutos|https://www.20minutos.es/rss/tecnologia/|13000000|Ciencia y tecnología
+La Razón|https://www.larazon.es/rss/espana.xml|11000000|Política
+La Razón|https://www.larazon.es/rss/internacional.xml|11002000|Diplomacia
+La Razón|https://www.larazon.es/rss/economia.xml|04000000|Economía
+La Razón|https://www.larazon.es/rss/sociedad.xml|14000000|Asuntos sociales
+La Razón|https://www.larazon.es/rss/cultura.xml|01000000|Cultura
+Reuters|https://news.google.com/rss/search?q=reuters+español&hl=es-419&gl=US&ceid=US:es-419|11002000|Diplomacia
+Reuters|https://news.google.com/rss/search?q=reuters+economia&hl=es-419&gl=US&ceid=US:es-419|04000000|Economía
+Europa Press|https://www.europapress.es/rss/rss.aspx?ch=00066|11000000|Política
+Europa Press|https://www.europapress.es/rss/rss.aspx?ch=00069|11002000|Diplomacia
+Europa Press|https://www.europapress.es/rss/rss.aspx?ch=00176|04000000|Economía

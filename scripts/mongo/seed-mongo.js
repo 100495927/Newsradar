@@ -1,5 +1,4 @@
 db = db.getSiblingDB(process.env.MONGO_APP_DB);
-const crypto = require("crypto");
 
 const POLITICS = 11000000;
 const SPORT = 15000000;
@@ -67,8 +66,19 @@ const STANDARD_RSS_SOURCES = [
   { medio: "moncloa", rss: "", url: "https://www.lamoncloa.gob.es/paginas/rss.aspx", category_id: POLITICS },
 ];
 
-function hashFuente(medio, rss) {
-  return crypto.createHash("sha256").update(`${medio}${rss || ""}`, "utf8").digest("hex");
+function nextCounter(name) {
+  const result = db.getCollection("counters").findOneAndUpdate(
+    { _id: name },
+    {
+      $inc: { seq: NumberInt(1) },
+      $set: { updated_at: new Date() },
+    },
+    {
+      upsert: true,
+      returnDocument: "after",
+    }
+  );
+  return NumberInt(result.seq);
 }
 
 function ensureUsersCounterAtLeast(seedValue) {
@@ -155,27 +165,80 @@ function seedAdminUser() {
   ensureUsersCounterAtLeast(1);
 }
 
+function sourceNameFromMedium(medio) {
+  return medio
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function sourceUrlFromFeedUrl(feedUrl) {
+  const parsed = new URL(feedUrl);
+  return `${parsed.protocol}//${parsed.host}`;
+}
+
 function seedStandardRssSources() {
-  const collection = db.getCollection("rss_fuentes");
+  const sourcesCollection = db.getCollection("information_sources");
+  const channelsCollection = db.getCollection("rss_channels");
   const now = new Date();
+  const sourceIdsByMedium = {};
 
   STANDARD_RSS_SOURCES.forEach((source) => {
-    const hash = hashFuente(source.medio, source.rss);
-    collection.updateOne(
-      { hash_fuente: hash },
+    if (sourceIdsByMedium[source.medio]) {
+      return;
+    }
+
+    const sourceUrl = sourceUrlFromFeedUrl(source.url);
+    let existingSource = sourcesCollection.findOne(
+      { url: sourceUrl, deleted_at: { $exists: false } },
+      { id: 1 }
+    );
+    if (!existingSource) {
+      const sourceId = nextCounter("information_sources");
+      sourcesCollection.insertOne({
+        id: sourceId,
+        name: sourceNameFromMedium(source.medio),
+        url: sourceUrl,
+        active: true,
+        created_at: now,
+        updated_at: now,
+      });
+      existingSource = { id: sourceId };
+    } else {
+      sourcesCollection.updateOne(
+        { id: existingSource.id },
+        {
+          $set: {
+            name: sourceNameFromMedium(source.medio),
+            active: true,
+            updated_at: now,
+          },
+        }
+      );
+    }
+    sourceIdsByMedium[source.medio] = NumberInt(existingSource.id);
+  });
+
+  STANDARD_RSS_SOURCES.forEach((source) => {
+    const existingChannel = channelsCollection.findOne(
+      { url: source.url, deleted_at: { $exists: false } },
+      { id: 1 }
+    );
+    const channelId = existingChannel ? existingChannel.id : nextCounter("rss_channels");
+    channelsCollection.updateOne(
+      { id: channelId },
       {
         $set: {
-          hash_fuente: hash,
-          medio: source.medio,
-          rss: source.rss,
+          id: channelId,
+          information_source_id: sourceIdsByMedium[source.medio],
           url: source.url,
-          tipo: "channel",
-          activo: true,
+          active: true,
           category_id: NumberInt(source.category_id),
-          actualizado: now,
+          updated_at: now,
         },
         $setOnInsert: {
-          creado: now,
+          created_at: now,
         },
       },
       { upsert: true }

@@ -10,8 +10,8 @@ LOGGER_NOMBRE = "rssworker"
 logger = logging.getLogger(LOGGER_NOMBRE)
 
 def fetch_de_entradas(db: Database) -> int:
-    fuentes = db.col_rss_fuentes.lista_fuentes()
-    logger.info("Iniciando procesamiento de %d fuentes RSS", len(fuentes))
+    fuentes = db.col_rss_channels.lista_canales_activos()
+    logger.info("Iniciando procesamiento de %d canales RSS", len(fuentes))
 
     total_nuevas = 0
     for fuente in fuentes:
@@ -21,7 +21,7 @@ def fetch_de_entradas(db: Database) -> int:
                     total_nuevas += 1
 
         except Exception:
-            logger.exception("Error crítico en ingesta de fuente: %s", fuente.url)
+            logger.exception("Error critico en ingesta del canal RSS: %s", fuente.url)
 
     logger.info("Ciclo completado. Nuevas entradas detectadas: %d", total_nuevas)
     return total_nuevas

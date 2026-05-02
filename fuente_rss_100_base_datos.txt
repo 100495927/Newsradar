@@ -1,0 +1,602 @@
+[
+    {
+        "medio": "El País",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "El País",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/internacional",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "El País",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/deportes",
+        "categoria_iptc": "15000000",
+        "label": "Deporte"
+    },
+    {
+        "medio": "El País",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/cultura",
+        "categoria_iptc": "01000000",
+        "label": "Cultura"
+    },
+    {
+        "medio": "El País",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/tecnologia",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "El Mundo",
+        "url": "https://www.elmundo.es/rss/portada.xml",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "El Mundo",
+        "url": "https://www.elmundo.es/rss/espana.xml",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "El Mundo",
+        "url": "https://www.elmundo.es/rss/economia.xml",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "El Mundo",
+        "url": "https://www.elmundo.es/rss/ciencia-y-salud.xml",
+        "categoria_iptc": "07000000",
+        "label": "Salud"
+    },
+    {
+        "medio": "El Mundo",
+        "url": "https://www.elmundo.es/rss/deportes.xml",
+        "categoria_iptc": "15000000",
+        "label": "Deporte"
+    },
+    {
+        "medio": "ABC",
+        "url": "https://www.abc.es/rss/2.0/portada/",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "ABC",
+        "url": "https://www.abc.es/rss/2.0/internacional/",
+        "categoria_iptc": "11002000",
+        "label": "Diplomacia"
+    },
+    {
+        "medio": "ABC",
+        "url": "https://www.abc.es/rss/2.0/sociedad/",
+        "categoria_iptc": "14000000",
+        "label": "Asuntos sociales"
+    },
+    {
+        "medio": "ABC",
+        "url": "https://www.abc.es/rss/2.0/cultura/",
+        "categoria_iptc": "01000000",
+        "label": "Cultura"
+    },
+    {
+        "medio": "ABC",
+        "url": "https://www.abc.es/rss/2.0/ciencia/",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "RTVE",
+        "url": "https://www.rtve.es/noticias/rss/noticias.xml",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "RTVE",
+        "url": "https://www.rtve.es/noticias/rss/mundo.xml",
+        "categoria_iptc": "11002000",
+        "label": "Diplomacia"
+    },
+    {
+        "medio": "RTVE",
+        "url": "https://www.rtve.es/noticias/rss/tecnologia.xml",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "RTVE",
+        "url": "https://www.rtve.es/noticias/rss/cultura.xml",
+        "categoria_iptc": "01000000",
+        "label": "Cultura"
+    },
+    {
+        "medio": "RTVE",
+        "url": "https://www.rtve.es/noticias/rss/deportes.xml",
+        "categoria_iptc": "15000000",
+        "label": "Deporte"
+    },
+    {
+        "medio": "Xataka",
+        "url": "https://www.xataka.com/feed",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "Xataka",
+        "url": "https://www.xatakasensacine.com/feed",
+        "categoria_iptc": "01000000",
+        "label": "Cultura"
+    },
+    {
+        "medio": "Xataka",
+        "url": "https://www.xatakamovil.com/feed",
+        "categoria_iptc": "13010000",
+        "label": "Telecomunicaciones"
+    },
+    {
+        "medio": "Xataka",
+        "url": "https://www.xatakafoto.com/feed",
+        "categoria_iptc": "01000000",
+        "label": "Arte"
+    },
+    {
+        "medio": "Xataka",
+        "url": "https://www.xatakahome.com/feed",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "Cinco Días",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.com/portada",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "Cinco Días",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.com/section/mercados",
+        "categoria_iptc": "04008000",
+        "label": "Mercados bursátiles"
+    },
+    {
+        "medio": "Cinco Días",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.com/section/companias",
+        "categoria_iptc": "04016000",
+        "label": "Empresas"
+    },
+    {
+        "medio": "Cinco Días",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.com/section/emprendedores",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "Cinco Días",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.com/section/fortuna",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "Marca",
+        "url": "https://e00-marca.uecdn.es/rss/portada.xml",
+        "categoria_iptc": "15000000",
+        "label": "Deporte"
+    },
+    {
+        "medio": "Marca",
+        "url": "https://e00-marca.uecdn.es/rss/futbol/primera-division.xml",
+        "categoria_iptc": "15011000",
+        "label": "Fútbol"
+    },
+    {
+        "medio": "Marca",
+        "url": "https://e00-marca.uecdn.es/rss/baloncesto.xml",
+        "categoria_iptc": "15008000",
+        "label": "Baloncesto"
+    },
+    {
+        "medio": "Marca",
+        "url": "https://e00-marca.uecdn.es/rss/motor/formula1.xml",
+        "categoria_iptc": "15039000",
+        "label": "Automovilismo"
+    },
+    {
+        "medio": "Marca",
+        "url": "https://e00-marca.uecdn.es/rss/tenis.xml",
+        "categoria_iptc": "15065000",
+        "label": "Tenis"
+    },
+    {
+        "medio": "BBC News",
+        "url": "https://feeds.bbci.co.uk/mundo/rss.xml",
+        "categoria_iptc": "11002000",
+        "label": "Diplomacia"
+    },
+    {
+        "medio": "BBC News",
+        "url": "https://feeds.bbci.co.uk/mundo/temas/america_latina/rss.xml",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "BBC News",
+        "url": "https://feeds.bbci.co.uk/mundo/temas/internacional/rss.xml",
+        "categoria_iptc": "11002000",
+        "label": "Diplomacia"
+    },
+    {
+        "medio": "BBC News",
+        "url": "https://feeds.bbci.co.uk/mundo/temas/ciencia/rss.xml",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "BBC News",
+        "url": "https://feeds.bbci.co.uk/mundo/temas/cultura/rss.xml",
+        "categoria_iptc": "01000000",
+        "label": "Cultura"
+    },
+    {
+        "medio": "La Vanguardia",
+        "url": "https://www.lavanguardia.com/rss/home.xml",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "La Vanguardia",
+        "url": "https://www.lavanguardia.com/rss/politica.xml",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "La Vanguardia",
+        "url": "https://www.lavanguardia.com/rss/economia.xml",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "La Vanguardia",
+        "url": "https://www.lavanguardia.com/rss/cultura.xml",
+        "categoria_iptc": "01000000",
+        "label": "Cultura"
+    },
+    {
+        "medio": "La Vanguardia",
+        "url": "https://www.lavanguardia.com/rss/deportes.xml",
+        "categoria_iptc": "15000000",
+        "label": "Deporte"
+    },
+    {
+        "medio": "National Geographic",
+        "url": "https://www.nationalgeographic.com.es/rss/ciencia.xml",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "National Geographic",
+        "url": "https://www.nationalgeographic.com.es/rss/historia.xml",
+        "categoria_iptc": "01000000",
+        "label": "Historia"
+    },
+    {
+        "medio": "National Geographic",
+        "url": "https://www.nationalgeographic.com.es/rss/naturaleza.xml",
+        "categoria_iptc": "06000000",
+        "label": "Medio ambiente"
+    },
+    {
+        "medio": "National Geographic",
+        "url": "https://www.nationalgeographic.com.es/rss/viajes.xml",
+        "categoria_iptc": "10000000",
+        "label": "Estilo de vida"
+    },
+    {
+        "medio": "National Geographic",
+        "url": "https://www.nationalgeographic.com.es/rss/fotografia.xml",
+        "categoria_iptc": "01000000",
+        "label": "Arte"
+    },
+    {
+        "medio": "El País",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/ciencia",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "El País",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/educacion",
+        "categoria_iptc": "05000000",
+        "label": "Educación"
+    },
+    {
+        "medio": "El País",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/opinion",
+        "categoria_iptc": "11000000",
+        "label": "Opinión"
+    },
+    {
+        "medio": "El País",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/sociedad",
+        "categoria_iptc": "14000000",
+        "label": "Asuntos sociales"
+    },
+    {
+        "medio": "El País",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/estilo",
+        "categoria_iptc": "10000000",
+        "label": "Estilo de vida"
+    },
+    {
+        "medio": "El Mundo",
+        "url": "https://www.elmundo.es/rss/internacional.xml",
+        "categoria_iptc": "11002000",
+        "label": "Diplomacia"
+    },
+    {
+        "medio": "El Mundo",
+        "url": "https://www.elmundo.es/rss/madrid.xml",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "El Mundo",
+        "url": "https://www.elmundo.es/rss/cultura.xml",
+        "categoria_iptc": "01000000",
+        "label": "Cultura"
+    },
+    {
+        "medio": "El Mundo",
+        "url": "https://www.elmundo.es/rss/opinion.xml",
+        "categoria_iptc": "11000000",
+        "label": "Opinión"
+    },
+    {
+        "medio": "El Mundo",
+        "url": "https://www.elmundo.es/rss/television.xml",
+        "categoria_iptc": "01000000",
+        "label": "Entretenimiento"
+    },
+    {
+        "medio": "ABC",
+        "url": "https://www.abc.es/rss/2.0/economia/",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "ABC",
+        "url": "https://www.abc.es/rss/2.0/deportes/",
+        "categoria_iptc": "15000000",
+        "label": "Deporte"
+    },
+    {
+        "medio": "ABC",
+        "url": "https://www.abc.es/rss/2.0/estilo/",
+        "categoria_iptc": "10000000",
+        "label": "Estilo de vida"
+    },
+    {
+        "medio": "ABC",
+        "url": "https://www.abc.es/rss/2.0/tecnologia/",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "ABC",
+        "url": "https://www.abc.es/rss/2.0/opinion/",
+        "categoria_iptc": "11000000",
+        "label": "Opinión"
+    },
+    {
+        "medio": "El Confidencial",
+        "url": "https://rss.elconfidencial.com/espana/",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "El Confidencial",
+        "url": "https://rss.elconfidencial.com/mundo/",
+        "categoria_iptc": "11002000",
+        "label": "Diplomacia"
+    },
+    {
+        "medio": "El Confidencial",
+        "url": "https://rss.elconfidencial.com/economia/",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "El Confidencial",
+        "url": "https://rss.elconfidencial.com/tecnologia/",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "El Confidencial",
+        "url": "https://rss.elconfidencial.com/deportes/",
+        "categoria_iptc": "15000000",
+        "label": "Deporte"
+    },
+    {
+        "medio": "Infobae",
+        "url": "https://www.infobae.com/feeds/rss/",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "Infobae",
+        "url": "https://www.infobae.com/america/rss/",
+        "categoria_iptc": "11002000",
+        "label": "Diplomacia"
+    },
+    {
+        "medio": "Infobae",
+        "url": "https://www.infobae.com/economia/rss/",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "Infobae",
+        "url": "https://www.infobae.com/deportes/rss/",
+        "categoria_iptc": "15000000",
+        "label": "Deporte"
+    },
+    {
+        "medio": "Infobae",
+        "url": "https://www.infobae.com/teleshow/rss/",
+        "categoria_iptc": "01000000",
+        "label": "Cultura"
+    },
+    {
+        "medio": "El Español",
+        "url": "https://www.elespanol.com/rss/",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "El Español",
+        "url": "https://www.elespanol.com/rss/espana/",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "El Español",
+        "url": "https://www.elespanol.com/rss/economia/",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "El Español",
+        "url": "https://www.elespanol.com/rss/ciencia/",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "El Español",
+        "url": "https://www.elespanol.com/rss/deportes/",
+        "categoria_iptc": "15000000",
+        "label": "Deporte"
+    },
+    {
+        "medio": "El Diario.es",
+        "url": "https://www.eldiario.es/rss/",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "El Diario.es",
+        "url": "https://www.eldiario.es/rss/internacional/",
+        "categoria_iptc": "11002000",
+        "label": "Diplomacia"
+    },
+    {
+        "medio": "El Diario.es",
+        "url": "https://www.eldiario.es/rss/economia/",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "El Diario.es",
+        "url": "https://www.eldiario.es/rss/cultura/",
+        "categoria_iptc": "01000000",
+        "label": "Cultura"
+    },
+    {
+        "medio": "El Diario.es",
+        "url": "https://www.eldiario.es/rss/tecnologia/",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "20 Minutos",
+        "url": "https://www.20minutos.es/rss/",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "20 Minutos",
+        "url": "https://www.20minutos.es/rss/nacional/",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "20 Minutos",
+        "url": "https://www.20minutos.es/rss/economia/",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "20 Minutos",
+        "url": "https://www.20minutos.es/rss/deportes/",
+        "categoria_iptc": "15000000",
+        "label": "Deporte"
+    },
+    {
+        "medio": "20 Minutos",
+        "url": "https://www.20minutos.es/rss/tecnologia/",
+        "categoria_iptc": "13000000",
+        "label": "Ciencia y tecnología"
+    },
+    {
+        "medio": "La Razón",
+        "url": "https://www.larazon.es/rss/espana.xml",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "La Razón",
+        "url": "https://www.larazon.es/rss/internacional.xml",
+        "categoria_iptc": "11002000",
+        "label": "Diplomacia"
+    },
+    {
+        "medio": "La Razón",
+        "url": "https://www.larazon.es/rss/economia.xml",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "La Razón",
+        "url": "https://www.larazon.es/rss/sociedad.xml",
+        "categoria_iptc": "14000000",
+        "label": "Asuntos sociales"
+    },
+    {
+        "medio": "La Razón",
+        "url": "https://www.larazon.es/rss/cultura.xml",
+        "categoria_iptc": "01000000",
+        "label": "Cultura"
+    },
+    {
+        "medio": "Reuters",
+        "url": "https://news.google.com/rss/search?q=reuters+español&hl=es-419&gl=US&ceid=US:es-419",
+        "categoria_iptc": "11002000",
+        "label": "Diplomacia"
+    },
+    {
+        "medio": "Reuters",
+        "url": "https://news.google.com/rss/search?q=reuters+economia&hl=es-419&gl=US&ceid=US:es-419",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    },
+    {
+        "medio": "Europa Press",
+        "url": "https://www.europapress.es/rss/rss.aspx?ch=00066",
+        "categoria_iptc": "11000000",
+        "label": "Política"
+    },
+    {
+        "medio": "Europa Press",
+        "url": "https://www.europapress.es/rss/rss.aspx?ch=00069",
+        "categoria_iptc": "11002000",
+        "label": "Diplomacia"
+    },
+    {
+        "medio": "Europa Press",
+        "url": "https://www.europapress.es/rss/rss.aspx?ch=00176",
+        "categoria_iptc": "04000000",
+        "label": "Economía"
+    }
+]

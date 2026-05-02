@@ -8,7 +8,7 @@ from rss_worker.main import main as rss_worker_main
 from rss_worker.settings import RssWorkerSettings
 
 
-def test_generar_lista_estandar_feeds_devuelve_fuentes() -> None:
+def test_generar_lista_estandar_feeds_devuelve_canales() -> None:
     feeds = generar_lista_estandar_feeds()
 
     assert feeds

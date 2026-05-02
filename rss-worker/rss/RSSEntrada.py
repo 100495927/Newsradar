@@ -29,6 +29,11 @@ class RSSEntrada:
         from datetime import datetime, timezone
 
         return {
+            "information_source_id": self.fuente.source_id,
+            "rss_channel_id": self.fuente.channel_id,
+            "source_name": self.fuente.medio,
+            "source_url": self.fuente.source_url,
+            "channel_url": self.fuente.url,
             "titulo": self.titulo,
             "autores": self.autores,
             "link": self.link,
