@@ -25,12 +25,21 @@ function AlertsPage() {
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [newAlert, setNewAlert] = useState({ name: '', cat: '01000000', cron: '', rssChannelIds: [] })
+  const [newAlert, setNewAlert] = useState({ name: '', cat: '01000000', cron: '*/15 * * * *', rssChannelIds: [] })
   const [error, setError] = useState('')
   const [rssChannels, setRssChannels] = useState([])
   const [synonymSuggestions, setSynonymSuggestions] = useState([])
   const [acceptedSynonyms, setAcceptedSynonyms] = useState([])
   const [loadingSynonyms, setLoadingSynonyms] = useState(false)
+
+  const frequencies = [
+    { value: '*/15 * * * *', label: t('alerts.freq15min', 'Cada 15 minutos') },
+    { value: '0 * * * *',    label: t('alerts.freq1h',    'Cada hora') },
+    { value: '0 */12 * * *', label: t('alerts.freq12h',   'Cada 12 horas') },
+    { value: '0 0 * * *',    label: t('alerts.freq24h',   'Cada 24 horas') },
+  ]
+
+  const cronLabel = (cron) => frequencies.find((f) => f.value === cron)?.label ?? cron
 
   const categories = [
     { value: '01000000', label: t('categories.01000000') },
@@ -165,7 +174,7 @@ function AlertsPage() {
       }
       const saved = await res.json()
       setAlerts([...alerts, toLocal(saved)])
-      setNewAlert({ name: '', cat: 'FIN_MRKT', cron: '', rssChannelIds: [] })
+      setNewAlert({ name: '', cat: '01000000', cron: '*/15 * * * *', rssChannelIds: [] })
       setSynonymSuggestions([])
       setAcceptedSynonyms([])
       setShowModal(false)
@@ -246,7 +255,7 @@ function AlertsPage() {
                       {a.cat}
                     </span>
                   </div>
-                  <div className="col-span-3 font-mono text-xs">{a.cron}</div>
+                  <div className="col-span-3 text-xs">{cronLabel(a.cron)}</div>
                   <div className="col-span-3 flex justify-end items-center gap-3">
                     <button
                       onClick={() => handleToggle(a.id)}
@@ -377,16 +386,19 @@ function AlertsPage() {
 
               <div className="space-y-2">
                 <label className="block text-xs font-bold uppercase text-slate-500">
-                  {t('alerts.cronLabel')}
+                  {t('alerts.frequencyLabel', 'Frecuencia')}
                 </label>
-                <input
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 font-mono text-sm"
-                  placeholder="*/15 * * * *"
+                <select
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
                   value={newAlert.cron}
                   onChange={(e) => setNewAlert({ ...newAlert, cron: e.target.value })}
                   required
-                />
-                <p className="text-xs text-slate-400">{t('alerts.cronHint')}</p>
+                >
+                  <option value="*/15 * * * *">{t('alerts.freq15min', 'Cada 15 minutos')}</option>
+                  <option value="0 * * * *">{t('alerts.freq1h', 'Cada hora')}</option>
+                  <option value="0 */12 * * *">{t('alerts.freq12h', 'Cada 12 horas')}</option>
+                  <option value="0 0 * * *">{t('alerts.freq24h', 'Cada 24 horas')}</option>
+                </select>
               </div>
 
               {error && <p className="text-red-500 text-sm">{error}</p>}
