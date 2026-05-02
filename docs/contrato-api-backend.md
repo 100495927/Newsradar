@@ -159,10 +159,10 @@ Actualizacion contractual aplicada el `2026-04-29`:
   "name": "Elecciones",
   "descriptors": ["congreso", "senado"],
   "categories": [
-    { "code": "politics", "label": "Politics" }
+    { "code": "11000000", "label": "Politica" }
   ],
-  "rss_channels_ids": ["rss-elpais-politica", "rss-rtve-nacional"],
-  "information_sources_ids": ["elpais", "rtve"],
+  "rss_channels_ids": ["101", "205"],
+  "information_sources_ids": ["1", "7"],
   "cron_expression": "0 0 * * *"
 }
 ```
@@ -174,10 +174,10 @@ Actualizacion contractual aplicada el `2026-04-29`:
   "name": "Elecciones",
   "descriptors": ["congreso", "senado"],
   "categories": [
-    { "code": "politics", "label": "Politics" }
+    { "code": "11000000", "label": "Politica" }
   ],
-  "rss_channels_ids": ["rss-elpais-politica", "rss-rtve-nacional"],
-  "information_sources_ids": ["elpais", "rtve"],
+  "rss_channels_ids": ["101", "205"],
+  "information_sources_ids": ["1", "7"],
   "cron_expression": "0 0 * * *"
 }
 ```
@@ -189,10 +189,10 @@ Actualizacion contractual aplicada el `2026-04-29`:
   "name": "Elecciones Europa",
   "descriptors": ["parlamento europeo"],
   "categories": [
-    { "code": "politics", "label": "Politics" }
+    { "code": "11000000", "label": "Politica" }
   ],
-  "rss_channels_ids": ["rss-euronews-politics"],
-  "information_sources_ids": ["euronews"],
+  "rss_channels_ids": ["301"],
+  "information_sources_ids": ["9"],
   "cron_expression": "*/15 * * * *"
 }
 ```

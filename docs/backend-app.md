@@ -50,7 +50,9 @@ Shared persistence and runtime state.
 | `roles_store` | `Dict[int, Role]` in-memory store used only for API compatibility |
 | `categories_store` | `Dict[int, Category]` in-memory store |
 | `users_col` | PyMongo collection for users |
-| `rss_fuentes_col` | Canonical PyMongo collection for information sources and RSS channels |
+| `information_sources_col` | PyMongo collection for information sources |
+| `rss_channels_col` | PyMongo collection for RSS channels |
+| `rss_entradas_col` | PyMongo collection for ingested RSS entries |
 | `stats_col` | PyMongo collection for stats |
 | `alerts_col` | PyMongo collection for alerts |
 | `notifications_col` | PyMongo collection for notifications |
@@ -60,7 +62,7 @@ Shared persistence and runtime state.
 
 Current persistence split:
 
-- MongoDB: users, RSS sources/channels in `rss_fuentes`, alerts, notifications, stats and counters
+- MongoDB: users, `information_sources`, `rss_channels`, `rss_entradas`, alerts, notifications, stats and counters
 - In-memory: categories and a canonical `manager` role used only for compatibility
 
 ### `dependencies.py`

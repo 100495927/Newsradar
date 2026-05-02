@@ -88,7 +88,9 @@ Campos usados:
 - `resumen`
 - `link`
 - `hash_deduplicado`
-- `id_fuente`
+- `information_source_id`
+- `rss_channel_id`
+- `source_name`
 - `fecha_publicacion`
 
 Uso:
@@ -157,8 +159,9 @@ Para cada alerta vencida:
 1. Se calcula la ventana de busqueda desde `last_checked_at`.
 2. Si nunca se ha revisado, se usa `created_at`.
 3. Se consultan `rss_entradas` con `fecha_ingestion > since`.
-4. Se compara `descriptors` contra `titulo` y `resumen`.
-5. Se evita duplicar una entrada ya notificada usando:
+4. Si la alerta selecciona canales o fuentes concretas, se filtra por `rss_channel_id` e `information_source_id`.
+5. Se compara `descriptors` contra `titulo` y `resumen`.
+6. Se evita duplicar una entrada ya notificada usando:
 
 - `alert_id`
 - `matches.rss_entry_hash`
