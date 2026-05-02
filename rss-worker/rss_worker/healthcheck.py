@@ -1,11 +1,12 @@
 import sys
 from shared.mongo import Database
+import requests
 
 
 def main() -> int:
     try:
         db = Database()
-        cols_ext = db.db_admin.list_collection_names()
+        cols_ext = set(db.db_app.list_collection_names())
 
         cols_req = [
             db.col_rss_entradas.NOMBRE_COLECCION,
@@ -18,9 +19,9 @@ def main() -> int:
             db.col_counters.NOMBRE_COLECCION,
         ]
 
-        for col in cols_req:
-            if not col in cols_ext:
-                raise ValueError(f"Colecion {col} no encontradas")
+        missing = [col for col in cols_req if col not in cols_ext]
+        if missing:
+            raise ValueError(f"Colecciones no encontradas: {', '.join(missing)}")
     except Exception as exc:
         print(f"Healthcheck Error: {exc}", file=sys.stderr)
         return 1
@@ -36,23 +37,13 @@ def main() -> int:
 
 def test_uvicorn():
     from EntornoRSS import EntornoRSS
-    import requests
 
     entorno = EntornoRSS()
-    url = f"http://localhost:{entorno.puerto_uvicorn}/fuentes"
-    data = {
-        "medio": "Test Media",
-        "rss": "https://example.com/rss",
-        "url": "https://example.com",
-        "activo": False,
-    }
+    url = f"http://localhost:{entorno.puerto_uvicorn}/openapi.json"
 
-    try:
-        response = requests.post(url, json=data)
-        print(f"Status Code: {response.status_code}")
-        print(f"Response Body: {response.json()}")
-    except Exception as e:
-        print(f"Uvicorn is not responding: {e}")
+    response = requests.get(url, timeout=5)
+    response.raise_for_status()
+    print(f"Status Code: {response.status_code}")
 
 
 if __name__ == "__main__":

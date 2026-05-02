@@ -436,6 +436,34 @@ ensureIndexes("notifications", [
   },
 ]);
 
+ensureCollection("stats", {
+  $jsonSchema: {
+    bsonType: "object",
+    required: ["id", "metrics"],
+    properties: {
+      _id: { bsonType: "objectId" },
+      id: { bsonType: ["int", "long"] },
+      metrics: {
+        bsonType: "array",
+        items: {
+          bsonType: "object",
+          required: ["name", "value"],
+          properties: {
+            name: { bsonType: "string" },
+            value: { bsonType: ["double", "int", "long", "decimal"] },
+          },
+        },
+      },
+    },
+  },
+});
+ensureIndexes("stats", [
+  {
+    keys: { id: 1 },
+    options: { unique: true, name: "idx_stats_id_unique" },
+  },
+]);
+
 ensureCollection("counters", {
   $jsonSchema: {
     bsonType: "object",

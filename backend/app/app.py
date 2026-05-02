@@ -15,7 +15,18 @@ from .notificaciones.routes import router as notificaciones_router
 from .rss.routes import router as rss_router
 from .stats.routes import router as stats_router
 from shared.iptc_catalog import IPTC_TOP_LEVEL_CATEGORIES
-from .store import categories_col, categories_store, counters, roles_store, users_col
+from .store import (
+    alerts_col,
+    categories_col,
+    categories_store,
+    counters,
+    counters_col,
+    notifications_col,
+    roles_store,
+    rss_fuentes_col,
+    stats_col,
+    users_col,
+)
 
 API_PREFIX = "/api/v1"
 ROLELESS_DEFAULT_ROLE_ID = 1
@@ -64,6 +75,30 @@ def _ensure_manager_role() -> int:
     return ROLELESS_DEFAULT_ROLE_ID
 
 
+def _verify_required_collections() -> None:
+    """Comprueba que las colecciones Mongo usadas por la API ya existen."""
+    required_collections = (
+        users_col,
+        rss_fuentes_col,
+        alerts_col,
+        notifications_col,
+        categories_col,
+        counters_col,
+        stats_col,
+    )
+    existing_collection_names = set(users_col.database.list_collection_names())
+    missing_collection_names = [
+        collection.name
+        for collection in required_collections
+        if collection.name not in existing_collection_names
+    ]
+    if missing_collection_names:
+        raise RuntimeError(
+            "Faltan colecciones requeridas en MongoDB: "
+            + ", ".join(sorted(missing_collection_names))
+        )
+
+
 def _seed_static_iptc_categories() -> None:
     """Fallback para contextos sin semilla Mongo inicial."""
     categories_store.clear()
@@ -94,6 +129,7 @@ def _load_iptc_categories_from_mongo() -> None:
 
 def create_seed_data() -> None:
     """Carga en memoria el catálogo y el rol canónico a partir de Mongo."""
+    _verify_required_collections()
     _sync_user_counter_from_mongo()
     _load_iptc_categories_from_mongo()
     _ensure_manager_role()

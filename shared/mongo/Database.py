@@ -11,6 +11,7 @@ class Database:
         self.login_como_app()
 
         self.iniciar_colecciones()
+        self.verificar_colecciones()
 
     def login_como_admin(self):
         usuario_root = quote_plus(self.__entorno.root_usuario)
@@ -47,6 +48,29 @@ class Database:
         self.col_alertas = colecciones.ColeccionAlerts(self)
         self.col_counters = colecciones.ColeccionCounters(self)
         self.col_notifications = colecciones.ColeccionNotifications(self)
+
+    def verificar_colecciones(self):
+        colecciones_requeridas = (
+            self.col_rss_entradas,
+            self.col_rss_fuentes,
+            self.col_rss_cat_iptc,
+            self.col_user_sesions,
+            self.col_users,
+            self.col_alertas,
+            self.col_counters,
+            self.col_notifications,
+        )
+        colecciones_existentes = set(self.__db_app.list_collection_names())
+
+        faltantes = [
+            coleccion.NOMBRE_COLECCION
+            for coleccion in colecciones_requeridas
+            if coleccion.NOMBRE_COLECCION not in colecciones_existentes
+        ]
+        if faltantes:
+            raise RuntimeError(
+                "Faltan colecciones requeridas en MongoDB: " + ", ".join(sorted(faltantes))
+            )
 
     def ping(self) -> None:
         self.__cliente_app.admin.command("ping")
