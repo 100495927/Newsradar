@@ -24,7 +24,8 @@ from .store import (
     counters_col,
     notifications_col,
     roles_store,
-    rss_fuentes_col,
+    information_sources_col,
+    rss_channels_col,
     stats_col,
     users_col,
 )
@@ -85,7 +86,8 @@ def _verify_required_collections() -> None:
 
     required_collections = (
         users_col,
-        rss_fuentes_col,
+        information_sources_col,
+        rss_channels_col,
         alerts_col,
         notifications_col,
         categories_col,
