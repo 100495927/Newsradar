@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from ..dependencies import get_current_user
 from ..auth.user import UserInDB
 from shared.iptc_catalog import resolve_category
-from ..store import categories_store
+from ..store import categories_store, rss_channels_col
 from .models import Category, CategoryCreate, CategoryUpdate
 
 router = APIRouter(tags=["categories"])
@@ -87,4 +87,12 @@ def delete_category(
     _: UserInDB = Depends(get_current_user),
 ) -> None:
     """Compatibilidad: aparenta borrado, pero no altera el catálogo canónico."""
+    if rss_channels_col.find_one(
+        {
+            "category_id": category_id,
+            "deleted_at": {"$exists": False},
+        },
+        {"_id": 1},
+    ):
+        raise HTTPException(status_code=409, detail="Categoría asociada a canales RSS")
     return None

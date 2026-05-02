@@ -23,19 +23,23 @@ def test_rss_workflow(client, auth_headers):
         )
         assert source_resp.status_code == 201
         source_id = source_resp.json()["id"]
+        assert source_resp.json()["name"] == source_data["name"]
+        assert source_resp.json()["url"] == source_data["url"]
 
-        rss_data = {
+        channel_data = {
             "url": f"https://www.elmundo.es/rss/portada.xml?testrun={unique_suffix}",
             "category_id": category_id,
         }
         rss_resp = client.post(
             f"/api/v1/information-sources/{source_id}/rss-channels",
-            json=rss_data,
+            json=channel_data,
             headers=auth_headers,
         )
         assert rss_resp.status_code == 201
         channel_id = rss_resp.json()["id"]
         assert rss_resp.json()["category_id"] == category_id
+        assert rss_resp.json()["information_source_id"] == source_id
+        assert rss_resp.json()["url"] == channel_data["url"]
 
         list_resp = client.get(
             f"/api/v1/information-sources/{source_id}/rss-channels",
@@ -43,6 +47,7 @@ def test_rss_workflow(client, auth_headers):
         )
         assert list_resp.status_code == 200
         assert len(list_resp.json()) >= 1
+        assert any(channel["id"] == channel_id for channel in list_resp.json())
     finally:
         if source_id is not None and channel_id is not None:
             client.delete(
