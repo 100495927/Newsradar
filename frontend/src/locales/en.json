@@ -83,11 +83,23 @@
     "errorCreate": "Error creating alert"
   },
   "categories": {
-    "FIN_MRKT": "Finance & Markets",
-    "SEC_POL": "Political Security",
-    "TECH": "Technology",
-    "ENERGY": "Energy",
-    "HEALTH": "Health"
+    "01000000": "Arts, Culture & Entertainment",
+    "02000000": "Crime, Law & Justice",
+    "03000000": "Disasters & Accidents",
+    "04000000": "Economy, Business & Finance",
+    "05000000": "Education",
+    "06000000": "Environment",
+    "07000000": "Health",
+    "08000000": "Human Interest",
+    "09000000": "Labour",
+    "10000000": "Lifestyle & Leisure",
+    "11000000": "Politics",
+    "12000000": "Religion & Beliefs",
+    "13000000": "Science & Technology",
+    "14000000": "Society",
+    "15000000": "Sport",
+    "16000000": "Conflict, War & Peace",
+    "17000000": "Weather"
   },
   "profile": {
     "pageTitle": "Profile Settings",

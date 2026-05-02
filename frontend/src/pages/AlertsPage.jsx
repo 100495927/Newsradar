@@ -25,7 +25,7 @@ function AlertsPage() {
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [newAlert, setNewAlert] = useState({ name: '', cat: 'FIN_MRKT', cron: '', rssChannelIds: [] })
+  const [newAlert, setNewAlert] = useState({ name: '', cat: '01000000', cron: '', rssChannelIds: [] })
   const [error, setError] = useState('')
   const [rssChannels, setRssChannels] = useState([])
   const [synonymSuggestions, setSynonymSuggestions] = useState([])
@@ -33,11 +33,23 @@ function AlertsPage() {
   const [loadingSynonyms, setLoadingSynonyms] = useState(false)
 
   const categories = [
-    { value: 'FIN_MRKT', label: t('categories.FIN_MRKT') },
-    { value: 'SEC_POL', label: t('categories.SEC_POL') },
-    { value: 'TECH', label: t('categories.TECH') },
-    { value: 'ENERGY', label: t('categories.ENERGY') },
-    { value: 'HEALTH', label: t('categories.HEALTH') },
+    { value: '01000000', label: t('categories.01000000') },
+    { value: '02000000', label: t('categories.02000000') },
+    { value: '03000000', label: t('categories.03000000') },
+    { value: '04000000', label: t('categories.04000000') },
+    { value: '05000000', label: t('categories.05000000') },
+    { value: '06000000', label: t('categories.06000000') },
+    { value: '07000000', label: t('categories.07000000') },
+    { value: '08000000', label: t('categories.08000000') },
+    { value: '09000000', label: t('categories.09000000') },
+    { value: '10000000', label: t('categories.10000000') },
+    { value: '11000000', label: t('categories.11000000') },
+    { value: '12000000', label: t('categories.12000000') },
+    { value: '13000000', label: t('categories.13000000') },
+    { value: '14000000', label: t('categories.14000000') },
+    { value: '15000000', label: t('categories.15000000') },
+    { value: '16000000', label: t('categories.16000000') },
+    { value: '17000000', label: t('categories.17000000') },
   ]
 
   useEffect(() => {
