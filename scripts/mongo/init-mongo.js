@@ -76,7 +76,7 @@ ensureCollection("rss_fuentes", {
       hash_fuente: { bsonType: "string" },
       tipo: { enum: ["source", "channel", null] },
       activo: { bsonType: "bool" },
-      categoria_iptc: { bsonType: ["int", "null"] },
+      category_id: { bsonType: ["int", "null"] },
       deleted_at: { bsonType: ["date", "null"] },
       creado: { bsonType: "date" },
       actualizado: { bsonType: "date" },
@@ -120,8 +120,7 @@ ensureCollection("rss_entradas", {
       titulo: { bsonType: "string" },
       autores: { bsonType: ["array", "null"] },
       link: { bsonType: "string" },
-      categorias: { bsonType: ["array", "null"] },
-      categorias_raw: { bsonType: ["array", "null"] },
+      category_id: { bsonType: ["int", "null"] },
       resumen: { bsonType: ["string", "null"] },
       fecha_publicacion: { bsonType: "date" },
       hash_deduplicado: { bsonType: "string" },
@@ -144,8 +143,8 @@ ensureIndexes("rss_entradas", [
     options: { name: "idx_rss_entradas_fecha_publicacion" },
   },
   {
-    keys: { categorias: 1 },
-    options: { name: "idx_rss_entradas_categorias" },
+    keys: { category_id: 1 },
+    options: { name: "idx_rss_entradas_category_id" },
   },
 ]);
 
@@ -451,6 +450,7 @@ ensureCollection("counters", {
 ensureIndexes("counters", []);
 ensureCounter("information_sources");
 ensureCounter("rss_channels");
+ensureCounter("users");
 ensureCounter("alerts");
 ensureCounter("notifications");
 

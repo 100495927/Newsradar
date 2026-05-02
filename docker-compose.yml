@@ -108,6 +108,7 @@ services:
       - ./data/mongodb/configdb:/data/configdb
       - ./scripts/mongo/init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
       - ./scripts/mongo/init-mongo.js:/opt/newsradar/init-mongo.js:ro
+      - ./scripts/mongo/seed-mongo.js:/opt/newsradar/seed-mongo.js:ro
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ping:1})'"]
       interval: 5s

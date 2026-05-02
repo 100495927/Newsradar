@@ -34,4 +34,13 @@ then
   fail "Error al ejecutar comandos en mongosh"
 fi
 
+log "Aplicando semilla inicial de categorias, admin y fuentes RSS"
+
+if ! mongosh --authenticationDatabase "$MONGO_INITDB_DATABASE" \
+  -u "$MONGO_INITDB_ROOT_USERNAME" \
+  -p "$MONGO_INITDB_ROOT_PASSWORD" /opt/newsradar/seed-mongo.js
+then
+  fail "Error al aplicar la semilla inicial de datos"
+fi
+
 log "Bootstrap de MongoDB finalizado correctamente"

@@ -66,7 +66,7 @@ ENTRADAS_MAPPING='{
       "resumen": {"type": "text", "analyzer": "analizador_rss_es"},
       "autores": {"type": "keyword"},
       "link": {"type": "keyword", "index": false},
-      "categorias": {"type": "keyword"},
+      "category_id": {"type": "integer"},
       "fecha_publicacion": {"type": "date"},
       "fecha_ingestion": {"type": "date"},
       "medio": {"type": "keyword"},
@@ -87,6 +87,7 @@ FUENTES_MAPPING='{
       "rss": {"type": "keyword"},
       "url": {"type": "keyword", "index": false},
       "parser_id": {"type": "keyword"},
+      "category_id": {"type": "integer"},
       "activo": {"type": "boolean"},
       "creado": {"type": "date"},
       "actualizado": {"type": "date"}
