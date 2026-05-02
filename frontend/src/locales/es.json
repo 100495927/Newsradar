@@ -150,7 +150,10 @@
     "newSource": "Nueva fuente...",
     "sourceNameLabel": "Nombre de la fuente",
     "sourceNamePlaceholder": "p.ej. El País",
-    "addButton": "Añadir fuente"
+    "addButton": "Añadir fuente",
+    "sourcesCount": "fuentes",
+    "channelsCount": "canales",
+    "noChannels": "Esta fuente no tiene canales"
   },
   "summary": {
     "pageTitle": "Resumen de Inteligencia",

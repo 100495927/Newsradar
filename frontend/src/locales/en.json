@@ -150,7 +150,10 @@
     "newSource": "New source...",
     "sourceNameLabel": "Source name",
     "sourceNamePlaceholder": "e.g. El País",
-    "addButton": "Add source"
+    "addButton": "Add source",
+    "sourcesCount": "sources",
+    "channelsCount": "channels",
+    "noChannels": "No channels for this source"
   },
   "summary": {
     "pageTitle": "Intelligence Summary",

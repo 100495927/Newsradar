@@ -7,8 +7,8 @@ import { apiFetch } from '../api/apiClient'
 
 function SourcesPage() {
   const { t } = useTranslation()
-  const [sources, setSources] = useState([])
-  const [informationSources, setInformationSources] = useState([])
+  const [groupedSources, setGroupedSources] = useState([])
+  const [expandedSources, setExpandedSources] = useState(new Set())
   const [newUrl, setNewUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitError, setSubmitError] = useState(null)
@@ -50,30 +50,42 @@ function SourcesPage() {
       const response = await apiFetch('/api/v1/information-sources')
       if (!response.ok) throw new Error('API no disponible')
       const data = await response.json()
-      setInformationSources(data)
-      const allChannels = await Promise.all(
+
+      const withChannels = await Promise.all(
         data.map(async (src) => {
           const chRes = await apiFetch(`/api/v1/information-sources/${src.id}/rss-channels`)
-          if (!chRes.ok) return []
-          const channels = await chRes.json()
-          return channels.map((ch) => ({
-            id: ch.id,
-            sourceId: src.id,
-            name: src.name,
-            url: ch.url,
-          }))
+          const channels = chRes.ok ? await chRes.json() : []
+          return { id: src.id, name: src.name, url: src.url, channels }
         }),
       )
-      setSources(allChannels.flat())
+      setGroupedSources(withChannels)
     } catch (err) {
       console.warn('Error cargando fuentes:', err.message)
-      setSources([])
+      setGroupedSources([])
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDelete = async (sourceId, channelId) => {
+  const toggleExpand = (sourceId) => {
+    setExpandedSources((prev) => {
+      const next = new Set(prev)
+      next.has(sourceId) ? next.delete(sourceId) : next.add(sourceId)
+      return next
+    })
+  }
+
+  const handleDeleteSource = async (sourceId) => {
+    try {
+      await apiFetch(`/api/v1/information-sources/${sourceId}`, { method: 'DELETE' })
+    } catch (err) {
+      console.warn('Error eliminando fuente:', err.message)
+    }
+    setGroupedSources((prev) => prev.filter((s) => s.id !== sourceId))
+    setExpandedSources((prev) => { const next = new Set(prev); next.delete(sourceId); return next })
+  }
+
+  const handleDeleteChannel = async (sourceId, channelId) => {
     try {
       await apiFetch(`/api/v1/information-sources/${sourceId}/rss-channels/${channelId}`, {
         method: 'DELETE',
@@ -81,7 +93,13 @@ function SourcesPage() {
     } catch (err) {
       console.warn('Error eliminando canal:', err.message)
     }
-    setSources((prev) => prev.filter((s) => !(s.sourceId === sourceId && s.id === channelId)))
+    setGroupedSources((prev) =>
+      prev.map((s) =>
+        s.id === sourceId
+          ? { ...s, channels: s.channels.filter((ch) => ch.id !== channelId) }
+          : s,
+      ),
+    )
   }
 
   const extractDomainName = (url) => {
@@ -168,6 +186,8 @@ function SourcesPage() {
     !selectedSourceId ||
     (selectedSourceId === 'new' && !newSourceName.trim())
 
+  const totalChannels = groupedSources.reduce((acc, s) => acc + s.channels.length, 0)
+
   return (
     <div className="bg-surface min-h-screen">
       <TopNavBar />
@@ -184,7 +204,15 @@ function SourcesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
               <section className="bg-surface-container-low rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-6">{t('sources.activeSources')}</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold">{t('sources.activeSources')}</h3>
+                  {!loading && totalChannels > 0 && (
+                    <span className="text-sm text-slate-500">
+                      {groupedSources.length} {t('sources.sourcesCount')} · {totalChannels} {t('sources.channelsCount')}
+                    </span>
+                  )}
+                </div>
+
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
                     <span className="material-symbols-outlined animate-spin text-slate-400">
@@ -192,37 +220,71 @@ function SourcesPage() {
                     </span>
                     <span className="ml-2 text-slate-500">{t('sources.loading')}</span>
                   </div>
-                ) : sources.length === 0 ? (
+                ) : groupedSources.length === 0 ? (
                   <div className="text-center py-8 text-slate-500">
                     <span className="material-symbols-outlined text-4xl mb-2">rss_feed</span>
                     <p>{t('sources.empty')}</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {sources.map((source) => (
-                      <div
-                        key={`${source.sourceId}-${source.id}`}
-                        className="p-4 bg-white rounded-lg border border-transparent hover:border-outline-variant flex justify-between items-center shadow-sm transition-all"
-                      >
-                        <div className="flex items-center gap-4">
-                          <span className="material-symbols-outlined text-slate-400">
-                            rss_feed
-                          </span>
-                          <div>
-                            <span className="font-bold block">{source.name}</span>
-                            <span className="text-xs text-slate-400 truncate max-w-xs block">
-                              {source.url}
-                            </span>
+                  <div className="space-y-2">
+                    {groupedSources.map((source) => {
+                      const isOpen = expandedSources.has(source.id)
+                      return (
+                        <div key={source.id} className="bg-white rounded-lg shadow-sm overflow-hidden border border-transparent hover:border-outline-variant transition-all">
+                          {/* Source header row */}
+                          <div className="flex items-center justify-between px-4 py-3">
+                            <button
+                              onClick={() => toggleExpand(source.id)}
+                              className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                            >
+                              <span className="material-symbols-outlined text-slate-400 text-base">
+                                {isOpen ? 'expand_less' : 'expand_more'}
+                              </span>
+                              <span className="material-symbols-outlined text-primary-container">
+                                public
+                              </span>
+                              <span className="font-bold truncate">{source.name}</span>
+                              <span className="ml-1 text-xs font-semibold bg-primary-container text-white rounded-full px-2 py-0.5 shrink-0">
+                                {source.channels.length}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSource(source.id)}
+                              className="material-symbols-outlined text-slate-400 hover:text-red-500 transition-colors ml-3 shrink-0"
+                            >
+                              delete
+                            </button>
                           </div>
+
+                          {/* Channel list */}
+                          {isOpen && (
+                            <div className="border-t border-slate-100 divide-y divide-slate-50">
+                              {source.channels.length === 0 ? (
+                                <p className="text-xs text-slate-400 px-12 py-3">{t('sources.noChannels')}</p>
+                              ) : (
+                                source.channels.map((ch) => (
+                                  <div
+                                    key={ch.id}
+                                    className="flex items-center justify-between px-12 py-2 bg-slate-50/60 hover:bg-slate-100/60 transition-colors"
+                                  >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <span className="material-symbols-outlined text-slate-300 text-sm">rss_feed</span>
+                                      <span className="text-xs text-slate-500 truncate">{ch.url}</span>
+                                    </div>
+                                    <button
+                                      onClick={() => handleDeleteChannel(source.id, ch.id)}
+                                      className="material-symbols-outlined text-slate-300 hover:text-red-500 transition-colors text-sm ml-3 shrink-0"
+                                    >
+                                      delete
+                                    </button>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <button
-                          onClick={() => handleDelete(source.sourceId, source.id)}
-                          className="material-symbols-outlined text-slate-400 hover:text-red-500 transition-colors"
-                        >
-                          delete
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </section>
@@ -287,7 +349,7 @@ function SourcesPage() {
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-800"
                 >
                   <option value="">{t('sources.sourcePlaceholder')}</option>
-                  {informationSources.map((s) => (
+                  {groupedSources.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
                     </option>
