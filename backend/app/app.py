@@ -77,6 +77,10 @@ def _ensure_manager_role() -> int:
 
 def _verify_required_collections() -> None:
     """Comprueba que las colecciones Mongo usadas por la API ya existen."""
+    database = getattr(users_col, "database", None)
+    if database is None:
+        return
+
     required_collections = (
         users_col,
         rss_fuentes_col,
@@ -86,7 +90,7 @@ def _verify_required_collections() -> None:
         counters_col,
         stats_col,
     )
-    existing_collection_names = set(users_col.database.list_collection_names())
+    existing_collection_names = set(database.list_collection_names())
     missing_collection_names = [
         collection.name
         for collection in required_collections

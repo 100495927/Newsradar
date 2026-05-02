@@ -3,9 +3,9 @@ from typing import Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from .EntornoRSS import EntornoRSS
 from rss import RSSFuente
 from shared.mongo import Database
-from EntornoRSS import EntornoRSS
 
 app = FastAPI()
 entorno = EntornoRSS()

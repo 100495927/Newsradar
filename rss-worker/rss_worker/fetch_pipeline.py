@@ -1,8 +1,8 @@
-from shared.mongo import Database
-from EntornoRSS import EntornoRSS
+from .EntornoRSS import EntornoRSS
 import logging
 from alerts import process_alerts
-from main import LOGGER_NOMBRE
+from .main import LOGGER_NOMBRE
+from shared.mongo import Database
 from time import sleep
 
 entorno = EntornoRSS()

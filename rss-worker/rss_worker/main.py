@@ -3,14 +3,14 @@ from __future__ import annotations
 import logging
 import threading
 
-from api_fuentes import api_task
+from .api_fuentes import api_task
 
 LOGGER_NOMBRE = "rssworker"
 logger = logging.getLogger(LOGGER_NOMBRE)
 
 
 def fetch_de_entradas() -> None:
-    from fetch_pipeline import fetch_de_entradas as _fetch_de_entradas
+    from .fetch_pipeline import fetch_de_entradas as _fetch_de_entradas
 
     _fetch_de_entradas()
 
@@ -25,7 +25,7 @@ def main() -> None:
     configure_logging()
     api_hilo = threading.Thread(target=api_task, daemon=True)
     api_hilo.start()
-    from fetch_pipeline import fetch_entradas_task
+    from .fetch_pipeline import fetch_entradas_task
 
     fetch_entradas_task()
 

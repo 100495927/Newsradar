@@ -85,7 +85,14 @@ def _resolve_alert_category_or_400(categories: list[dict] | None) -> tuple[int, 
         )
 
     candidate = categories[0]
-    category = resolve_category(candidate.get("code")) or resolve_category(candidate.get("label"))
+    if isinstance(candidate, dict):
+        code = candidate.get("code")
+        label = candidate.get("label")
+    else:
+        code = getattr(candidate, "code", None)
+        label = getattr(candidate, "label", None)
+
+    category = resolve_category(code) or resolve_category(label)
     if category is None:
         raise HTTPException(
             status_code=400,

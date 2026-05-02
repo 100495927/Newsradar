@@ -1,17 +1,24 @@
 from __future__ import annotations
 
+import os
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.app import app
+from backend.app.app import create_seed_data
 from backend.app.store import users_col
+
+os.environ.setdefault("SMTP_SERVER", "smtp.gmail.com")
+os.environ.setdefault("SMTP_USER", "noreply@newsradar.com")
 
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    test_client = TestClient(app)
+    create_seed_data()
+    return test_client
 
 
 @pytest.fixture
