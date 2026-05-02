@@ -12,7 +12,6 @@ from ..auth.user import UserInDB
 from ..category.routes import ensure_category_exists
 from ..dependencies import get_current_user
 from ..store import next_mongo_id, rss_fuentes_col
-from .iptc_utils import detect_categories_from_tags
 from .models import (
     InformationSource,
     InformationSourceCreate,
@@ -32,23 +31,12 @@ def preview_rss_url(
     payload: RSSPreviewRequest,
     _: UserInDB = Depends(get_current_user),
 ) -> RSSPreviewResponse:
-    """Parse an RSS URL and detect its IPTC category without saving it."""
+    """Parse an RSS URL without attempting category autodetection."""
     feed = feedparser.parse(str(payload.url))
 
     if feed.bozo and not feed.entries:
         error_msg = str(feed.bozo_exception) if feed.bozo_exception else "No se pudo analizar el feed RSS"
         return RSSPreviewResponse(status="parse_error", error=error_msg)
-
-    raw_tags: list[str] = []
-    for entry in feed.entries[:3]:
-        for tag in entry.get("tags", []):
-            term = tag.get("term", "")
-            if term:
-                raw_tags.append(term)
-
-    detected = detect_categories_from_tags(raw_tags)
-    if detected:
-        return RSSPreviewResponse(status="ok", detected_categories=detected)
     return RSSPreviewResponse(status="no_category")
 
 
@@ -138,7 +126,6 @@ def create_information_source(
         "channel_id": None,
         "category_id": None,
         "activo": False,
-        "categoria_iptc": None,
         "creado": now,
         "actualizado": now,
     }
@@ -277,7 +264,6 @@ def create_source_channel(
         "channel_id": channel_id,
         "category_id": payload.category_id,
         "activo": True,
-        "categoria_iptc": None,
         "creado": now,
         "actualizado": now,
     }

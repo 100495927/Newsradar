@@ -48,8 +48,7 @@ def get_global_stats() -> dict[str, Any]:
     # 1. Agregación de Alertas por categoría
     alertas_por_categoria = list(
         alerts_col.aggregate([
-            {"$unwind": "$categories"},
-            {"$group": {"_id": "$categories.label", "total": {"$sum": 1}}},
+            {"$group": {"_id": "$category_id", "total": {"$sum": 1}}},
             {"$project": {"_id": 0, "id": "$_id", "total": 1}},
             {"$sort": {"total": -1, "id": 1}},
         ])
@@ -58,8 +57,7 @@ def get_global_stats() -> dict[str, Any]:
     # 2. Agregación de Noticias por categoría
     noticias_por_categoria = list(
         rss_entradas_col.aggregate([
-            {"$unwind": "$categorias"},
-            {"$group": {"_id": "$categorias", "total": {"$sum": 1}}},
+            {"$group": {"_id": "$category_id", "total": {"$sum": 1}}},
             {"$project": {"_id": 0, "id": "$_id", "total": 1}},
             {"$sort": {"total": -1, "id": 1}},
         ])
@@ -103,7 +101,7 @@ def get_word_cloud_data(categoria: str) -> list[dict[str, int | str]]:
         category_values.append(int(categoria))
 
     cursor = rss_entradas_col.find(
-        {"categorias": {"$in": category_values}},
+        {"category_id": {"$in": category_values}},
         {"titulo": 1, "resumen": 1},
     )
 

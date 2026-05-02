@@ -8,6 +8,7 @@ from shared.utils import next_run_on_or_after, validate_minute_cron_expression
 
 from ..dependencies import ensure_gestor_role, ensure_user_can_access, get_current_user
 from ..auth.user import UserInDB
+from shared.iptc_catalog import resolve_category
 from ..store import alerts_col, next_mongo_id, notifications_col, users_col
 from .models import (
     Alert,
@@ -76,6 +77,24 @@ def _normalize_notification_channels(channels: list[str] | None) -> list[str]:
     return normalized
 
 
+def _resolve_alert_category_or_400(categories: list[dict] | None) -> tuple[int, list[dict[str, str]]]:
+    if not categories:
+        raise HTTPException(
+            status_code=400,
+            detail="La alerta debe incluir una categoría IPTC",
+        )
+
+    candidate = categories[0]
+    category = resolve_category(candidate.get("code")) or resolve_category(candidate.get("label"))
+    if category is None:
+        raise HTTPException(
+            status_code=400,
+            detail="La categoría de la alerta no corresponde a una categoría IPTC válida",
+        )
+
+    return category.id, [{"code": str(category.id), "label": category.name}]
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -116,12 +135,14 @@ def create_user_alert(
 
     now = datetime.now(timezone.utc)
     _validate_cron_or_400(payload.cron_expression)
+    category_id, normalized_categories = _resolve_alert_category_or_400(payload.categories)
     alert_id = next_mongo_id("alerts")
     alert_doc = {
         "id": alert_id,
         "user_id": user_id,
         **payload.model_dump(),
-        "category_id": 0,
+        "categories": normalized_categories,
+        "category_id": category_id,
         "rss_channel_ids": [],
         "notification_channels": _normalize_notification_channels(["app", "email"]),
         "enabled": True,
@@ -169,6 +190,11 @@ def update_user_alert(
     if "cron_expression" in update_data:
         _validate_cron_or_400(update_data["cron_expression"])
         update_data["next_run_at"] = next_run_on_or_after(update_data["cron_expression"], now)
+
+    if "categories" in update_data:
+        category_id, normalized_categories = _resolve_alert_category_or_400(update_data["categories"])
+        update_data["categories"] = normalized_categories
+        update_data["category_id"] = category_id
 
     if update_data.get("enabled") is False:
         update_data["next_run_at"] = None

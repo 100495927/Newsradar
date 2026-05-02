@@ -2,38 +2,35 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from backend.app.store import categories_store
-
-# --- TESTS ACTUALIZADOS CON /api/v1 ---
-
 def test_create_category(client, auth_headers):
-    category_name = f"Tecnología {uuid4().hex[:8]}"
-    payload = {"name": category_name, "source": "IPTC"}
+    before = client.get("/api/v1/categories", headers=auth_headers)
+    payload = {"name": "Ciencia y tecnología", "source": "IPTC"}
+    response = client.post("/api/v1/categories", json=payload, headers=auth_headers)
+    after = client.get("/api/v1/categories", headers=auth_headers)
 
-    category_id = None
-    try:
-        response = client.post("/api/v1/categories", json=payload, headers=auth_headers)
-        assert response.status_code == 201
-        assert response.json()["name"] == category_name
-        category_id = response.json()["id"]
-    finally:
-        if category_id is not None:
-            categories_store.pop(category_id, None)
+    assert response.status_code == 201
+    assert response.json()["name"] == "Ciencia y tecnología"
+    assert response.json()["id"] == 13000000
+    assert before.json() == after.json()
 
 def test_list_categories(client, auth_headers):
     response = client.get("/api/v1/categories", headers=auth_headers)
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+    assert any(item["id"] == 13000000 for item in response.json())
 
 def test_delete_category_not_found(client, auth_headers):
+    before = client.get("/api/v1/categories", headers=auth_headers)
     response = client.delete("/api/v1/categories/9999", headers=auth_headers)
-    assert response.status_code == 404
+    after = client.get("/api/v1/categories", headers=auth_headers)
+    assert response.status_code == 204
+    assert before.json() == after.json()
 
 def test_create_notification(client, auth_user):
     alert_payload = {
         "name": f"Alerta de prueba {uuid4().hex[:8]}",
         "descriptors": ["tecnologia", "IA"],
-        "categories": [{"code": "technology", "label": "Technology"}],
+        "categories": [{"code": "13000000", "label": "Ciencia y tecnología"}],
         "rss_channels_ids": [],
         "information_sources_ids": [],
         "cron_expression": "0 12 * * *",
