@@ -10,6 +10,7 @@ function MobileNav() {
     { id: 'dashboard', label: t('mobileNav.dashboard'), icon: 'dashboard', path: '/dashboard' },
     { id: 'summary', label: t('mobileNav.summary'), icon: 'auto_stories', path: '/summary' },
     { id: 'alerts', label: t('mobileNav.alerts'), icon: 'notification_important', path: '/alerts' },
+    { id: 'notifications', label: t('mobileNav.notifications', 'Avisos'), icon: 'notifications', path: '/notifications' },
     { id: 'profile', label: t('mobileNav.profile'), icon: 'settings', path: '/profile' },
   ]
 

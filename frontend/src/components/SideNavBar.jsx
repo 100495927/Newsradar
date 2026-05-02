@@ -11,6 +11,7 @@ function SideNavBar() {
     { id: 'summary', label: t('nav.summary'), icon: 'auto_stories', path: '/summary' },
     { id: 'alerts', label: t('nav.alerts'), icon: 'notifications_active', path: '/alerts' },
     { id: 'sources', label: t('nav.sources'), icon: 'rss_feed', path: '/sources' },
+    { id: 'notifications', label: t('nav.notifications', 'Notificaciones'), icon: 'notifications', path: '/notifications' },
   ]
 
   return (
