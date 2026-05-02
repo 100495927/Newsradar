@@ -141,9 +141,15 @@
     "urlPlaceholder": "https://dominio.com/feed.xml",
     "connectButton": "Conectar Stream",
     "defaultSourceName": "Nueva Fuente",
-    "categoryModalTitle": "Seleccionar categoría",
-    "categoryModalDesc": "Selecciona una categoría para clasificar los artículos de este feed.",
+    "categoryModalTitle": "Configurar canal RSS",
+    "categoryModalDesc": "Selecciona la fuente y la categoría para este feed RSS.",
+    "categoryLabel": "Categoría",
     "categoryPlaceholder": "-- Elige una categoría --",
+    "sourceLabel": "Fuente",
+    "sourcePlaceholder": "-- Elige una fuente --",
+    "newSource": "Nueva fuente...",
+    "sourceNameLabel": "Nombre de la fuente",
+    "sourceNamePlaceholder": "p.ej. El País",
     "addButton": "Añadir fuente"
   },
   "summary": {

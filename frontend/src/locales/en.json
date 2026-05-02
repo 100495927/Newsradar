@@ -141,9 +141,15 @@
     "urlPlaceholder": "https://domain.com/feed.xml",
     "connectButton": "Connect Stream",
     "defaultSourceName": "New Source",
-    "categoryModalTitle": "Select category",
-    "categoryModalDesc": "Select a category to classify articles from this feed.",
+    "categoryModalTitle": "Configure RSS channel",
+    "categoryModalDesc": "Select the source and category for this RSS feed.",
+    "categoryLabel": "Category",
     "categoryPlaceholder": "-- Choose a category --",
+    "sourceLabel": "Source",
+    "sourcePlaceholder": "-- Choose a source --",
+    "newSource": "New source...",
+    "sourceNameLabel": "Source name",
+    "sourceNamePlaceholder": "e.g. El País",
     "addButton": "Add source"
   },
   "summary": {

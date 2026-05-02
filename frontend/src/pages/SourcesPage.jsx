@@ -8,14 +8,16 @@ import { apiFetch } from '../api/apiClient'
 function SourcesPage() {
   const { t } = useTranslation()
   const [sources, setSources] = useState([])
+  const [informationSources, setInformationSources] = useState([])
   const [newUrl, setNewUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitError, setSubmitError] = useState(null)
 
-  // Category modal state (shown when feed has no detectable category)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [pendingUrl, setPendingUrl] = useState(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
+  const [selectedSourceId, setSelectedSourceId] = useState('')
+  const [newSourceName, setNewSourceName] = useState('')
   const [modalError, setModalError] = useState(null)
 
   const categories = [
@@ -48,6 +50,7 @@ function SourcesPage() {
       const response = await apiFetch('/api/v1/information-sources')
       if (!response.ok) throw new Error('API no disponible')
       const data = await response.json()
+      setInformationSources(data)
       const allChannels = await Promise.all(
         data.map(async (src) => {
           const chRes = await apiFetch(`/api/v1/information-sources/${src.id}/rss-channels`)
@@ -91,18 +94,23 @@ function SourcesPage() {
     }
   }
 
-  const createSourceAndChannel = async (url, categoryId) => {
-    const srcRes = await apiFetch('/api/v1/information-sources', {
-      method: 'POST',
-      body: JSON.stringify({ name: extractDomainName(url), url }),
-    })
-    if (!srcRes.ok) {
-      const err = await srcRes.json().catch(() => ({}))
-      throw new Error(err.detail || 'Error creando fuente')
-    }
-    const src = await srcRes.json()
+  const createSourceAndChannel = async (url, categoryId, sourceId, sourceName) => {
+    let finalSourceId = sourceId
 
-    const chRes = await apiFetch(`/api/v1/information-sources/${src.id}/rss-channels`, {
+    if (sourceId === 'new') {
+      const srcRes = await apiFetch('/api/v1/information-sources', {
+        method: 'POST',
+        body: JSON.stringify({ name: sourceName, url: new URL(url).origin }),
+      })
+      if (!srcRes.ok) {
+        const err = await srcRes.json().catch(() => ({}))
+        throw new Error(err.detail || 'Error creando fuente')
+      }
+      const src = await srcRes.json()
+      finalSourceId = src.id
+    }
+
+    const chRes = await apiFetch(`/api/v1/information-sources/${finalSourceId}/rss-channels`, {
       method: 'POST',
       body: JSON.stringify({ url, category_id: categoryId }),
     })
@@ -115,6 +123,8 @@ function SourcesPage() {
     setShowCategoryModal(false)
     setPendingUrl(null)
     setSelectedCategoryId('')
+    setSelectedSourceId('')
+    setNewSourceName('')
     setModalError(null)
     fetchSources()
   }
@@ -124,18 +134,39 @@ function SourcesPage() {
     if (!newUrl.trim()) return
     setSubmitError(null)
     setPendingUrl(newUrl)
+    setNewSourceName(extractDomainName(newUrl))
     setShowCategoryModal(true)
   }
 
   const handleModalConfirm = async () => {
-    if (!selectedCategoryId) return
+    if (!selectedCategoryId || !selectedSourceId) return
+    if (selectedSourceId === 'new' && !newSourceName.trim()) return
     setModalError(null)
     try {
-      await createSourceAndChannel(pendingUrl, Number(selectedCategoryId))
+      await createSourceAndChannel(
+        pendingUrl,
+        Number(selectedCategoryId),
+        selectedSourceId,
+        newSourceName.trim(),
+      )
     } catch (err) {
       setModalError(err.message || 'Error al añadir la fuente')
     }
   }
+
+  const closeModal = () => {
+    setShowCategoryModal(false)
+    setPendingUrl(null)
+    setSelectedCategoryId('')
+    setSelectedSourceId('')
+    setNewSourceName('')
+    setModalError(null)
+  }
+
+  const isConfirmDisabled =
+    !selectedCategoryId ||
+    !selectedSourceId ||
+    (selectedSourceId === 'new' && !newSourceName.trim())
 
   return (
     <div className="bg-surface min-h-screen">
@@ -231,44 +262,80 @@ function SourcesPage() {
       </main>
       <MobileNav />
 
-      {/* Category selection modal */}
       {showCategoryModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-8">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-slate-800">{t('sources.categoryModalTitle')}</h2>
               <button
-                onClick={() => {
-                  setShowCategoryModal(false)
-                  setPendingUrl(null)
-                  setSelectedCategoryId('')
-                  setModalError(null)
-                }}
+                onClick={closeModal}
                 className="material-symbols-outlined text-slate-400 hover:text-slate-600"
               >
                 close
               </button>
             </div>
-            <p className="text-slate-500 mb-6">
-              {t('sources.categoryModalDesc')}
-            </p>
-            <select
-              value={selectedCategoryId}
-              onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 mb-2 text-slate-800"
-            >
-              <option value="">{t('sources.categoryPlaceholder')}</option>
-              {categories.map((c) => (
-                <option key={c.code} value={c.id}>
-                  {t(`categories.${c.code}`)}
-                </option>
-              ))}
-            </select>
-            {modalError && <p className="text-red-500 text-sm mb-4">{modalError}</p>}
+            <p className="text-slate-500 mb-6">{t('sources.categoryModalDesc')}</p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs uppercase font-bold text-slate-500 mb-1">
+                  {t('sources.sourceLabel')}
+                </label>
+                <select
+                  value={selectedSourceId}
+                  onChange={(e) => setSelectedSourceId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-800"
+                >
+                  <option value="">{t('sources.sourcePlaceholder')}</option>
+                  {informationSources.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                  <option value="new">{t('sources.newSource')}</option>
+                </select>
+              </div>
+
+              {selectedSourceId === 'new' && (
+                <div>
+                  <label className="block text-xs uppercase font-bold text-slate-500 mb-1">
+                    {t('sources.sourceNameLabel')}
+                  </label>
+                  <input
+                    type="text"
+                    value={newSourceName}
+                    onChange={(e) => setNewSourceName(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-800"
+                    placeholder={t('sources.sourceNamePlaceholder')}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs uppercase font-bold text-slate-500 mb-1">
+                  {t('sources.categoryLabel')}
+                </label>
+                <select
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-800"
+                >
+                  <option value="">{t('sources.categoryPlaceholder')}</option>
+                  {categories.map((c) => (
+                    <option key={c.code} value={c.id}>
+                      {t(`categories.${c.code}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {modalError && <p className="text-red-500 text-sm mt-4">{modalError}</p>}
+
             <button
-              disabled={!selectedCategoryId}
+              disabled={isConfirmDisabled}
               onClick={handleModalConfirm}
-              className="w-full mt-4 bg-primary-container text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
+              className="w-full mt-6 bg-primary-container text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
             >
               {t('sources.addButton')}
             </button>
