@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from .Coleccion import Coleccion
@@ -60,13 +59,9 @@ class ColeccionRssEntradas(Coleccion):
         if not id_fuente:
             raise ValueError(f"No se encontró la fuente en la BD para la URL: {url_fuente}")
         datos["id_fuente"] = id_fuente["_id"]
-        datos.pop("fecha_ingestion")
         resultado = self._collection.update_one(
             {"hash_deduplicado": datos["hash_deduplicado"]},
-            {
-                "$setOnInsert": datos,
-                "$set": {"fecha_ingestion": datetime.now(timezone.utc)},
-            },
+            {"$setOnInsert": datos},
             upsert=True,
         )
         return resultado.upserted_id

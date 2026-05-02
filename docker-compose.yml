@@ -138,22 +138,19 @@ services:
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-admin}
       RSS_WORKER_INTERVAL_SECONDS: ${RSS_WORKER_INTERVAL_SECONDS:-300}
       RSS_WORKER_RUN_ONCE: ${RSS_WORKER_RUN_ONCE:-false}
-      RSS_WORKER_UVICORN_PORT: ${RSS_WORKER_UVICORN_PORT:-8000}
     command: ["python", "-m", "rss_worker"]
     healthcheck:
       test:
         [
           "CMD",
           "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json', timeout=2)",
+          "-m",
+          "rss_worker.healthcheck",
         ]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 15s
-    ports:
-      - "${RSS_WORKER_UVICORN_EXPOSE_PORT:-12670}:8000"
     depends_on:
       mongodb:
         condition: service_healthy
