@@ -45,12 +45,7 @@ export function AuthProvider({ children }) {
       const err = await res.json()
       throw new Error(err.detail || 'Error al registrarse')
     }
-    const data = await res.json()
-    _persist(data.access_token, {
-      email: fields.email,
-      first_name: fields.first_name,
-      last_name: fields.last_name,
-    })
+    // El contrato devuelve User (no token) — el usuario debe verificar su correo antes de poder iniciar sesión
   }
 
   function logout() {
