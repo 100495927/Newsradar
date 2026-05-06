@@ -45,7 +45,8 @@ export function AuthProvider({ children }) {
       const err = await res.json()
       throw new Error(err.detail || 'Error al registrarse')
     }
-    // El contrato devuelve User (no token) — el usuario debe verificar su correo antes de poder iniciar sesión
+    // El backend devuelve User (no token). El usuario debe verificar su correo
+    // antes de poder iniciar sesión — no se hace auto-login aquí.
   }
 
   function logout() {

@@ -30,6 +30,9 @@ def auth_user(client: TestClient) -> dict[str, object]:
     register_response = client.post("/api/v1/auth/register", json=register_payload)
     assert register_response.status_code == 201
 
+    # Verify the email in DB directly so the login check passes in tests
+    users_col.update_one({"email": email}, {"$set": {"is_verified": True}})
+
     login_response = client.post(
         "/api/v1/auth/login",
         json={"email": email, "password": password},

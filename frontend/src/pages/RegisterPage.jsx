@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 function RegisterPage() {
   const { register } = useAuth()
+  const navigate = useNavigate()
   const [form, setForm] = useState({
     first_name: '',
     last_name: '',
@@ -13,7 +14,6 @@ function RegisterPage() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [registered, setRegistered] = useState(false)
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -25,7 +25,7 @@ function RegisterPage() {
     setLoading(true)
     try {
       await register(form)
-      setRegistered(true)
+      navigate('/login?registered=true')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -93,31 +93,6 @@ function RegisterPage() {
         </div>
         <div className="lg:col-span-7 p-8 md:p-16 flex flex-col justify-center">
           <div className="max-w-md mx-auto w-full">
-            {registered ? (
-              <div className="text-center py-8">
-                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="material-symbols-outlined text-emerald-600 text-4xl">mark_email_read</span>
-                </div>
-                <h2 className="text-3xl font-headline font-extrabold text-primary-container tracking-tight mb-3">
-                  ¡Cuenta creada!
-                </h2>
-                <p className="text-on-surface-variant font-medium mb-2">
-                  Hemos enviado un enlace de verificación a
-                </p>
-                <p className="font-bold text-primary-container mb-6">{form.email}</p>
-                <p className="text-sm text-on-surface-variant mb-8">
-                  Revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.
-                  El enlace caduca en 24 horas.
-                </p>
-                <Link
-                  to="/login"
-                  className="inline-flex items-center gap-2 text-primary-container font-bold hover:underline"
-                >
-                  <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-                  Ir al inicio de sesión
-                </Link>
-              </div>
-            ) : (
             <>
             <div className="mb-10">
               <h2 className="text-3xl font-headline font-extrabold text-primary-container tracking-tight mb-2">
@@ -231,7 +206,6 @@ function RegisterPage() {
               </p>
             </div>
             </>
-            )}
           </div>
         </div>
       </div>

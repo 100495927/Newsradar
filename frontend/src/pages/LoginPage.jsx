@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [toastVisible, setToastVisible] = useState(searchParams.get('registered') === 'true')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -26,6 +28,23 @@ function LoginPage() {
 
   return (
     <div className="bg-[#f0f2f5] min-h-screen flex flex-col relative overflow-hidden">
+      {toastVisible && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
+          <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl px-5 py-4 shadow-lg">
+            <span className="material-symbols-outlined text-emerald-600 text-xl mt-0.5 shrink-0">mark_email_read</span>
+            <div className="flex-1 text-sm font-medium">
+              Cuenta creada correctamente. Revisa tu bandeja de entrada y haz clic en el enlace de verificación (válido 24 h).
+            </div>
+            <button
+              onClick={() => setToastVisible(false)}
+              className="text-emerald-600 hover:text-emerald-800 shrink-0 ml-1"
+              aria-label="Cerrar"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+          </div>
+        </div>
+      )}
       <header className="fixed top-0 left-0 w-full z-50 flex justify-start items-center px-8 h-20 bg-transparent">
         <div className="flex items-center gap-2.5">
           <div className="bg-primary-container p-1.5 rounded-lg shadow-sm">
@@ -105,7 +124,7 @@ function LoginPage() {
                 ¿No tienes cuenta?{' '}
                 <Link
                   className="text-primary-container font-bold hover:underline"
-                  to="/"
+                  to="/register"
                 >
                   Solicitar acceso
                 </Link>
