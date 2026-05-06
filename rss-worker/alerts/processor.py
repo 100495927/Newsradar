@@ -121,12 +121,20 @@ def _process_single_alert(
     descriptors = clean_descriptors(alert.get("descriptors"))
     # Si la alerta es nueva, empezamos a contar desde su creacion para no incluir historico previo.
     since = alert.get("last_checked_at") or alert.get("created_at") or timestamp
+    query = {"fecha_ingestion": {"$gt": since}}
+    category_id = alert.get("category_id")
+    if category_id is not None:
+        query["category_id"] = category_id
+    rss_channel_ids = alert.get("rss_channel_ids") or []
+    if rss_channel_ids:
+        query["rss_channel_id"] = {"$in": rss_channel_ids}
+    information_source_ids = alert.get("information_sources_ids") or []
+    if information_source_ids:
+        query["information_source_id"] = {"$in": information_source_ids}
 
     matches: list[dict] = []
     source_cache: dict[Any, str | None] = {}
-    cursor = app_db["rss_entradas"].find({"fecha_ingestion": {"$gt": since}}).sort(
-        "fecha_ingestion", 1
-    )
+    cursor = app_db["rss_entradas"].find(query).sort("fecha_ingestion", 1)
 
     if descriptors:
         for entry in cursor:
@@ -141,7 +149,7 @@ def _process_single_alert(
                     entry,
                     matched_descriptors,
                     source=_source_name(app_db, entry, source_cache),
-                    category_id=alert.get("category_id"),
+                    category_id=entry.get("category_id"),
                 )
             )
 
@@ -210,13 +218,19 @@ def _entry_already_notified(app_db: Any, alert_id: int, rss_entry_hash: str | No
 
 
 def _source_name(app_db: Any, entry: dict, source_cache: dict[Any, str | None]) -> str | None:
-    source_id = entry.get("id_fuente")
+    if entry.get("source_name"):
+        return entry.get("source_name")
+
+    source_id = entry.get("information_source_id")
     if source_id is None:
         return None
-    # Cache local por ciclo para no consultar rss_fuentes repetidamente por cada noticia.
+    # Cache local por ciclo para no consultar information_sources repetidamente por cada noticia.
     if source_id not in source_cache:
-        source = app_db["rss_fuentes"].find_one({"_id": source_id}, {"medio": 1, "rss": 1})
-        source_cache[source_id] = None if not source else source.get("medio") or source.get("rss")
+        source = app_db["information_sources"].find_one(
+            {"id": source_id},
+            {"name": 1, "url": 1},
+        )
+        source_cache[source_id] = None if not source else source.get("name") or source.get("url")
     return source_cache[source_id]
 
 

@@ -4,11 +4,19 @@ from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from shared.utils import next_run_on_or_after, validate_minute_cron_expression
+from shared.utils import next_run_after, next_run_on_or_after, validate_minute_cron_expression
 
 from ..dependencies import ensure_gestor_role, ensure_user_can_access, get_current_user
 from ..auth.user import UserInDB
-from ..store import alerts_col, next_mongo_id, notifications_col, users_col
+from shared.iptc_catalog import resolve_category
+from ..store import (
+    alerts_col,
+    information_sources_col,
+    next_mongo_id,
+    notifications_col,
+    rss_channels_col,
+    users_col,
+)
 from .models import (
     Alert,
     AlertCreate,
@@ -38,10 +46,11 @@ def _doc_to_alert(doc: dict) -> Alert:
         name=doc["name"],
         descriptors=doc.get("descriptors", []),
         categories=doc.get("categories", []),
-        rss_channels_ids=doc.get("rss_channels_ids", []),
-        information_sources_ids=doc.get("information_sources_ids", []),
+        rss_channels_ids=[str(value) for value in doc.get("rss_channel_ids", [])],
+        information_sources_ids=[
+            str(value) for value in doc.get("information_sources_ids", [])
+        ],
         cron_expression=doc["cron_expression"],
-        enabled=doc.get("enabled", True),
     )
 
 
@@ -74,6 +83,163 @@ def _normalize_notification_channels(channels: list[str] | None) -> list[str]:
             detail=f"Canales de notificacion no validos: {invalid}",
         )
     return normalized
+
+
+def _resolve_alert_category_or_400(categories: list[dict] | None) -> tuple[int, list[dict[str, str]]]:
+    if not categories:
+        raise HTTPException(
+            status_code=400,
+            detail="La alerta debe incluir exactamente una categoría IPTC",
+        )
+    if len(categories) != 1:
+        raise HTTPException(
+            status_code=400,
+            detail="La alerta debe incluir exactamente una categoría IPTC",
+        )
+
+    candidate = categories[0]
+    if isinstance(candidate, dict):
+        code = candidate.get("code")
+        label = candidate.get("label")
+    else:
+        code = getattr(candidate, "code", None)
+        label = getattr(candidate, "label", None)
+
+    category = resolve_category(code) or resolve_category(label)
+    if category is None:
+        raise HTTPException(
+            status_code=400,
+            detail="La categoría de la alerta no corresponde a una categoría IPTC válida",
+        )
+
+    return category.id, [{"code": str(category.id), "label": category.name}]
+
+
+def _normalize_resource_ids(raw_ids: list[str] | None, field_name: str) -> list[int]:
+    if not raw_ids:
+        return []
+
+    normalized: list[int] = []
+    seen: set[int] = set()
+    for raw_value in raw_ids:
+        if isinstance(raw_value, int):
+            parsed = raw_value
+        elif isinstance(raw_value, str) and raw_value.isdigit():
+            parsed = int(raw_value)
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"{field_name} debe contener IDs enteros serializados como string",
+            )
+        if parsed not in seen:
+            normalized.append(parsed)
+            seen.add(parsed)
+    return normalized
+
+
+def _validate_alert_scope_or_400(
+    category_id: int,
+    rss_channel_ids: list[int],
+    information_source_ids: list[int],
+) -> tuple[list[int], list[int]]:
+    normalized_channel_ids = list(dict.fromkeys(rss_channel_ids))
+    normalized_source_ids = list(dict.fromkeys(information_source_ids))
+
+    if normalized_channel_ids:
+        channel_docs = list(
+            rss_channels_col.find(
+                {
+                    "id": {"$in": normalized_channel_ids},
+                    "deleted_at": {"$exists": False},
+                },
+                {"id": 1, "category_id": 1, "information_source_id": 1, "_id": 0},
+            )
+        )
+        found_channel_ids = {int(doc["id"]) for doc in channel_docs}
+        missing_channels = [
+            channel_id
+            for channel_id in normalized_channel_ids
+            if channel_id not in found_channel_ids
+        ]
+        if missing_channels:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Canales RSS no encontrados: {missing_channels}",
+            )
+        incompatible_channels = [
+            int(doc["id"]) for doc in channel_docs if int(doc["category_id"]) != category_id
+        ]
+        if incompatible_channels:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Los canales RSS seleccionados no son compatibles con la categoria "
+                    f"de la alerta: {incompatible_channels}"
+                ),
+            )
+        if normalized_source_ids:
+            channels_outside_selected_sources = [
+                int(doc["id"])
+                for doc in channel_docs
+                if int(doc["information_source_id"]) not in normalized_source_ids
+            ]
+            if channels_outside_selected_sources:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Los canales RSS seleccionados no pertenecen a las fuentes "
+                        f"indicadas: {channels_outside_selected_sources}"
+                    ),
+                )
+
+    if normalized_source_ids:
+        source_docs = list(
+            information_sources_col.find(
+                {
+                    "id": {"$in": normalized_source_ids},
+                    "deleted_at": {"$exists": False},
+                },
+                {"id": 1, "_id": 0},
+            )
+        )
+        found_source_ids = {int(doc["id"]) for doc in source_docs}
+        missing_sources = [
+            source_id
+            for source_id in normalized_source_ids
+            if source_id not in found_source_ids
+        ]
+        if missing_sources:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Fuentes de informacion no encontradas: {missing_sources}",
+            )
+
+        compatible_source_ids = {
+            int(doc["information_source_id"])
+            for doc in rss_channels_col.find(
+                {
+                    "information_source_id": {"$in": normalized_source_ids},
+                    "category_id": category_id,
+                    "deleted_at": {"$exists": False},
+                },
+                {"information_source_id": 1, "_id": 0},
+            )
+        }
+        incompatible_sources = [
+            source_id
+            for source_id in normalized_source_ids
+            if source_id not in compatible_source_ids
+        ]
+        if incompatible_sources:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Las fuentes seleccionadas no tienen canales RSS compatibles con la "
+                    f"categoria de la alerta: {incompatible_sources}"
+                ),
+            )
+
+    return normalized_channel_ids, normalized_source_ids
 
 
 # ---------------------------------------------------------------------------
@@ -116,18 +282,32 @@ def create_user_alert(
 
     now = datetime.now(timezone.utc)
     _validate_cron_or_400(payload.cron_expression)
+    category_id, normalized_categories = _resolve_alert_category_or_400(payload.categories)
+    normalized_channel_ids, normalized_source_ids = _validate_alert_scope_or_400(
+        category_id,
+        _normalize_resource_ids(payload.rss_channels_ids, "rss_channels_ids"),
+        _normalize_resource_ids(
+            payload.information_sources_ids,
+            "information_sources_ids",
+        ),
+    )
+    payload_data = payload.model_dump()
+    payload_data.pop("rss_channels_ids", None)
+    payload_data.pop("information_sources_ids", None)
     alert_id = next_mongo_id("alerts")
     alert_doc = {
         "id": alert_id,
         "user_id": user_id,
-        **payload.model_dump(),
-        "category_id": 0,
-        "rss_channel_ids": [],
+        **payload_data,
+        "categories": normalized_categories,
+        "category_id": category_id,
+        "rss_channel_ids": normalized_channel_ids,
+        "information_sources_ids": normalized_source_ids,
         "notification_channels": _normalize_notification_channels(["app", "email"]),
         "enabled": True,
         "last_checked_at": None,
         "last_run_at": None,
-        "next_run_at": next_run_on_or_after(payload.cron_expression, now),
+        "next_run_at": next_run_after(payload.cron_expression, now),
         "created_at": now,
         "updated_at": now,
     }
@@ -168,18 +348,47 @@ def update_user_alert(
 
     if "cron_expression" in update_data:
         _validate_cron_or_400(update_data["cron_expression"])
-        update_data["next_run_at"] = next_run_on_or_after(update_data["cron_expression"], now)
+        update_data["next_run_at"] = next_run_after(update_data["cron_expression"], now)
 
-    if update_data.get("enabled") is False:
-        update_data["next_run_at"] = None
+    if "categories" in update_data:
+        category_id, normalized_categories = _resolve_alert_category_or_400(update_data["categories"])
+        update_data["categories"] = normalized_categories
+        update_data["category_id"] = category_id
 
-    if update_data.get("enabled") is True and "next_run_at" not in update_data:
-        current = alerts_col.find_one(
-            {"id": alert_id, "user_id": user_id},
-            {"cron_expression": 1, "next_run_at": 1, "_id": 0},
+    current_doc = alerts_col.find_one({"id": alert_id, "user_id": user_id}, {"_id": 0})
+    if current_doc is None:
+        raise HTTPException(status_code=404, detail="Alerta no encontrada para el usuario")
+
+    if (
+        "rss_channels_ids" in update_data
+        or "information_sources_ids" in update_data
+        or "category_id" in update_data
+    ):
+        effective_category_id = int(update_data.get("category_id", current_doc["category_id"]))
+        normalized_channel_ids, normalized_source_ids = _validate_alert_scope_or_400(
+            effective_category_id,
+            _normalize_resource_ids(
+                update_data.get(
+                    "rss_channels_ids",
+                    [str(value) for value in current_doc.get("rss_channel_ids", [])],
+                ),
+                "rss_channels_ids",
+            ),
+            _normalize_resource_ids(
+                update_data.get(
+                    "information_sources_ids",
+                    [
+                        str(value)
+                        for value in current_doc.get("information_sources_ids", [])
+                    ],
+                ),
+                "information_sources_ids",
+            ),
         )
-        if current and current.get("next_run_at") is None:
-            update_data["next_run_at"] = next_run_on_or_after(current["cron_expression"], now)
+        update_data["rss_channel_ids"] = normalized_channel_ids
+        update_data["information_sources_ids"] = normalized_source_ids
+        update_data.pop("rss_channels_ids", None)
+        update_data.pop("information_sources_ids", None)
 
     if update_data:
         update_data["updated_at"] = now

@@ -1,66 +1,332 @@
 from __future__ import annotations
 
-from uuid import uuid4
+from datetime import datetime, timezone
+from types import SimpleNamespace
 
-from backend.app.store import categories_store
+from fastapi import HTTPException
 
-# --- TESTS ACTUALIZADOS CON /api/v1 ---
+from backend.app.auth.user import UserInDB
+from backend.app.category import routes as category_routes
+from backend.app.category.models import Category
+from backend.app.notificaciones import routes as notification_routes
+from backend.app.notificaciones.models import NotificationCreate
+from backend.app.rss import routes as rss_routes
 
-def test_create_category(client, auth_headers):
-    category_name = f"Tecnología {uuid4().hex[:8]}"
-    payload = {"name": category_name, "source": "IPTC"}
 
-    category_id = None
+class FakeChannelsCollection:
+    def __init__(self, docs: list[dict] | None = None) -> None:
+        self.docs = list(docs or [])
+
+    def find_one(self, query: dict, *_args, **_kwargs):
+        for doc in self.docs:
+            if all(_matches_field(doc, key, value) for key, value in query.items()):
+                return doc
+        return None
+
+
+class FakeCategoriesCollection:
+    def __init__(self, docs: list[dict] | None = None) -> None:
+        self.docs = list(docs or [])
+
+    def insert_one(self, doc: dict) -> None:
+        self.docs.append(dict(doc))
+
+    def update_one(self, query: dict, update: dict, upsert: bool = False):
+        for doc in self.docs:
+            if all(doc.get(key) == value for key, value in query.items()):
+                doc.update(update.get("$set", {}))
+                return None
+
+        if upsert:
+            doc = dict(query)
+            doc.update(update.get("$set", {}))
+            self.docs.append(doc)
+        return None
+
+    def delete_one(self, query: dict):
+        self.docs = [
+            doc
+            for doc in self.docs
+            if not all(doc.get(key) == value for key, value in query.items())
+        ]
+        return None
+
+
+class FakeCollection:
+    def __init__(self, docs: list[dict] | None = None) -> None:
+        self.docs = list(docs or [])
+
+    def find_one(self, query: dict, *_args, **_kwargs):
+        for doc in self.docs:
+            if all(doc.get(key) == value for key, value in query.items()):
+                return doc
+        return None
+
+    def insert_one(self, doc: dict) -> None:
+        self.docs.append(dict(doc))
+
+
+def _matches_field(doc: dict, key: str, value):
+    if isinstance(value, dict) and "$exists" in value:
+        return (key in doc) == bool(value["$exists"])
+    return doc.get(key) == value
+
+
+def _dummy_user() -> UserInDB:
+    return UserInDB(
+        id=7,
+        email="test@example.com",
+        first_name="Test",
+        last_name="User",
+        organization="NewsRadar",
+        role_ids=[1],
+        password_hash="hashed",
+        role="manager",
+        status="active",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+        email_verified_at=datetime.now(timezone.utc),
+        is_verified=True,
+    )
+
+
+def test_create_category_persists_new_category(monkeypatch) -> None:
+    categories_store = {}
+    categories_col = FakeCategoriesCollection()
+    monkeypatch.setattr(category_routes, "categories_store", categories_store)
+    monkeypatch.setattr(category_routes, "categories_col", categories_col)
+    monkeypatch.setattr(category_routes, "next_mongo_id", lambda _key: 42)
+
+    response = category_routes.create_category(
+        payload=category_routes.CategoryCreate(name="Innovacion local", source="IPTC"),
+        _=_dummy_user(),
+    )
+
+    assert response.id == 42
+    assert response.name == "Innovacion local"
+    assert categories_store[42] == response
+    assert categories_col.docs[0]["_id"] == 42
+    assert categories_col.docs[0]["descripciones"][0]["nombre"] == "Innovacion local"
+
+
+def test_create_category_rejects_duplicate_normalized_name(monkeypatch) -> None:
+    monkeypatch.setattr(
+        category_routes,
+        "categories_store",
+        {
+            42: Category(id=42, name="Innovacion local", source="IPTC"),
+        },
+    )
+    monkeypatch.setattr(category_routes, "categories_col", FakeCategoriesCollection())
+    monkeypatch.setattr(category_routes, "next_mongo_id", lambda _key: 43)
+
     try:
-        response = client.post("/api/v1/categories", json=payload, headers=auth_headers)
-        assert response.status_code == 201
-        assert response.json()["name"] == category_name
-        category_id = response.json()["id"]
-    finally:
-        if category_id is not None:
-            categories_store.pop(category_id, None)
+        category_routes.create_category(
+            payload=category_routes.CategoryCreate(name="Innovacion   Local", source="IPTC"),
+            _=_dummy_user(),
+        )
+    except HTTPException as exc:
+        assert exc.status_code == 409
+    else:
+        raise AssertionError("Expected duplicate category conflict")
 
-def test_list_categories(client, auth_headers):
-    response = client.get("/api/v1/categories", headers=auth_headers)
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
 
-def test_delete_category_not_found(client, auth_headers):
-    response = client.delete("/api/v1/categories/9999", headers=auth_headers)
-    assert response.status_code == 404
+def test_list_categories_returns_loaded_catalog(monkeypatch) -> None:
+    monkeypatch.setattr(
+        category_routes,
+        "categories_store",
+        {
+            13000000: Category(id=13000000, name="Ciencia y tecnologia", source="IPTC"),
+        },
+    )
 
-def test_create_notification(client, auth_user):
-    alert_payload = {
-        "name": f"Alerta de prueba {uuid4().hex[:8]}",
-        "descriptors": ["tecnologia", "IA"],
-        "categories": [{"code": "technology", "label": "Technology"}],
-        "rss_channels_ids": [],
-        "information_sources_ids": [],
-        "cron_expression": "0 12 * * *",
+    response = category_routes.list_categories(_=_dummy_user())
+
+    assert isinstance(response, list)
+    assert any(item.id == 13000000 for item in response)
+
+
+def test_update_category_persists_existing_category(monkeypatch) -> None:
+    categories_store = {
+        42: Category(id=42, name="Innovacion local", source="IPTC"),
     }
+    categories_col = FakeCategoriesCollection([{"_id": 42, "descripciones": []}])
+    monkeypatch.setattr(category_routes, "categories_store", categories_store)
+    monkeypatch.setattr(category_routes, "categories_col", categories_col)
 
-    alert_response = client.post(
-        f"/api/v1/users/{auth_user['user_id']}/alerts",
-        json=alert_payload,
-        headers=auth_user["headers"],
+    response = category_routes.update_category(
+        category_id=42,
+        payload=category_routes.CategoryUpdate(name="Innovacion regional"),
+        _=_dummy_user(),
     )
-    assert alert_response.status_code == 201
-    alert_id = alert_response.json()["id"]
 
-    notification_payload = {
-        "timestamp": "2026-04-17T12:00:00Z",
-        "metrics": [],
+    assert response.id == 42
+    assert response.name == "Innovacion regional"
+    assert categories_store[42].name == "Innovacion regional"
+    assert categories_col.docs[0]["descripciones"][0]["nombre"] == "Innovacion regional"
+
+
+def test_update_category_missing_returns_404(monkeypatch) -> None:
+    monkeypatch.setattr(category_routes, "categories_store", {})
+
+    try:
+        category_routes.update_category(
+            category_id=404,
+            payload=category_routes.CategoryUpdate(name="No existe"),
+            _=_dummy_user(),
+        )
+    except HTTPException as exc:
+        assert exc.status_code == 404
+    else:
+        raise AssertionError("Expected missing category error")
+
+
+def test_update_category_rejects_duplicate_normalized_name(monkeypatch) -> None:
+    monkeypatch.setattr(
+        category_routes,
+        "categories_store",
+        {
+            42: Category(id=42, name="Innovacion local", source="IPTC"),
+            43: Category(id=43, name="Sociedad civil", source="IPTC"),
+        },
+    )
+    monkeypatch.setattr(category_routes, "categories_col", FakeCategoriesCollection())
+
+    try:
+        category_routes.update_category(
+            category_id=43,
+            payload=category_routes.CategoryUpdate(name="innovacion   LOCAL"),
+            _=_dummy_user(),
+        )
+    except HTTPException as exc:
+        assert exc.status_code == 409
+    else:
+        raise AssertionError("Expected duplicate category conflict")
+
+
+def test_delete_category_with_active_rss_channel_returns_409(monkeypatch) -> None:
+    monkeypatch.setattr(
+        category_routes,
+        "categories_store",
+        {
+            42: Category(id=42, name="Innovacion local", source="IPTC"),
+        },
+    )
+    monkeypatch.setattr(category_routes, "rss_channels_col", FakeChannelsCollection([{"category_id": 42}]))
+
+    try:
+        category_routes.delete_category(category_id=42, _=_dummy_user())
+    except HTTPException as exc:
+        assert exc.status_code == 409
+    else:
+        raise AssertionError("Expected category in-use conflict")
+
+
+def test_delete_category_missing_returns_404(monkeypatch) -> None:
+    monkeypatch.setattr(category_routes, "categories_store", {})
+
+    try:
+        category_routes.delete_category(category_id=404, _=_dummy_user())
+    except HTTPException as exc:
+        assert exc.status_code == 404
+    else:
+        raise AssertionError("Expected missing category error")
+
+
+def test_delete_category_without_channels_removes_category(monkeypatch) -> None:
+    categories_store = {
+        9999: Category(id=9999, name="Categoria temporal", source="IPTC"),
     }
-    notification_response = client.post(
-        f"/api/v1/users/{auth_user['user_id']}/alerts/{alert_id}/notifications",
-        json=notification_payload,
-        headers=auth_user["headers"],
-    )
-    assert notification_response.status_code == 201
-    assert notification_response.json()["alert_id"] == alert_id
+    categories_col = FakeCategoriesCollection([{"_id": 9999, "descripciones": []}])
+    monkeypatch.setattr(category_routes, "categories_store", categories_store)
+    monkeypatch.setattr(category_routes, "categories_col", categories_col)
+    monkeypatch.setattr(category_routes, "rss_channels_col", FakeChannelsCollection([]))
 
-    delete_response = client.delete(
-        f"/api/v1/users/{auth_user['user_id']}/alerts/{alert_id}",
-        headers=auth_user["headers"],
+    response = category_routes.delete_category(category_id=9999, _=_dummy_user())
+
+    assert response is None
+    assert 9999 not in categories_store
+    assert categories_col.docs == []
+
+
+def test_create_rss_channel_rejects_missing_category(monkeypatch) -> None:
+    monkeypatch.setattr(category_routes, "categories_store", {})
+    monkeypatch.setattr(rss_routes, "ensure_information_source_exists", lambda _source_id: {"id": 1})
+
+    try:
+        rss_routes.create_source_channel(
+            source_id=1,
+            payload=rss_routes.RSSChannelCreate(url="https://example.com/rss.xml", category_id=999),
+            _=_dummy_user(),
+        )
+    except HTTPException as exc:
+        assert exc.status_code == 404
+    else:
+        raise AssertionError("Expected missing category error")
+
+
+def test_update_rss_channel_rejects_missing_category(monkeypatch) -> None:
+    monkeypatch.setattr(category_routes, "categories_store", {})
+    monkeypatch.setattr(rss_routes, "ensure_information_source_exists", lambda _source_id: {"id": 1})
+    monkeypatch.setattr(
+        rss_routes,
+        "ensure_rss_for_source",
+        lambda _source_id, _channel_id: {
+            "id": 7,
+            "information_source_id": 1,
+            "url": "https://example.com/rss.xml",
+            "category_id": 42,
+        },
     )
-    assert delete_response.status_code == 204
+
+    try:
+        rss_routes.update_source_channel(
+            source_id=1,
+            channel_id=7,
+            payload=rss_routes.RSSChannelUpdate(category_id=999),
+            _=_dummy_user(),
+        )
+    except HTTPException as exc:
+        assert exc.status_code == 404
+    else:
+        raise AssertionError("Expected missing category error")
+
+
+def test_create_notification_uses_alert_delivery_channels(monkeypatch) -> None:
+    alerts_col = FakeCollection(
+        [
+            {
+                "id": 21,
+                "user_id": 7,
+                "notification_channels": ["app", "email"],
+            }
+        ]
+    )
+    notifications_col = FakeCollection([])
+
+    monkeypatch.setattr(notification_routes, "alerts_col", alerts_col)
+    monkeypatch.setattr(notification_routes, "notifications_col", notifications_col)
+    monkeypatch.setattr(notification_routes, "next_mongo_id", lambda _key: 55)
+    monkeypatch.setattr(notification_routes, "ensure_user_can_access", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        notification_routes,
+        "ensure_alert_for_user",
+        lambda user_id, alert_id: SimpleNamespace(id=alert_id, user_id=user_id, name="Alerta de prueba"),
+    )
+
+    payload = NotificationCreate(
+        timestamp=datetime(2026, 4, 17, 12, 0, tzinfo=timezone.utc),
+        metrics=[],
+    )
+
+    response = notification_routes.create_alert_notification(
+        user_id=7,
+        alert_id=21,
+        payload=payload,
+        current_user=_dummy_user(),
+    )
+
+    assert response.id == 55
+    assert response.alert_id == 21
+    assert notifications_col.docs[0]["delivery_channels"] == ["app", "email"]
+    assert notifications_col.docs[0]["email_status"] == "pending"

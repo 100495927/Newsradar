@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import unicodedata
+from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from pymongo.errors import DuplicateKeyError
 
-from ..dependencies import get_current_user
 from ..auth.user import UserInDB
-from ..store import categories_store, next_id, rss_fuentes_col
+from ..dependencies import get_current_user
+from ..store import categories_col, categories_store, next_mongo_id, rss_channels_col
+from shared.iptc_catalog import resolve_category
 from .models import Category, CategoryCreate, CategoryUpdate
 
 router = APIRouter(tags=["categories"])
@@ -20,6 +24,49 @@ def ensure_category_exists(category_id: int) -> None:
     """Lanza 404 si la categoría no existe."""
     if category_id not in categories_store:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _normalize_category_name(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value)
+    without_accents = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+    return " ".join(without_accents.lower().split())
+
+
+def _ensure_name_is_available(name: str, *, current_category_id: int | None = None) -> None:
+    normalized_name = _normalize_category_name(name)
+    for category in categories_store.values():
+        if current_category_id is not None and category.id == current_category_id:
+            continue
+        if _normalize_category_name(category.name) == normalized_name:
+            raise HTTPException(status_code=409, detail="Ya existe una categoría con ese nombre")
+
+
+def _category_doc(category: Category, now: datetime) -> dict:
+    return {
+        "_id": category.id,
+        "id_padre": None,
+        "nivel": 1,
+        "descripciones": [
+            {
+                "idioma": "es",
+                "nombre": category.name,
+                "descripcion": category.name,
+            },
+        ],
+        "subcategorias": [],
+        "updated_at": now,
+    }
+
+
+def _next_available_category_id() -> int:
+    category_id = next_mongo_id("categories")
+    while category_id in categories_store:
+        category_id = next_mongo_id("categories")
+    return category_id
 
 
 # ---------------------------------------------------------------------------
@@ -37,10 +84,27 @@ def create_category(
     payload: CategoryCreate,
     _: UserInDB = Depends(get_current_user),
 ) -> Category:
-    """Crea una categoría (fuente IPTC en este prototipo)."""
-    category_id = next_id("categories")
-    category = Category(id=category_id, **payload.model_dump())
-    categories_store[category_id] = category
+    """Crea una categoría y la sincroniza con Mongo y memoria."""
+    resolved = resolve_category(payload.name)
+    if resolved is not None:
+        category = Category(id=resolved.id, name=resolved.name, source=resolved.source)
+        if category.id in categories_store:
+            raise HTTPException(status_code=409, detail="Ya existe una categoría con ese ID")
+    else:
+        category = Category(id=_next_available_category_id(), **payload.model_dump())
+
+    _ensure_name_is_available(category.name)
+
+    now = _utc_now()
+    category_doc = _category_doc(category, now)
+    category_doc["created_at"] = now
+
+    try:
+        categories_col.insert_one(category_doc)
+    except DuplicateKeyError as exc:
+        raise HTTPException(status_code=409, detail="Ya existe una categoría con ese ID") from exc
+
+    categories_store[category.id] = category
     return category
 
 
@@ -62,11 +126,20 @@ def update_category(
     payload: CategoryUpdate,
     _: UserInDB = Depends(get_current_user),
 ) -> Category:
-    """Actualiza una categoría existente."""
+    """Actualiza una categoría existente sin cambiar su ID."""
     category = categories_store.get(category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
-    updated = category.model_copy(update=payload.model_dump(exclude_unset=True))
+
+    update_data = payload.model_dump(exclude_unset=True)
+    updated = category.model_copy(update=update_data)
+    _ensure_name_is_available(updated.name, current_category_id=category_id)
+
+    categories_col.update_one(
+        {"_id": category_id},
+        {"$set": _category_doc(updated, _utc_now())},
+        upsert=True,
+    )
     categories_store[category_id] = updated
     return updated
 
@@ -81,19 +154,19 @@ def delete_category(
     category_id: int,
     _: UserInDB = Depends(get_current_user),
 ) -> None:
-    """Elimina categoría solo si no está asociada a canales RSS."""
+    """Elimina una categoría si no tiene canales RSS activos asociados."""
     if category_id not in categories_store:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
 
-    linked_channel = rss_fuentes_col.find_one(
+    if rss_channels_col.find_one(
         {
-            "tipo": "channel",
             "category_id": category_id,
             "deleted_at": {"$exists": False},
         },
         {"_id": 1},
-    )
-    if linked_channel:
+    ):
         raise HTTPException(status_code=409, detail="Categoría asociada a canales RSS")
 
+    categories_col.delete_one({"_id": category_id})
     categories_store.pop(category_id, None)
+    return None

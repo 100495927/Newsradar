@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from datetime import datetime, timezone
 from typing import List
 
@@ -21,10 +20,8 @@ from .models import (
 
 router = APIRouter(tags=["information-sources", "rss-channels"])
 
-
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
 
 def _source_query(source_id: int) -> dict:
     return {

@@ -67,38 +67,86 @@ function ensureCounter(name) {
 
 ensureAppUser();
 
-ensureCollection("rss_fuentes", {
+ensureCollection("information_sources", {
   $jsonSchema: {
     bsonType: "object",
-    required: ["hash_fuente", "medio", "url", "activo", "creado", "actualizado"],
+    required: ["id", "name", "url", "active", "created_at", "updated_at"],
     properties: {
       _id: { bsonType: "objectId" },
-      hash_fuente: { bsonType: "string" },
-      tipo: { enum: ["source", "channel", null] },
-      activo: { bsonType: "bool" },
-      categoria_iptc: { bsonType: ["int", "null"] },
+      id: { bsonType: ["int", "long"] },
+      name: { bsonType: "string" },
+      url: { bsonType: "string" },
+      active: { bsonType: "bool" },
       deleted_at: { bsonType: ["date", "null"] },
-      creado: { bsonType: "date" },
-      actualizado: { bsonType: "date" },
+      created_at: { bsonType: "date" },
+      updated_at: { bsonType: "date" },
     },
   },
 });
-ensureIndexes("rss_fuentes", [
+ensureIndexes("information_sources", [
   {
-    keys: { hash_fuente: 1 },
-    options: { unique: true, name: "idx_rss_fuentes_hash_fuente_unique" },
+    keys: { id: 1 },
+    options: { unique: true, name: "idx_information_sources_id_unique" },
   },
   {
     keys: { url: 1 },
-    options: { unique: true, name: "idx_rss_fuentes_url_unique" },
+    options: {
+      unique: true,
+      partialFilterExpression: { deleted_at: null },
+      name: "idx_information_sources_url_unique_active",
+    },
   },
   {
-    keys: { medio: 1, rss: 1 },
-    options: { name: "idx_rss_fuentes_medio_rss" },
+    keys: { active: 1, name: 1 },
+    options: { name: "idx_information_sources_active_name" },
+  },
+]);
+
+ensureCollection("rss_channels", {
+  $jsonSchema: {
+    bsonType: "object",
+    required: [
+      "id",
+      "information_source_id",
+      "url",
+      "category_id",
+      "active",
+      "created_at",
+      "updated_at",
+    ],
+    properties: {
+      _id: { bsonType: "objectId" },
+      id: { bsonType: ["int", "long"] },
+      information_source_id: { bsonType: ["int", "long"] },
+      url: { bsonType: "string" },
+      category_id: { bsonType: ["int", "long"] },
+      active: { bsonType: "bool" },
+      deleted_at: { bsonType: ["date", "null"] },
+      created_at: { bsonType: "date" },
+      updated_at: { bsonType: "date" },
+    },
+  },
+});
+ensureIndexes("rss_channels", [
+  {
+    keys: { id: 1 },
+    options: { unique: true, name: "idx_rss_channels_id_unique" },
   },
   {
-    keys: { activo: 1 },
-    options: { name: "idx_rss_fuentes_activo" },
+    keys: { url: 1 },
+    options: {
+      unique: true,
+      partialFilterExpression: { deleted_at: null },
+      name: "idx_rss_channels_url_unique_active",
+    },
+  },
+  {
+    keys: { information_source_id: 1, active: 1 },
+    options: { name: "idx_rss_channels_source_active" },
+  },
+  {
+    keys: { category_id: 1, active: 1 },
+    options: { name: "idx_rss_channels_category_active" },
   },
 ]);
 
@@ -106,7 +154,8 @@ ensureCollection("rss_entradas", {
   $jsonSchema: {
     bsonType: "object",
     required: [
-      "id_fuente",
+      "information_source_id",
+      "rss_channel_id",
       "titulo",
       "autores",
       "link",
@@ -116,12 +165,15 @@ ensureCollection("rss_entradas", {
     ],
     properties: {
       _id: { bsonType: "objectId" },
-      id_fuente: { bsonType: "objectId" },
+      information_source_id: { bsonType: ["int", "long"] },
+      rss_channel_id: { bsonType: ["int", "long"] },
+      source_name: { bsonType: ["string", "null"] },
+      source_url: { bsonType: ["string", "null"] },
+      channel_url: { bsonType: ["string", "null"] },
       titulo: { bsonType: "string" },
       autores: { bsonType: ["array", "null"] },
       link: { bsonType: "string" },
-      categorias: { bsonType: ["array", "null"] },
-      categorias_raw: { bsonType: ["array", "null"] },
+      category_id: { bsonType: ["int", "null"] },
       resumen: { bsonType: ["string", "null"] },
       fecha_publicacion: { bsonType: "date" },
       hash_deduplicado: { bsonType: "string" },
@@ -136,16 +188,20 @@ ensureIndexes("rss_entradas", [
     options: { unique: true, name: "idx_rss_entradas_hash_deduplicado_unique" },
   },
   {
-    keys: { id_fuente: 1, fecha_publicacion: -1 },
-    options: { name: "idx_rss_entradas_fuente_fecha" },
+    keys: { rss_channel_id: 1, fecha_publicacion: -1 },
+    options: { name: "idx_rss_entradas_channel_fecha" },
+  },
+  {
+    keys: { information_source_id: 1, fecha_publicacion: -1 },
+    options: { name: "idx_rss_entradas_source_fecha" },
   },
   {
     keys: { fecha_publicacion: -1 },
     options: { name: "idx_rss_entradas_fecha_publicacion" },
   },
   {
-    keys: { categorias: 1 },
-    options: { name: "idx_rss_entradas_categorias" },
+    keys: { category_id: 1 },
+    options: { name: "idx_rss_entradas_category_id" },
   },
 ]);
 
@@ -280,6 +336,7 @@ ensureCollection("alerts", {
       "descriptors",
       "category_id",
       "rss_channel_ids",
+      "information_sources_ids",
       "cron_expression",
       "notification_channels",
       "enabled",
@@ -308,6 +365,10 @@ ensureCollection("alerts", {
       },
       category_id: { bsonType: ["int", "long"] },
       rss_channel_ids: {
+        bsonType: "array",
+        items: { bsonType: ["int", "long"] },
+      },
+      information_sources_ids: {
         bsonType: "array",
         items: { bsonType: ["int", "long"] },
       },
@@ -341,6 +402,10 @@ ensureIndexes("alerts", [
   {
     keys: { rss_channel_ids: 1 },
     options: { name: "idx_alerts_rss_channel_ids" },
+  },
+  {
+    keys: { information_sources_ids: 1 },
+    options: { name: "idx_alerts_information_sources_ids" },
   },
 ]);
 
@@ -437,6 +502,34 @@ ensureIndexes("notifications", [
   },
 ]);
 
+ensureCollection("stats", {
+  $jsonSchema: {
+    bsonType: "object",
+    required: ["id", "metrics"],
+    properties: {
+      _id: { bsonType: "objectId" },
+      id: { bsonType: ["int", "long"] },
+      metrics: {
+        bsonType: "array",
+        items: {
+          bsonType: "object",
+          required: ["name", "value"],
+          properties: {
+            name: { bsonType: "string" },
+            value: { bsonType: ["double", "int", "long", "decimal"] },
+          },
+        },
+      },
+    },
+  },
+});
+ensureIndexes("stats", [
+  {
+    keys: { id: 1 },
+    options: { unique: true, name: "idx_stats_id_unique" },
+  },
+]);
+
 ensureCollection("counters", {
   $jsonSchema: {
     bsonType: "object",
@@ -451,6 +544,7 @@ ensureCollection("counters", {
 ensureIndexes("counters", []);
 ensureCounter("information_sources");
 ensureCounter("rss_channels");
+ensureCounter("users");
 ensureCounter("alerts");
 ensureCounter("notifications");
 

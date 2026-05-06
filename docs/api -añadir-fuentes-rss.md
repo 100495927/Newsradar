@@ -1,68 +1,30 @@
-## 🚀 API de Fuentes RSS
+# Estado actual de altas RSS
 
-La API permite registrar nuevas fuentes de noticias (medios) en la base de datos para que el worker comience a procesar sus feeds automáticamente.
+Este documento describe una implementacion antigua y ya no vigente.
 
-### Configuración del Servidor
-El servidor corre bajo **FastAPI** y se levanta en un hilo independiente al iniciar el worker principal.
-* **Host:** `0.0.0.0`
-* **Puerto interno:** Definido por la variable de entorno `RSS_WORKER_UVICORN_PORT`. Por defecto escucha en el `8000` dentro del contenedor.
-* **Puerto expuesto:** Definido por la variable de entorno `RSS_WORKER_UVICORN_EXPOSE_PORT`. Por defecto se publica en el `12670` del host.
+## Lo que ya no existe
 
----
+- el `rss-worker` ya no expone una API propia
+- ya no existe el endpoint interno `POST /fuentes`
+- ya no existe persistencia runtime en `col_rss_fuentes`
 
-### 1. Añadir/Actualizar Fuente
-Registra un nuevo origen RSS en la colección de fuentes.
+## Flujo correcto a dia de hoy
 
-* **URL:** `/fuentes`
-* **Método:** `POST`
-* **Cuerpo (JSON):**
+La gestion de fuentes y canales se hace desde el backend publico:
 
-| Campo | Tipo | Requerido | Descripción |
-| :--- | :--- | :--- | :--- |
-| `medio` | String | Sí | Nombre del medio de comunicación. |
-| `rss` | String | Sí | URL directa del feed RSS/XML. |
-| `url` | String | Sí | URL del sitio web principal del medio. |
-| `activo` | Boolean | Sí | Define si el worker debe procesar esta fuente. |
-| `categoria_iptc` | String | No | Código de categoría estandarizada IPTC. |
+1. Crear la fuente de informacion en `POST /api/v1/information-sources`
+2. Crear el canal RSS asociado en `POST /api/v1/information-sources/{source_id}/rss-channels`
+3. El `rss-worker` lee periodicamente `rss_channels` e `information_sources` desde MongoDB
+4. Las noticias capturadas se guardan en `rss_entradas`
 
-#### Ejemplo de Petición
-```json
-{
-    "medio": "El Mundo",
-    "rss": "https://www.elmundo.es/rss/portada.xml",
-    "url": "https://www.elmundo.es",
-    "activo": true,
-    "categoria_iptc": "04000000"
-}
-```
+## Colecciones canonicas
 
-#### Respuestas
-* **200 OK:** La fuente se ha insertado correctamente.
-    ```json
-    { "message": "Fuente insertada" }
-    ```
-* **Error:** Devuelve el mensaje de la excepción capturada.
-    ```json
-    { "message": "Error description..." }
-    ```
+- `information_sources`
+- `rss_channels`
+- `rss_entradas`
 
----
+## Referencia recomendada
 
-## 🛠️ Detalles de Implementación
+Para el detalle completo del cambio de modelo y la razon historica de abandonar `rss_fuentes`, usar:
 
-### Estructura de Datos (Pydantic)
-La API utiliza el modelo `FuenteJSON` para validar los datos de entrada antes de transformarlos al objeto de dominio `RSSFuente`.
-
-### Integración con el Worker
-1.  **Hilo secundario:** La función `api_task` ejecuta `uvicorn` de forma asíncrona mediante `threading.Thread(daemon=True)`.
-2.  **Persistencia:** Utiliza la conexión global de `Database()` para insertar los registros directamente en la colección `col_rss_fuentes`.
-
-### Variables de Entorno Requeridas
-Para que la API funcione, el archivo `Entorno.py` debe poder leer:
-* `RSS_WORKER_UVICORN_PORT`: El puerto donde escuchará la API dentro del contenedor.
-* `RSS_WORKER_UVICORN_EXPOSE_PORT`: El puerto del host que Docker mapeará hacia la API del worker.
-
----
-
-## 🔍 Prueba de Salud (Healthcheck)
-El archivo `test.py` incluye una función `test_uvicorn()` que verifica la disponibilidad de este endpoint realizando un `POST` de prueba a `http://localhost:{puerto}/fuentes` con un medio de test.
+- `docs/migracion-modelo-rss-2026-05-02.md`

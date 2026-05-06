@@ -67,7 +67,14 @@ Documento detallado del workflow:
 
 ### Bootstrap de MongoDB
 
-MongoDB se inicializa desde `scripts/mongo/init-mongo.sh` en el primer arranque del contenedor cuando `data/mongodb/data` esta vacio. Ese bootstrap crea el usuario de aplicacion, las colecciones necesarias, sus validadores y los indices requeridos.
+MongoDB se inicializa desde `scripts/mongo/init-mongo.sh` en el primer arranque del contenedor cuando `data/mongodb/data` esta vacio.
+
+El bootstrap queda separado en dos pasos:
+
+* `scripts/mongo/init-mongo.js`: crea el usuario de aplicacion, las colecciones necesarias, sus validadores, indices y contadores.
+* `scripts/mongo/seed-mongo.js`: siembra el catalogo IPTC canonico, crea el usuario admin inicial y añade las 34 fuentes RSS base.
+
+Por defecto, el admin inicial queda como `AdminDefault@newsradar.com` con la contraseña `NewsRadar2026`. Si se quiere cambiar el email o el hash bcrypt inicial, se pueden usar `NEWSRADAR_ADMIN_EMAIL` y `NEWSRADAR_ADMIN_PASSWORD_HASH`.
 
 Si una base persistida ya existe pero necesita reconciliar su estructura, se puede usar el script administrativo `scripts/mongo/admin/apply_bootstrap.py`.
 

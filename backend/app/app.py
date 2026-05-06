@@ -11,47 +11,28 @@ from .auth.routes import router as auth_router
 from .synonyms.routes import router as synonyms_router
 from .auth.user import Role  # noqa: F401 – usado en roles_store
 from .category.routes import router as category_router
+from .category.models import Category
 from .notificaciones.routes import router as notificaciones_router
 from .rss.routes import router as rss_router
 from .stats.routes import router as stats_router
-from .auth.jwt_utils import hash_password
-from .category.models import Category
-from .rss.iptc_utils import IPTC_TOP_LEVEL_CATEGORIES
-from .store import categories_store, counters, next_id, roles_store, users_col
+from shared.iptc_catalog import IPTC_TOP_LEVEL_CATEGORIES
+from .store import (
+    alerts_col,
+    categories_col,
+    categories_store,
+    counters,
+    counters_col,
+    notifications_col,
+    roles_store,
+    information_sources_col,
+    rss_channels_col,
+    stats_col,
+    users_col,
+)
 
 API_PREFIX = "/api/v1"
 ROLELESS_DEFAULT_ROLE_ID = 1
 ROLELESS_DEFAULT_ROLE_NAME = "manager"
-
-DEFAULT_USERS = (
-    {
-        "email": "AdminDefault@newsradar.com",
-        "legacy_emails": ["AdminDefault@newsradar.local"],
-        "first_name": "AdminDefault",
-        "last_name": "NewsRadar",
-        "organization": "NewsRadar",
-        "role_name": "manager",
-        "stored_role": "manager",
-    },
-    {
-        "email": "GestorDefault@newsradar.com",
-        "legacy_emails": ["GestorDefault@newsradar.local"],
-        "first_name": "GestorDefault",
-        "last_name": "NewsRadar",
-        "organization": "NewsRadar",
-        "role_name": "manager",
-        "stored_role": "manager",
-    },
-    {
-        "email": "LectorDefault@newsradar.com",
-        "legacy_emails": ["LectorDefault@newsradar.local"],
-        "first_name": "LectorDefault",
-        "last_name": "NewsRadar",
-        "organization": "NewsRadar",
-        "role_name": "manager",
-        "stored_role": "manager",
-    },
-)
 
 app = FastAPI(
     title="NewsRadar API",
@@ -86,12 +67,6 @@ def _sync_user_counter_from_mongo() -> None:
         counters["users"] = max_doc["id"] + 1
 
 
-def _next_seed_id(counter_key: str) -> int:
-    value = counters[counter_key]
-    counters[counter_key] += 1
-    return value
-
-
 def _ensure_manager_role() -> int:
     """Mantiene un unico rol funcional de gestor para compatibilidad."""
     roles_store.clear()
@@ -103,96 +78,74 @@ def _ensure_manager_role() -> int:
     return ROLELESS_DEFAULT_ROLE_ID
 
 
-def _find_seeded_user(user_data: dict[str, object]) -> dict | None:
-    email_candidates = [user_data["email"], *user_data.get("legacy_emails", [])]
-    for email in email_candidates:
-        existing_user = users_col.find_one({"email": email})
-        if existing_user:
-            return existing_user
-    return None
-
-
-def _seed_default_user(user_data: dict[str, object]) -> None:
-    role_id = ROLELESS_DEFAULT_ROLE_ID
-    now = datetime.now(timezone.utc)
-    existing_user = _find_seeded_user(user_data)
-    if existing_user:
-        users_col.update_one(
-            {"email": existing_user["email"]},
-            {
-                "$set": {
-                    "email": user_data["email"],
-                    "role_ids": [role_id],
-                    "role": user_data["stored_role"],
-                    "updated_at": now,
-                }
-            },
-        )
+def _verify_required_collections() -> None:
+    """Comprueba que las colecciones Mongo usadas por la API ya existen."""
+    database = getattr(users_col, "database", None)
+    if database is None:
         return
 
-    user_id = _next_seed_id("users")
-    users_col.insert_one(
-        {
-            "id": user_id,
-            "email": user_data["email"],
-            "first_name": user_data["first_name"],
-            "last_name": user_data["last_name"],
-            "organization": user_data["organization"],
-            "password_hash": hash_password("NewsRadar2026"),
-            "role_ids": [role_id],
-            "created_at": now,
-            "updated_at": now,
-            "role": user_data["stored_role"],
-            "status": "active",
-            "is_verified": True,
-        }
+    required_collections = (
+        users_col,
+        information_sources_col,
+        rss_channels_col,
+        alerts_col,
+        notifications_col,
+        categories_col,
+        counters_col,
+        stats_col,
     )
-
-
-def _set_all_users_as_manager(role_id: int) -> None:
-    """Normaliza usuarios existentes al unico rol funcional de gestor."""
-    now = datetime.now(timezone.utc)
-    if hasattr(users_col, "update_many"):
-        users_col.update_many(
-            {},
-            {
-                "$set": {
-                    "role_ids": [role_id],
-                    "role": ROLELESS_DEFAULT_ROLE_NAME,
-                    "updated_at": now,
-                }
-            },
-        )
-        return
-
-    for doc in getattr(users_col, "docs", []):
-        doc.update(
-            {
-                "role_ids": [role_id],
-                "role": ROLELESS_DEFAULT_ROLE_NAME,
-                "updated_at": now,
-            }
+    existing_collection_names = set(database.list_collection_names())
+    missing_collection_names = [
+        collection.name
+        for collection in required_collections
+        if collection.name not in existing_collection_names
+    ]
+    if missing_collection_names:
+        raise RuntimeError(
+            "Faltan colecciones requeridas en MongoDB: "
+            + ", ".join(sorted(missing_collection_names))
         )
 
 
-def _seed_iptc_categories() -> None:
-    """Populates categories_store with the 15 standard IPTC top-level categories."""
-    if categories_store:
+def _seed_static_iptc_categories() -> None:
+    """Fallback para contextos sin semilla Mongo inicial."""
+    categories_store.clear()
+    for category in IPTC_TOP_LEVEL_CATEGORIES:
+        categories_store[category.id] = Category(id=category.id, name=category.name, source=category.source)
+
+
+def _load_iptc_categories_from_mongo() -> None:
+    """Carga el catálogo IPTC persistido en MongoDB."""
+    docs = list(
+        categories_col.find(
+            {"deleted_at": {"$exists": False}},
+            {"_id": 1, "descripciones": 1},
+        ).sort("_id", 1)
+    )
+    if not docs:
+        _seed_static_iptc_categories()
         return
-    for name in IPTC_TOP_LEVEL_CATEGORIES:
-        category_id = next_id("categories")
-        categories_store[category_id] = Category(id=category_id, name=name, source="IPTC")
+
+    categories_store.clear()
+    for doc in docs:
+        descriptions = doc.get("descripciones") or []
+        primary_description = descriptions[0] if descriptions else {}
+        name = primary_description.get("nombre")
+        if not name:
+            continue
+        categories_store[int(doc["_id"])] = Category(
+            id=int(doc["_id"]),
+            name=name,
+            source="IPTC",
+        )
 
 
 def create_seed_data() -> None:
-    """Carga roles base y usuarios por defecto en el arranque si no existen."""
+    """Carga en memoria el catálogo y el rol canónico a partir de Mongo."""
+    _verify_required_collections()
     _sync_user_counter_from_mongo()
-    _seed_iptc_categories()
-    role_id = _ensure_manager_role()
-    _set_all_users_as_manager(role_id)
-
-    for user_data in DEFAULT_USERS:
-        _seed_default_user(user_data)
+    _load_iptc_categories_from_mongo()
+    _ensure_manager_role()
 
 
 @app.on_event("startup")
