@@ -3,7 +3,13 @@ param(
 )
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$runner = Join-Path $scriptDir "run_backend_tests.ps1"
+$backendRunner = Join-Path $scriptDir "run_backend_tests.ps1"
+$workerRunner = Join-Path $scriptDir "run_worker_tests.ps1"
 
-& $runner -Type all -SkipMongoCheck:$SkipMongoCheck
+& $backendRunner -Type all -SkipMongoCheck:$SkipMongoCheck
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+}
+
+& $workerRunner -Type all
 exit $LASTEXITCODE

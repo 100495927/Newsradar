@@ -45,3 +45,9 @@ jobs:
           docker exec \
             -e PYTHONPATH="/app:/app/backend" \
             newsradar-backend pytest tests/
+
+      - name: Ejecutar Tests de RSS Worker
+        run: |
+          docker exec \
+            -e PYTHONPATH="/app:/app/rss-worker" \
+            newsradar-rss-worker pytest rss-worker/tests/

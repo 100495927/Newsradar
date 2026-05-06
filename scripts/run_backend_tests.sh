@@ -5,10 +5,10 @@ TYPE="${1:-all}"
 SKIP_MONGO_CHECK="${SKIP_MONGO_CHECK:-0}"
 
 case "$TYPE" in
-  all|unit|integration|api) ;;
+  all|unit|integration|api|email) ;;
   *)
     echo "[tests] Tipo no valido: $TYPE"
-    echo "[tests] Usa uno de: all, unit, integration, api"
+    echo "[tests] Usa uno de: all, unit, integration, api, email"
     exit 1
     ;;
 esac
@@ -127,6 +127,9 @@ case "$TYPE" in
     ;;
   api)
     TARGETS=("backend/tests/api")
+    ;;
+  email)
+    TARGETS=("backend/tests/test_email_send.py")
     ;;
 esac
 

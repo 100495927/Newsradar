@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("all", "unit", "integration", "api")]
+    [ValidateSet("all", "unit", "integration", "api", "email")]
     [string]$Type = "all",
     [switch]$SkipMongoCheck
 )
@@ -147,6 +147,7 @@ $targetsByType = @{
         "backend/tests/test_alertas.py::test_crear_alerta_requiere_autenticacion"
     )
     api = @("backend/tests/api")
+    email = @("backend/tests/test_email_send.py")
 }
 
 $pytestArgs = @("-m", "pytest", "-q") + $targetsByType[$Type]
