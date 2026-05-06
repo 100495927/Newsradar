@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import TopNavBar from '../components/TopNavBar'
 import SideNavBar from '../components/SideNavBar'
 import MobileNav from '../components/MobileNav'
-import { apiFetch } from '../api/apiClient'
+import { apiFetch, getCategories } from '../api/apiClient'
 
 function SourcesPage() {
   const { t } = useTranslation()
   const [groupedSources, setGroupedSources] = useState([])
+  const [categories, setCategories] = useState([])
   const [expandedSources, setExpandedSources] = useState(new Set())
   const [newUrl, setNewUrl] = useState('')
   const [loading, setLoading] = useState(true)
@@ -20,29 +21,21 @@ function SourcesPage() {
   const [newSourceName, setNewSourceName] = useState('')
   const [modalError, setModalError] = useState(null)
 
-  const categories = [
-    { id: 1,  code: '01000000' },
-    { id: 2,  code: '02000000' },
-    { id: 3,  code: '03000000' },
-    { id: 4,  code: '04000000' },
-    { id: 5,  code: '05000000' },
-    { id: 6,  code: '06000000' },
-    { id: 7,  code: '07000000' },
-    { id: 8,  code: '08000000' },
-    { id: 9,  code: '09000000' },
-    { id: 10, code: '10000000' },
-    { id: 11, code: '11000000' },
-    { id: 12, code: '12000000' },
-    { id: 13, code: '13000000' },
-    { id: 14, code: '14000000' },
-    { id: 15, code: '15000000' },
-    { id: 16, code: '16000000' },
-    { id: 17, code: '17000000' },
-  ]
-
   useEffect(() => {
+    fetchCategories()
     fetchSources()
   }, [])
+
+  const fetchCategories = async () => {
+    try {
+      setCategories(await getCategories())
+    } catch (err) {
+      console.warn('Error cargando categorias:', err.message)
+      setCategories([])
+    }
+  }
+
+  const categoryLabel = (category) => t(`categories.${category.code}`, category.name)
 
   const fetchSources = async () => {
     try {
@@ -184,6 +177,7 @@ function SourcesPage() {
   const isConfirmDisabled =
     !selectedCategoryId ||
     !selectedSourceId ||
+    categories.length === 0 ||
     (selectedSourceId === 'new' && !newSourceName.trim())
 
   const totalChannels = groupedSources.reduce((acc, s) => acc + s.channels.length, 0)
@@ -383,9 +377,14 @@ function SourcesPage() {
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-800"
                 >
                   <option value="">{t('sources.categoryPlaceholder')}</option>
+                  {categories.length === 0 && (
+                    <option value="" disabled>
+                      Categorias no disponibles
+                    </option>
+                  )}
                   {categories.map((c) => (
-                    <option key={c.code} value={c.id}>
-                      {t(`categories.${c.code}`)}
+                    <option key={c.id} value={c.id}>
+                      {categoryLabel(c)}
                     </option>
                   ))}
                 </select>

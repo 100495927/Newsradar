@@ -11,8 +11,9 @@ from rss_worker.settings import RssWorkerSettings
 def test_generar_lista_estandar_feeds_devuelve_canales() -> None:
     feeds = generar_lista_estandar_feeds()
 
-    assert feeds
+    assert len(feeds) == 100
     assert all(feed.url for feed in feeds)
+    assert len({feed.url for feed in feeds}) == 100
 
 
 def test_worker_main_expone_fetch_de_entradas() -> None:

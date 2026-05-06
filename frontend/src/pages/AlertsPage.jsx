@@ -5,7 +5,7 @@ import SideNavBar from '../components/SideNavBar'
 import MobileNav from '../components/MobileNav'
 import MultiSelectSearch from '../components/MultiSelectSearch'
 import { useAuth } from '../context/AuthContext'
-import { apiFetch } from '../api/apiClient'
+import { apiFetch, getCategories } from '../api/apiClient'
 
 const MAX_ALERTS = 20
 
@@ -27,10 +27,11 @@ function AlertsPage() {
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
   const [rssChannels, setRssChannels] = useState([])
+  const [categories, setCategories] = useState([])
 
   // Create modal
   const [showModal, setShowModal] = useState(false)
-  const [newAlert, setNewAlert] = useState({ name: '', cat: '01000000', cron: '*/15 * * * *', rssChannelIds: [] })
+  const [newAlert, setNewAlert] = useState({ name: '', cat: '', cron: '*/15 * * * *', rssChannelIds: [] })
   const [error, setError] = useState('')
   const [synonymSuggestions, setSynonymSuggestions] = useState([])
   const [acceptedSynonyms, setAcceptedSynonyms] = useState([])
@@ -38,49 +39,53 @@ function AlertsPage() {
 
   // Edit modal
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editData, setEditData] = useState({ id: null, name: '', cat: '01000000', cron: '*/15 * * * *', rssChannelIds: [] })
+  const [editData, setEditData] = useState({ id: null, name: '', cat: '', cron: '*/15 * * * *', rssChannelIds: [] })
   const [editExtraDescriptors, setEditExtraDescriptors] = useState([])
   const [editSuggestions, setEditSuggestions] = useState([])
   const [editError, setEditError] = useState('')
   const [loadingEditSynonyms, setLoadingEditSynonyms] = useState(false)
 
   const frequencies = [
+    { value: '* * * * *',     label: t('alerts.freq1min',  'Cada minuto') },
+    { value: '*/2 * * * *',   label: t('alerts.freq2min',  'Cada 2 minutos') },
+    { value: '*/5 * * * *',   label: t('alerts.freq5min',  'Cada 5 minutos') },
     { value: '*/15 * * * *', label: t('alerts.freq15min', 'Cada 15 minutos') },
+    { value: '*/30 * * * *', label: t('alerts.freq30min', 'Cada 30 minutos') },
     { value: '0 * * * *',    label: t('alerts.freq1h',    'Cada hora') },
     { value: '0 */12 * * *', label: t('alerts.freq12h',   'Cada 12 horas') },
-    { value: '0 0 * * *',    label: t('alerts.freq24h',   'Cada 24 horas') },
+    { value: '0 0 * * *',    label: t('alerts.freq24h',   'Cada 24 h') },
   ]
 
   const cronLabel = (cron) => frequencies.find((f) => f.value === cron)?.label ?? cron
 
-  const categories = [
-    { value: '01000000', label: t('categories.01000000') },
-    { value: '02000000', label: t('categories.02000000') },
-    { value: '03000000', label: t('categories.03000000') },
-    { value: '04000000', label: t('categories.04000000') },
-    { value: '05000000', label: t('categories.05000000') },
-    { value: '06000000', label: t('categories.06000000') },
-    { value: '07000000', label: t('categories.07000000') },
-    { value: '08000000', label: t('categories.08000000') },
-    { value: '09000000', label: t('categories.09000000') },
-    { value: '10000000', label: t('categories.10000000') },
-    { value: '11000000', label: t('categories.11000000') },
-    { value: '12000000', label: t('categories.12000000') },
-    { value: '13000000', label: t('categories.13000000') },
-    { value: '14000000', label: t('categories.14000000') },
-    { value: '15000000', label: t('categories.15000000') },
-    { value: '16000000', label: t('categories.16000000') },
-    { value: '17000000', label: t('categories.17000000') },
-  ]
-
   const catLabel = (code) => categories.find((c) => c.value === code)?.label ?? code
+  const categoryPayload = (code) => (code ? [{ code, label: catLabel(code) }] : [])
 
   const limitReached = alerts.length >= MAX_ALERTS
 
   useEffect(() => {
     if (user?.id) fetchAlerts()
+    fetchCategories()
     fetchRssChannels()
   }, [user?.id])
+
+  const fetchCategories = async () => {
+    try {
+      const apiCategories = await getCategories()
+      const normalized = apiCategories.map((category) => ({
+        value: category.code,
+        label: t(`categories.${category.code}`, category.name),
+      }))
+      setCategories(normalized)
+      if (normalized.length > 0) {
+        setNewAlert((prev) => (prev.cat ? prev : { ...prev, cat: normalized[0].value }))
+        setEditData((prev) => (prev.cat ? prev : { ...prev, cat: normalized[0].value }))
+      }
+    } catch (err) {
+      console.warn('Error cargando categorias:', err.message)
+      setCategories([])
+    }
+  }
 
   const fetchRssChannels = async () => {
     try {
@@ -131,9 +136,7 @@ function AlertsPage() {
         cron_expression: alert.cron,
         enabled: alert.enabled,
         descriptors: alert.descriptors.length > 0 ? alert.descriptors : [alert.name],
-        categories: categories
-          .filter((c) => c.value === alert.cat)
-          .map((c) => ({ code: c.value, label: c.label })),
+        categories: categoryPayload(alert.cat),
         rss_channels_ids: alert.rssChannelIds ?? [],
       }),
     })
@@ -168,12 +171,16 @@ function AlertsPage() {
     e.preventDefault()
     setError('')
     if (!newAlert.name.trim() || !newAlert.cron.trim()) return
-    const catInfo = categories.find((c) => c.value === newAlert.cat)
+    const selectedCategories = categoryPayload(newAlert.cat)
+    if (selectedCategories.length === 0) {
+      setError('No se ha podido cargar la lista de categorias')
+      return
+    }
     const payload = {
       name: newAlert.name,
       cron_expression: newAlert.cron,
       descriptors: [newAlert.name, ...acceptedSynonyms],
-      categories: catInfo ? [{ code: catInfo.value, label: catInfo.label }] : [],
+      categories: selectedCategories,
       rss_channels_ids: newAlert.rssChannelIds,
     }
     try {
@@ -187,7 +194,7 @@ function AlertsPage() {
       }
       const saved = await res.json()
       setAlerts([...alerts, toLocal(saved)])
-      setNewAlert({ name: '', cat: '01000000', cron: '*/15 * * * *', rssChannelIds: [] })
+      setNewAlert({ name: '', cat: categories[0]?.value ?? '', cron: '*/15 * * * *', rssChannelIds: [] })
       setSynonymSuggestions([])
       setAcceptedSynonyms([])
       setShowModal(false)
@@ -238,14 +245,18 @@ function AlertsPage() {
   const handleSaveEdit = async (e) => {
     e.preventDefault()
     setEditError('')
-    const catInfo = categories.find((c) => c.value === editData.cat)
+    const selectedCategories = categoryPayload(editData.cat)
+    if (selectedCategories.length === 0) {
+      setEditError('No se ha podido cargar la lista de categorias')
+      return
+    }
     const currentAlert = alerts.find((a) => a.id === editData.id)
     const payload = {
       name: editData.name,
       cron_expression: editData.cron,
       enabled: currentAlert?.enabled ?? true,
       descriptors: [editData.name, ...editExtraDescriptors],
-      categories: catInfo ? [{ code: catInfo.value, label: catInfo.label }] : [],
+      categories: selectedCategories,
       rss_channels_ids: editData.rssChannelIds,
     }
     try {
@@ -485,6 +496,11 @@ function AlertsPage() {
                   value={newAlert.cat}
                   onChange={(e) => setNewAlert({ ...newAlert, cat: e.target.value })}
                 >
+                  {categories.length === 0 && (
+                    <option value="" disabled>
+                      Categorias no disponibles
+                    </option>
+                  )}
                   {categories.map((cat) => (
                     <option key={cat.value} value={cat.value}>
                       {cat.label}
@@ -652,6 +668,11 @@ function AlertsPage() {
                   value={editData.cat}
                   onChange={(e) => setEditData({ ...editData, cat: e.target.value })}
                 >
+                  {categories.length === 0 && (
+                    <option value="" disabled>
+                      Categorias no disponibles
+                    </option>
+                  )}
                   {categories.map((cat) => (
                     <option key={cat.value} value={cat.value}>
                       {cat.label}

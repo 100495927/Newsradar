@@ -28,6 +28,7 @@ def main() -> int:
     counters = app_db["counters"]
     now = datetime.now(timezone.utc)
 
+
     inserted = 0
     updated = 0
     source_ids_by_medium: dict[str, int] = {}
@@ -127,6 +128,8 @@ def _next_counter(counters: pymongo.collection.Collection, name: str, now: datet
 
 
 def _source_name_from_medium(medio: str) -> str:
+    if "_" not in medio:
+        return medio
     return " ".join(part.capitalize() for part in medio.split("_") if part)
 
 
@@ -137,3 +140,4 @@ def _source_url_from_feed_url(feed_url: str) -> str:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

@@ -10,6 +10,26 @@ export async function apiFetch(path, options = {}) {
   return fetch(path, { ...options, headers })
 }
 
+export async function getCategories() {
+  const response = await apiFetch('/api/v1/categories')
+  if (!response.ok) throw new Error('Error al obtener categorias')
+  const data = await response.json()
+
+  return data
+    .map((category) => {
+      const id = Number(category.id)
+      if (!Number.isFinite(id)) return null
+      return {
+        id,
+        code: String(id).padStart(8, '0'),
+        name: category.name ?? String(id),
+        source: category.source,
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.id - b.id)
+}
+
 // ---------------------------------------------------------------------------
 // Stats — basado en GET /api/v1/stats del contrato (api_ag_comentado.py)
 //
