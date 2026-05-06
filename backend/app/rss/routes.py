@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from pymongo.errors import DuplicateKeyError
 
 from ..auth.user import UserInDB
 from ..category.routes import ensure_category_exists
@@ -25,8 +26,27 @@ def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _source_query(source_id: int) -> dict:
+    return {
+        "id": source_id,
+        "deleted_at": {"$exists": False},
+    }
+
+
+def _channel_query(source_id: int, channel_id: int) -> dict:
+    return {
+        "information_source_id": source_id,
+        "id": channel_id,
+        "deleted_at": {"$exists": False},
+    }
+
+
 def _doc_to_source(doc: dict) -> InformationSource:
-    return InformationSource(id=doc["id"], name=doc["name"], url=doc["url"])
+    return InformationSource(
+        id=doc["id"],
+        name=doc["name"],
+        url=doc["url"],
+    )
 
 
 def _doc_to_channel(doc: dict) -> RSSChannel:
@@ -39,16 +59,14 @@ def _doc_to_channel(doc: dict) -> RSSChannel:
 
 
 def ensure_information_source_exists(source_id: int) -> dict:
-    source = information_sources_col.find_one({"id": source_id}, {"_id": 0})
+    source = information_sources_col.find_one(_source_query(source_id), {"_id": 0})
     if not source:
         raise HTTPException(status_code=404, detail="Fuente de información no encontrada")
     return source
 
 
 def ensure_rss_for_source(source_id: int, channel_id: int) -> dict:
-    channel = rss_channels_col.find_one(
-        {"id": channel_id, "information_source_id": source_id}, {"_id": 0}
-    )
+    channel = rss_channels_col.find_one(_channel_query(source_id, channel_id), {"_id": 0})
     if not channel:
         raise HTTPException(status_code=404, detail="Canal RSS no encontrado para la fuente")
     return channel
@@ -60,7 +78,10 @@ def ensure_rss_for_source(source_id: int, channel_id: int) -> dict:
 
 @router.get("/information-sources", response_model=List[InformationSource])
 def list_information_sources(_: UserInDB = Depends(get_current_user)) -> List[InformationSource]:
-    cursor = information_sources_col.find({}, {"_id": 0}).sort("id", 1)
+    cursor = information_sources_col.find(
+        {"deleted_at": {"$exists": False}},
+        {"_id": 0},
+    ).sort("id", 1)
     return [_doc_to_source(doc) for doc in cursor]
 
 
@@ -73,16 +94,25 @@ def create_information_source(
         raise HTTPException(status_code=409, detail="Ya existe una fuente con esa URL")
     now = _utc_now()
     source_id = next_mongo_id("information_sources")
-    doc = {
+    source_url = str(payload.url)
+    source_doc = {
         "id": source_id,
         "name": payload.name,
-        "url": str(payload.url),
+        "url": source_url,
         "active": True,
         "created_at": now,
         "updated_at": now,
     }
-    information_sources_col.insert_one(doc)
-    return _doc_to_source(doc)
+
+    try:
+        information_sources_col.insert_one(source_doc)
+    except DuplicateKeyError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Ya existe una fuente de informacion registrada con esa URL",
+        ) from exc
+
+    return _doc_to_source(source_doc)
 
 
 @router.get("/information-sources/{source_id}", response_model=InformationSource)
@@ -98,13 +128,28 @@ def update_information_source(
     payload: InformationSourceUpdate,
     _: UserInDB = Depends(get_current_user),
 ) -> InformationSource:
-    ensure_information_source_exists(source_id)
-    data = payload.model_dump(exclude_unset=True)
-    if "url" in data:
-        data["url"] = str(data["url"])
-    data["updated_at"] = _utc_now()
-    information_sources_col.update_one({"id": source_id}, {"$set": data})
-    return _doc_to_source(information_sources_col.find_one({"id": source_id}, {"_id": 0}))
+    source = ensure_information_source_exists(source_id)
+    update_data = payload.model_dump(exclude_unset=True)
+    now = _utc_now()
+
+    source_name = update_data.get("name", source["name"])
+    source_url = str(update_data.get("url", source["url"]))
+    set_fields = {
+        "name": source_name,
+        "url": source_url,
+        "updated_at": now,
+    }
+
+    try:
+        information_sources_col.update_one(_source_query(source_id), {"$set": set_fields})
+    except DuplicateKeyError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Ya existe una fuente de informacion registrada con esa URL",
+        ) from exc
+
+    updated_doc = information_sources_col.find_one(_source_query(source_id), {"_id": 0})
+    return _doc_to_source(updated_doc)
 
 
 @router.delete("/information-sources/{source_id}", status_code=204)
@@ -112,8 +157,18 @@ def delete_information_source(
     source_id: int, _: UserInDB = Depends(get_current_user)
 ) -> Response:
     ensure_information_source_exists(source_id)
-    information_sources_col.delete_one({"id": source_id})
-    rss_channels_col.delete_many({"information_source_id": source_id})
+    now = _utc_now()
+    information_sources_col.update_one(
+        _source_query(source_id),
+        {"$set": {"active": False, "deleted_at": now, "updated_at": now}},
+    )
+    rss_channels_col.update_many(
+        {
+            "information_source_id": source_id,
+            "deleted_at": {"$exists": False},
+        },
+        {"$set": {"active": False, "deleted_at": now, "updated_at": now}},
+    )
     return Response(status_code=204)
 
 
@@ -128,7 +183,13 @@ def list_source_channels(
     source_id: int, _: UserInDB = Depends(get_current_user)
 ) -> List[RSSChannel]:
     ensure_information_source_exists(source_id)
-    cursor = rss_channels_col.find({"information_source_id": source_id}, {"_id": 0}).sort("id", 1)
+    cursor = rss_channels_col.find(
+        {
+            "information_source_id": source_id,
+            "deleted_at": {"$exists": False},
+        },
+        {"_id": 0},
+    ).sort("id", 1)
     return [_doc_to_channel(doc) for doc in cursor]
 
 
@@ -148,17 +209,26 @@ def create_source_channel(
         raise HTTPException(status_code=409, detail="Ya existe un canal con esa URL para esta fuente")
     now = _utc_now()
     channel_id = next_mongo_id("rss_channels")
-    doc = {
+    channel_url = str(payload.url)
+    channel_doc = {
         "id": channel_id,
         "information_source_id": source_id,
-        "url": str(payload.url),
+        "url": channel_url,
         "category_id": payload.category_id,
         "active": True,
         "created_at": now,
         "updated_at": now,
     }
-    rss_channels_col.insert_one(doc)
-    return _doc_to_channel(doc)
+
+    try:
+        rss_channels_col.insert_one(channel_doc)
+    except DuplicateKeyError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Ya existe un canal RSS registrado con esa URL",
+        ) from exc
+
+    return _doc_to_channel(channel_doc)
 
 
 @router.get(
@@ -183,19 +253,28 @@ def update_source_channel(
     _: UserInDB = Depends(get_current_user),
 ) -> RSSChannel:
     ensure_information_source_exists(source_id)
-    ensure_rss_for_source(source_id, channel_id)
-    data = payload.model_dump(exclude_unset=True)
-    if "url" in data:
-        data["url"] = str(data["url"])
-    if "category_id" in data:
-        ensure_category_exists(data["category_id"])
-    data["updated_at"] = _utc_now()
-    rss_channels_col.update_one(
-        {"id": channel_id, "information_source_id": source_id}, {"$set": data}
-    )
-    return _doc_to_channel(
-        rss_channels_col.find_one({"id": channel_id, "information_source_id": source_id}, {"_id": 0})
-    )
+    channel = ensure_rss_for_source(source_id, channel_id)
+    update_data = payload.model_dump(exclude_unset=True)
+    now = _utc_now()
+    set_fields = {"updated_at": now}
+
+    if "category_id" in update_data:
+        ensure_category_exists(update_data["category_id"])
+        set_fields["category_id"] = update_data["category_id"]
+
+    if "url" in update_data:
+        set_fields["url"] = str(update_data["url"])
+
+    try:
+        rss_channels_col.update_one(_channel_query(source_id, channel_id), {"$set": set_fields})
+    except DuplicateKeyError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Ya existe un canal RSS registrado con esa URL",
+        ) from exc
+
+    updated_doc = rss_channels_col.find_one(_channel_query(source_id, channel_id), {"_id": 0})
+    return _doc_to_channel(updated_doc or channel)
 
 
 @router.delete("/information-sources/{source_id}/rss-channels/{channel_id}", status_code=204)
@@ -204,5 +283,9 @@ def delete_source_channel(
 ) -> Response:
     ensure_information_source_exists(source_id)
     ensure_rss_for_source(source_id, channel_id)
-    rss_channels_col.delete_one({"id": channel_id, "information_source_id": source_id})
+    now = _utc_now()
+    rss_channels_col.update_one(
+        _channel_query(source_id, channel_id),
+        {"$set": {"active": False, "deleted_at": now, "updated_at": now}},
+    )
     return Response(status_code=204)
