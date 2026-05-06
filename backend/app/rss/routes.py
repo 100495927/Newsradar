@@ -10,7 +10,7 @@ from pymongo.errors import DuplicateKeyError
 from ..auth.user import UserInDB
 from ..category.routes import ensure_category_exists
 from ..dependencies import get_current_user
-from ..store import next_mongo_id, rss_fuentes_col
+from ..store import information_sources_col, next_mongo_id, rss_channels_col, rss_fuentes_col
 from .models import (
     InformationSource,
     InformationSourceCreate,
@@ -52,30 +52,32 @@ def _channel_query(source_id: int, channel_id: int) -> dict:
 
 def _doc_to_source(doc: dict) -> InformationSource:
     return InformationSource(
-        id=doc["source_id"],
-        name=doc["source_name"],
-        url=doc["source_url"],
+        id=doc["id"],
+        name=doc["name"],
+        url=doc["url"],
     )
 
 
 def _doc_to_channel(doc: dict) -> RSSChannel:
     return RSSChannel(
-        id=doc["channel_id"],
-        information_source_id=doc["source_id"],
+        id=doc["id"],
+        information_source_id=doc["information_source_id"],
         url=doc["url"],
         category_id=doc["category_id"],
     )
 
 
 def ensure_information_source_exists(source_id: int) -> dict:
-    source = rss_fuentes_col.find_one(_source_query(source_id), {"_id": 0})
+    source = information_sources_col.find_one({"id": source_id}, {"_id": 0})
     if not source:
         raise HTTPException(status_code=404, detail="Fuente de información no encontrada")
     return source
 
 
 def ensure_rss_for_source(source_id: int, channel_id: int) -> dict:
-    channel = rss_fuentes_col.find_one(_channel_query(source_id, channel_id), {"_id": 0})
+    channel = rss_channels_col.find_one(
+        {"id": channel_id, "information_source_id": source_id}, {"_id": 0}
+    )
     if not channel:
         raise HTTPException(status_code=404, detail="Canal RSS no encontrado para la fuente")
     return channel
@@ -83,10 +85,7 @@ def ensure_rss_for_source(source_id: int, channel_id: int) -> dict:
 
 @router.get("/information-sources", response_model=List[InformationSource])
 def list_information_sources(_: UserInDB = Depends(get_current_user)) -> List[InformationSource]:
-    cursor = rss_fuentes_col.find(
-        {"tipo": "source", "deleted_at": {"$exists": False}},
-        {"_id": 0},
-    ).sort("source_id", 1)
+    cursor = information_sources_col.find({}, {"_id": 0}).sort("id", 1)
     return [_doc_to_source(doc) for doc in cursor]
 
 
@@ -210,14 +209,9 @@ def list_source_channels(
     _: UserInDB = Depends(get_current_user),
 ) -> List[RSSChannel]:
     ensure_information_source_exists(source_id)
-    cursor = rss_fuentes_col.find(
-        {
-            "tipo": "channel",
-            "source_id": source_id,
-            "deleted_at": {"$exists": False},
-        },
-        {"_id": 0},
-    ).sort("channel_id", 1)
+    cursor = rss_channels_col.find(
+        {"information_source_id": source_id}, {"_id": 0}
+    ).sort("id", 1)
     return [_doc_to_channel(doc) for doc in cursor]
 
 
@@ -317,7 +311,9 @@ def update_source_channel(
             detail="Ya existe un canal RSS registrado con esa URL",
         ) from exc
 
-    updated_doc = rss_fuentes_col.find_one(_channel_query(source_id, channel_id), {"_id": 0})
+    updated_doc = rss_channels_col.find_one(
+        {"id": channel_id, "information_source_id": source_id}, {"_id": 0}
+    )
     return _doc_to_channel(updated_doc or channel)
 
 

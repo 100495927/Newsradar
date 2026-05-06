@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 function VerifyEmailPage() {
   const { token } = useParams()
   const [status, setStatus] = useState('loading') // 'loading' | 'success' | 'error'
   const [message, setMessage] = useState('')
+  const called = useRef(false)
 
   useEffect(() => {
+    if (called.current) return
+    called.current = true
+
     if (!token) {
       setStatus('error')
       setMessage('Token de verificación no encontrado en la URL.')

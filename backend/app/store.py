@@ -26,6 +26,8 @@ stats_col = db["stats"]
 alerts_col = db["alerts"]
 notifications_col = db["notifications"]
 counters_col = db["counters"]
+information_sources_col = db["information_sources"]
+rss_channels_col = db["rss_channels"]
 
 # -- In-memory stores for contract entities that are still not persisted --
 roles_store: Dict[int, Any] = {}
