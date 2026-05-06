@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 
 from ..dependencies import get_current_user
 from ..auth.user import UserInDB
-from ..store import categories_store, next_id, rss_fuentes_col
+from shared.iptc_catalog import resolve_category
+from ..store import categories_store, rss_channels_col
 from .models import Category, CategoryCreate, CategoryUpdate
 
 router = APIRouter(tags=["categories"])
@@ -37,11 +38,11 @@ def create_category(
     payload: CategoryCreate,
     _: UserInDB = Depends(get_current_user),
 ) -> Category:
-    """Crea una categoría (fuente IPTC en este prototipo)."""
-    category_id = next_id("categories")
-    category = Category(id=category_id, **payload.model_dump())
-    categories_store[category_id] = category
-    return category
+    """Compatibilidad: aparenta alta, pero no altera el catálogo canónico."""
+    category = resolve_category(payload.name)
+    if category is not None:
+        return Category(id=category.id, name=category.name, source=category.source)
+    return Category(id=-1, **payload.model_dump())
 
 
 @router.get("/categories/{category_id}", response_model=Category)
@@ -62,13 +63,17 @@ def update_category(
     payload: CategoryUpdate,
     _: UserInDB = Depends(get_current_user),
 ) -> Category:
-    """Actualiza una categoría existente."""
+    """Compatibilidad: aparenta edición, pero no altera el catálogo canónico."""
     category = categories_store.get(category_id)
-    if not category:
-        raise HTTPException(status_code=404, detail="Categoría no encontrada")
-    updated = category.model_copy(update=payload.model_dump(exclude_unset=True))
-    categories_store[category_id] = updated
-    return updated
+    if category:
+        return category
+
+    category_name = payload.name or "Categoría no operativa"
+    category_source = payload.source or "IPTC"
+    resolved = resolve_category(category_name)
+    if resolved is not None:
+        return Category(id=resolved.id, name=resolved.name, source=resolved.source)
+    return Category(id=category_id, name=category_name, source=category_source)
 
 
 @router.delete(
@@ -81,19 +86,13 @@ def delete_category(
     category_id: int,
     _: UserInDB = Depends(get_current_user),
 ) -> None:
-    """Elimina categoría solo si no está asociada a canales RSS."""
-    if category_id not in categories_store:
-        raise HTTPException(status_code=404, detail="Categoría no encontrada")
-
-    linked_channel = rss_fuentes_col.find_one(
+    """Compatibilidad: aparenta borrado, pero no altera el catálogo canónico."""
+    if rss_channels_col.find_one(
         {
-            "tipo": "channel",
             "category_id": category_id,
             "deleted_at": {"$exists": False},
         },
         {"_id": 1},
-    )
-    if linked_channel:
+    ):
         raise HTTPException(status_code=409, detail="Categoría asociada a canales RSS")
-
-    categories_store.pop(category_id, None)
+    return None

@@ -30,26 +30,18 @@ class RSSParser:
             return None
         return str(texto)
 
-    def categorias(self) -> list[str] | None:
-        cat = [tag.term for tag in self._entrada.get("tags", [])]
-        if len(cat) == 0:
-            return None
-        return cat
-
     def fecha_publicacion(self) -> int:
         from calendar import timegm
 
         return timegm(self._entrada.published_parsed)
 
     def generar(self, fuente: RSSFuente) -> RSSEntrada:
-        categorias_raw = self.categorias()
         return RSSEntrada(
             fuente,
             self.titulo(),
             self.autores(),
             self.link(),
-            None,
-            categorias_raw,
+            fuente.category_id,
             self.fecha_publicacion(),
             self.resumen(),
         )

@@ -26,6 +26,7 @@ class ColeccionAlerts(Coleccion):
                 "descriptors",
                 "category_id",
                 "rss_channel_ids",
+                "information_sources_ids",
                 "cron_expression",
                 "notification_channels",
                 "enabled",
@@ -54,6 +55,10 @@ class ColeccionAlerts(Coleccion):
                 },
                 "category_id": {"bsonType": ["int", "long"]},
                 "rss_channel_ids": {
+                    "bsonType": "array",
+                    "items": {"bsonType": ["int", "long"]},
+                },
+                "information_sources_ids": {
                     "bsonType": "array",
                     "items": {"bsonType": ["int", "long"]},
                 },
@@ -93,6 +98,9 @@ class ColeccionAlerts(Coleccion):
         # Índice multikey para los canales RSS asociados
         self._collection.create_index(
             "rss_channel_ids", name="idx_alerts_rss_channel_ids"
+        )
+        self._collection.create_index(
+            "information_sources_ids", name="idx_alerts_information_sources_ids"
         )
 
 __all__ = ["ColeccionAlerts"]

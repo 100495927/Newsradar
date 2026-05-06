@@ -17,6 +17,9 @@ Campos usados en el workflow:
 - `name`
 - `descriptors`
 - `categories`
+- `category_id`
+- `rss_channel_ids`
+- `information_sources_ids`
 - `cron_expression`
 - `notification_channels`
 - `enabled`
@@ -88,7 +91,9 @@ Campos usados:
 - `resumen`
 - `link`
 - `hash_deduplicado`
-- `id_fuente`
+- `information_source_id`
+- `rss_channel_id`
+- `source_name`
 - `fecha_publicacion`
 
 Uso:
@@ -129,9 +134,15 @@ Responsabilidades:
 
 1. El `backend` recibe `POST` o `PUT` de alerta.
 2. Valida `cron_expression`.
-3. Calcula `next_run_at` con `shared/utils/cron.py`.
-4. Guarda la alerta en `alerts`.
-5. La configuracion de canales se mantiene en `notification_channels`.
+3. Resuelve una unica categoria IPTC efectiva para la alerta.
+4. Valida que los canales o fuentes seleccionados, si existen, sean compatibles con esa categoria.
+5. Si no se indican canales RSS concretos, el alcance operativo de la alerta pasa a ser toda la categoria.
+6. Calcula `next_run_at` con `shared/utils/cron.py`.
+7. Para alertas nuevas o alertas cuyo cron se acaba de editar, el primer `next_run_at` se fija en la siguiente ocurrencia cron estrictamente posterior al instante actual.
+8. Esto evita ejecutar una alerta recien creada contra un minuto ya empezado.
+9. Ejemplo: si una alerta se crea a las `12:00:35` con cron `0 * * * *`, su primera ejecucion sera a las `13:00`, no en la pasada de `12:01`.
+10. Guarda la alerta en `alerts`.
+11. La configuracion de canales se mantiene en `notification_channels`.
 
 ### Paso 2. Ingesta RSS
 
@@ -149,6 +160,7 @@ Responsabilidades:
 - `next_run_at <= now`
 
 4. Si una alerta activa no tiene `next_run_at`, la inicializa con su cron.
+5. Esa inicializacion se usa solo como mecanismo de recuperacion para datos incompletos; en el flujo normal una alerta nueva ya nace con `next_run_at` persistido por el backend.
 
 ### Paso 4. Evaluacion de coincidencias
 
@@ -157,8 +169,10 @@ Para cada alerta vencida:
 1. Se calcula la ventana de busqueda desde `last_checked_at`.
 2. Si nunca se ha revisado, se usa `created_at`.
 3. Se consultan `rss_entradas` con `fecha_ingestion > since`.
-4. Se compara `descriptors` contra `titulo` y `resumen`.
-5. Se evita duplicar una entrada ya notificada usando:
+4. Siempre se filtra por `category_id = alert.category_id`.
+5. Si la alerta selecciona canales o fuentes concretas, se anade ademas filtro por `rss_channel_id` e `information_source_id`.
+6. Se compara `descriptors` contra `titulo` y `resumen`.
+7. Se evita duplicar una entrada ya notificada usando:
 
 - `alert_id`
 - `matches.rss_entry_hash`

@@ -108,6 +108,7 @@ services:
       - ./data/mongodb/configdb:/data/configdb
       - ./scripts/mongo/init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
       - ./scripts/mongo/init-mongo.js:/opt/newsradar/init-mongo.js:ro
+      - ./scripts/mongo/seed-mongo.js:/opt/newsradar/seed-mongo.js:ro
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ping:1})'"]
       interval: 5s
@@ -137,22 +138,19 @@ services:
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-admin}
       RSS_WORKER_INTERVAL_SECONDS: ${RSS_WORKER_INTERVAL_SECONDS:-300}
       RSS_WORKER_RUN_ONCE: ${RSS_WORKER_RUN_ONCE:-false}
-      RSS_WORKER_UVICORN_PORT: ${RSS_WORKER_UVICORN_PORT:-8000}
-    command: ["python", "/app/rss-worker/rss_worker/main.py"]
+    command: ["python", "-m", "rss_worker"]
     healthcheck:
       test:
         [
           "CMD",
           "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json', timeout=2)",
+          "-m",
+          "rss_worker.healthcheck",
         ]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 15s
-    ports:
-      - "${RSS_WORKER_UVICORN_EXPOSE_PORT:-12670}:8000"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -179,14 +177,14 @@ services:
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-admin}
       ALERT_WORKER_INTERVAL_SECONDS: ${ALERT_WORKER_INTERVAL_SECONDS:-60}
       ALERT_WORKER_RUN_ONCE: ${ALERT_WORKER_RUN_ONCE:-false}
-    command: ["python", "/app/rss-worker/alert_worker/main.py"]
+    command: ["python", "-m", "alert_worker"]
     healthcheck:
       test:
         [
           "CMD",
           "python",
           "-c",
-          "from pathlib import Path; raise SystemExit(0 if 'alert_worker/main.py' in Path('/proc/1/cmdline').read_text() else 1)",
+          "from pathlib import Path; cmdline = Path('/proc/1/cmdline').read_text(); raise SystemExit(0 if 'alert_worker' in cmdline else 1)",
         ]
       interval: 30s
       timeout: 8s

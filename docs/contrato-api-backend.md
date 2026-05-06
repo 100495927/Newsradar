@@ -139,6 +139,8 @@ Actualizacion contractual aplicada el `2026-04-29`:
 - `Alert`, `AlertCreate` y `AlertUpdate` incorporan los campos `rss_channels_ids` e `information_sources_ids`.
 - En esta fase el contrato publico ya refleja esos campos, aunque su explotacion funcional interna puede evolucionar despues.
 - Aunque `categories` se modela como lista por compatibilidad y futura extension, funcionalmente la alerta debe llevar por ahora una sola categoria IPTC.
+- Si la alerta no informa `rss_channels_ids`, su alcance funcional son todos los canales RSS de esa categoria.
+- Si la alerta informa `rss_channels_ids`, el alcance funcional se restringe a esos canales concretos.
 - Si la alerta selecciona `rss_channels_ids` o `information_sources_ids`, esos canales o fuentes deben ser compatibles con la categoria de la alerta; en caso contrario la API respondera `400 Bad Request`.
 
 `AlertCategoryItem`
@@ -159,10 +161,10 @@ Actualizacion contractual aplicada el `2026-04-29`:
   "name": "Elecciones",
   "descriptors": ["congreso", "senado"],
   "categories": [
-    { "code": "politics", "label": "Politics" }
+    { "code": "11000000", "label": "Politica" }
   ],
-  "rss_channels_ids": ["rss-elpais-politica", "rss-rtve-nacional"],
-  "information_sources_ids": ["elpais", "rtve"],
+  "rss_channels_ids": ["101", "205"],
+  "information_sources_ids": ["1", "7"],
   "cron_expression": "0 0 * * *"
 }
 ```
@@ -174,10 +176,10 @@ Actualizacion contractual aplicada el `2026-04-29`:
   "name": "Elecciones",
   "descriptors": ["congreso", "senado"],
   "categories": [
-    { "code": "politics", "label": "Politics" }
+    { "code": "11000000", "label": "Politica" }
   ],
-  "rss_channels_ids": ["rss-elpais-politica", "rss-rtve-nacional"],
-  "information_sources_ids": ["elpais", "rtve"],
+  "rss_channels_ids": ["101", "205"],
+  "information_sources_ids": ["1", "7"],
   "cron_expression": "0 0 * * *"
 }
 ```
@@ -189,10 +191,10 @@ Actualizacion contractual aplicada el `2026-04-29`:
   "name": "Elecciones Europa",
   "descriptors": ["parlamento europeo"],
   "categories": [
-    { "code": "politics", "label": "Politics" }
+    { "code": "11000000", "label": "Politica" }
   ],
-  "rss_channels_ids": ["rss-euronews-politics"],
-  "information_sources_ids": ["euronews"],
+  "rss_channels_ids": ["301"],
+  "information_sources_ids": ["9"],
   "cron_expression": "*/15 * * * *"
 }
 ```
@@ -308,7 +310,7 @@ Actualizacion contractual aplicada el `2026-04-29`:
 | GET | `/api/v1/users/{user_id}/alerts` | Si | Path param `user_id` | `List[Alert]` | |
 | POST | `/api/v1/users/{user_id}/alerts` | Si | `AlertCreate` | `Alert` | `201 Created`; requiere rol `manager`; `400` si la alerta no tiene exactamente una categoria valida o si sus fuentes/canales no son compatibles con ella |
 | GET | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | Path params | `Alert` | |
-| PUT | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | `AlertUpdate` | `Alert` | `400` si deja la alerta con categorias/fuentes incompatibles |
+| PUT | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | `AlertUpdate` | `Alert` | `400` si deja la alerta sin exactamente una categoria valida o con categorias/fuentes incompatibles |
 | DELETE | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | Path params | Sin body | `204 No Content`; borra notificaciones asociadas |
 
 ### 5.6 Notificaciones
