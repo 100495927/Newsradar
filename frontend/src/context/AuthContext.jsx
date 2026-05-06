@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 
 const AuthContext = createContext(null)
 
@@ -14,12 +14,39 @@ function parseJwtId(token) {
   }
 }
 
+async function fetchProfile(accessToken) {
+  const id = parseJwtId(accessToken)
+  if (!id) return null
+  const res = await fetch(`/api/v1/users/${id}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) return null
+  return res.json()
+}
+
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem(USER_KEY)
     return stored ? JSON.parse(stored) : null
   })
+
+  // Validate stored token on startup and refresh user profile
+  useEffect(() => {
+    const stored = localStorage.getItem(TOKEN_KEY)
+    if (!stored) return
+    fetchProfile(stored).then((profile) => {
+      if (!profile) {
+        setToken(null)
+        setUser(null)
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(USER_KEY)
+      } else {
+        setUser(profile)
+        localStorage.setItem(USER_KEY, JSON.stringify(profile))
+      }
+    })
+  }, [])
 
   async function login(email, password) {
     const res = await fetch('/api/v1/auth/login', {
@@ -32,7 +59,8 @@ export function AuthProvider({ children }) {
       throw new Error(err.detail || 'Error al iniciar sesión')
     }
     const data = await res.json()
-    _persist(data.access_token, { email })
+    const profile = await fetchProfile(data.access_token)
+    _persist(data.access_token, profile ?? { email })
   }
 
   async function register(fields) {
@@ -45,8 +73,6 @@ export function AuthProvider({ children }) {
       const err = await res.json()
       throw new Error(err.detail || 'Error al registrarse')
     }
-    // El backend devuelve User (no token). El usuario debe verificar su correo
-    // antes de poder iniciar sesión — no se hace auto-login aquí.
   }
 
   function logout() {

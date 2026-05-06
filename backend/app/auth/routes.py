@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import os
 from datetime import datetime, timezone
 from typing import List
@@ -227,11 +226,10 @@ def reset_password(token: str, new_password: str):
             detail="El enlace es inválido o ha caducado (máximo 24h)",
         )
 
-    hashed_pw = hashlib.sha256(new_password.encode()).hexdigest()
     users_col.update_one(
         {"_id": doc["_id"]},
         {
-            "$set": {"password": hashed_pw},
+            "$set": {"password_hash": hash_password(new_password)},
             "$unset": {"reset_token": "", "reset_token_at": ""},
         },
     )
