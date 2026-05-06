@@ -11,24 +11,23 @@ export async function apiFetch(path, options = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Stats — basado en GET /api/v1/stats del contrato oficial
+// Stats — basado en GET /api/v1/stats del contrato (api_ag_comentado.py)
 //
 // El backend almacena métricas con la siguiente convención de nombres:
 //   sources_count             → nº total de fuentes de información
 //   news_count                → nº total de noticias procesadas
 //   alerts_count              → nº total de alertas
 //   rss_channels_count        → nº total de canales RSS
-//   news_cat_<code>           → noticias de la categoría IPTC <code> (ej. news_cat_01000000)
-//   timeline_<YYYY-MM-DD>     → noticias procesadas en esa fecha (ej. timeline_2026-04-01)
+//   news_cat_<code>           → noticias de la categoría IPTC <code>
+//   timeline_<YYYY-MM-DD>     → noticias procesadas en esa fecha
 //   cloud_<code>_<palabra>    → frecuencia de <palabra> en categoría <code>
 //
 // Se usa el objeto Stats de id más alto (el más reciente).
 // ---------------------------------------------------------------------------
 
-// Cache de la llamada a /api/v1/stats para no repetirla dentro del mismo ciclo de render
 let _statsPromise = null
 let _statsCacheTs = 0
-const CACHE_TTL_MS = 30_000 // 30 s
+const CACHE_TTL_MS = 30_000
 
 function _fetchStats() {
   const now = Date.now()
@@ -40,13 +39,12 @@ function _fetchStats() {
       return r.json()
     })
     .catch((err) => {
-      _statsPromise = null // permitir reintento en error
+      _statsPromise = null
       throw err
     })
   return _statsPromise
 }
 
-// Devuelve el objeto Stats más reciente (el de id más alto)
 async function _latestStats() {
   const list = await _fetchStats()
   if (!list || list.length === 0) return []
@@ -54,33 +52,25 @@ async function _latestStats() {
   return latest.metrics ?? []
 }
 
-// Convierte la lista de métricas en un Map { name -> value }
 function _metricsMap(metrics) {
   const map = new Map()
   for (const m of metrics) map.set(m.name, m.value)
   return map
 }
 
-// ---------------------------------------------------------------------------
-// API pública — misma firma que antes para no tocar las páginas
-// ---------------------------------------------------------------------------
-
 export async function getGlobalStats() {
   const metrics = await _latestStats()
   const map = _metricsMap(metrics)
 
-  // Contadores globales
   const n_noticias = map.get('news_count') ?? 0
   const n_fuentes = map.get('sources_count') ?? 0
   const n_alertas = map.get('alerts_count') ?? 0
   const n_canales_rss = map.get('rss_channels_count') ?? 0
 
-  // Noticias por categoría: buscar todas las métricas con prefijo "news_cat_"
   const noticias_por_categoria = []
   for (const [name, value] of map) {
     if (name.startsWith('news_cat_')) {
-      const id = name.replace('news_cat_', '')
-      noticias_por_categoria.push({ id, total: value })
+      noticias_por_categoria.push({ id: name.replace('news_cat_', ''), total: value })
     }
   }
   noticias_por_categoria.sort((a, b) => b.total - a.total)
@@ -90,17 +80,12 @@ export async function getGlobalStats() {
 
 export async function getTimeline() {
   const metrics = await _latestStats()
-
-  // Buscar métricas con prefijo "timeline_"
   const entries = []
   for (const m of metrics) {
     if (m.name.startsWith('timeline_')) {
-      const fecha = m.name.replace('timeline_', '')
-      entries.push({ fecha, total: m.value })
+      entries.push({ fecha: m.name.replace('timeline_', ''), total: m.value })
     }
   }
-
-  // Ordenar cronológicamente
   entries.sort((a, b) => a.fecha.localeCompare(b.fecha))
   return entries
 }
@@ -108,15 +93,12 @@ export async function getTimeline() {
 export async function getWordCloud(categoryCode) {
   const metrics = await _latestStats()
   const prefix = `cloud_${categoryCode}_`
-
   const words = []
   for (const m of metrics) {
     if (m.name.startsWith(prefix)) {
-      const word = m.name.replace(prefix, '')
-      words.push({ word, value: m.value })
+      words.push({ word: m.name.replace(prefix, ''), value: m.value })
     }
   }
-
   words.sort((a, b) => b.value - a.value)
   return words
 }

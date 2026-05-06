@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from ..dependencies import get_current_user
 from ..auth.user import UserInDB
 from ..store import next_id, stats_col
-from .models import FeedStats, GlobalDashboard, Stats, StatsCreate, StatsUpdate, TimelineEntry, WordCloudItem
+from .models import FeedStats, GlobalDashboard, Metric, Stats, StatsCreate, StatsUpdate, TimelineEntry, WordCloudItem
 from . import service
 
 router = APIRouter(tags=["stats"])
@@ -47,9 +47,27 @@ def read_word_cloud(categoria: str, _: UserInDB = Depends(get_current_user)):
 
 @router.get("", response_model=List[Stats])
 def list_stats(_: UserInDB = Depends(get_current_user)) -> List[Stats]:
-    """Lista registros de estadísticas desde MongoDB."""
-    cursor = stats_col.find({}, {"_id": 0})
-    return [Stats(**doc) for doc in cursor]
+    """Lista registros de estadísticas. Si la colección está vacía, computa uno en tiempo real."""
+    stored = list(stats_col.find({}, {"_id": 0}))
+    if stored:
+        return [Stats(**doc) for doc in stored]
+
+    # Colección vacía: devolver un Stats calculado en tiempo real para cumplir el contrato
+    data = service.get_global_stats()
+    timeline = service.get_timeline_stats()
+
+    metrics = [
+        {"name": "news_count",        "value": data["n_noticias"]},
+        {"name": "sources_count",     "value": data["n_fuentes"]},
+        {"name": "alerts_count",      "value": data["n_alertas"]},
+        {"name": "rss_channels_count","value": data["n_canales_rss"]},
+    ]
+    for cat in data.get("noticias_por_categoria", []):
+        metrics.append({"name": f"news_cat_{cat['id']}", "value": cat["total"]})
+    for entry in timeline:
+        metrics.append({"name": f"timeline_{entry['fecha']}", "value": entry["total"]})
+
+    return [Stats(id=0, metrics=[Metric(**m) for m in metrics])]
 
 
 @router.post("", response_model=Stats, status_code=201)

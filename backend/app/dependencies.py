@@ -85,6 +85,8 @@ def es_token_valido(fecha_creacion: Optional[datetime]) -> bool:
     """Valida el requisito de caducidad de 24 horas."""
     if not fecha_creacion:
         return False
+    if fecha_creacion.tzinfo is None:
+        fecha_creacion = fecha_creacion.replace(tzinfo=timezone.utc)
     return (datetime.now(timezone.utc) - fecha_creacion) <= timedelta(hours=24)
 
 

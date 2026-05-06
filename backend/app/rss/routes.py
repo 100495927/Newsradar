@@ -69,6 +69,10 @@ def ensure_rss_for_source(source_id: int, channel_id: int) -> dict:
     return channel
 
 
+# ---------------------------------------------------------------------------
+# Information Sources
+# ---------------------------------------------------------------------------
+
 @router.get("/information-sources", response_model=List[InformationSource])
 def list_information_sources(_: UserInDB = Depends(get_current_user)) -> List[InformationSource]:
     cursor = information_sources_col.find(
@@ -83,6 +87,8 @@ def create_information_source(
     payload: InformationSourceCreate,
     _: UserInDB = Depends(get_current_user),
 ) -> InformationSource:
+    if information_sources_col.find_one({"url": str(payload.url)}):
+        raise HTTPException(status_code=409, detail="Ya existe una fuente con esa URL")
     now = _utc_now()
     source_id = next_mongo_id("information_sources")
     source_url = str(payload.url)
@@ -108,8 +114,7 @@ def create_information_source(
 
 @router.get("/information-sources/{source_id}", response_model=InformationSource)
 def get_information_source(
-    source_id: int,
-    _: UserInDB = Depends(get_current_user),
+    source_id: int, _: UserInDB = Depends(get_current_user)
 ) -> InformationSource:
     return _doc_to_source(ensure_information_source_exists(source_id))
 
@@ -146,8 +151,7 @@ def update_information_source(
 
 @router.delete("/information-sources/{source_id}", status_code=204)
 def delete_information_source(
-    source_id: int,
-    _: UserInDB = Depends(get_current_user),
+    source_id: int, _: UserInDB = Depends(get_current_user)
 ) -> Response:
     ensure_information_source_exists(source_id)
     now = _utc_now()
@@ -165,10 +169,15 @@ def delete_information_source(
     return Response(status_code=204)
 
 
-@router.get("/information-sources/{source_id}/rss-channels", response_model=List[RSSChannel])
+# ---------------------------------------------------------------------------
+# RSS Channels
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/information-sources/{source_id}/rss-channels", response_model=List[RSSChannel]
+)
 def list_source_channels(
-    source_id: int,
-    _: UserInDB = Depends(get_current_user),
+    source_id: int, _: UserInDB = Depends(get_current_user)
 ) -> List[RSSChannel]:
     ensure_information_source_exists(source_id)
     cursor = rss_channels_col.find(
@@ -193,7 +202,8 @@ def create_source_channel(
 ) -> RSSChannel:
     ensure_information_source_exists(source_id)
     ensure_category_exists(payload.category_id)
-
+    if rss_channels_col.find_one({"information_source_id": source_id, "url": str(payload.url)}):
+        raise HTTPException(status_code=409, detail="Ya existe un canal con esa URL para esta fuente")
     now = _utc_now()
     channel_id = next_mongo_id("rss_channels")
     channel_url = str(payload.url)
@@ -223,9 +233,7 @@ def create_source_channel(
     response_model=RSSChannel,
 )
 def get_source_channel(
-    source_id: int,
-    channel_id: int,
-    _: UserInDB = Depends(get_current_user),
+    source_id: int, channel_id: int, _: UserInDB = Depends(get_current_user)
 ) -> RSSChannel:
     ensure_information_source_exists(source_id)
     return _doc_to_channel(ensure_rss_for_source(source_id, channel_id))
@@ -268,9 +276,7 @@ def update_source_channel(
 
 @router.delete("/information-sources/{source_id}/rss-channels/{channel_id}", status_code=204)
 def delete_source_channel(
-    source_id: int,
-    channel_id: int,
-    _: UserInDB = Depends(get_current_user),
+    source_id: int, channel_id: int, _: UserInDB = Depends(get_current_user)
 ) -> Response:
     ensure_information_source_exists(source_id)
     ensure_rss_for_source(source_id, channel_id)
