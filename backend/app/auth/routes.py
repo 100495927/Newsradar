@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from datetime import datetime, timezone
 from typing import List
 from uuid import uuid4
@@ -33,6 +34,11 @@ from .user import (
     UserInDB,
     UserUpdate,
 )
+from shared.utils import send_notification_email_with_error
+
+
+def _frontend_url() -> str:
+    return os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 router = APIRouter()
 ROLELESS_DEFAULT_ROLE_ID = 1
@@ -94,13 +100,21 @@ def login(payload: LoginRequest) -> TokenResponse:
     if not doc or not verify_password(payload.password, doc.get("password_hash") or ""):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
+    # Bloquear usuarios nuevos que aún no han verificado su correo.
+    # Los usuarios legacy (is_verified=None) pueden seguir accediendo.
+    if doc.get("is_verified") is False:
+        raise HTTPException(
+            status_code=403,
+            detail="Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.",
+        )
+
     token = create_access_token(doc["id"])
     return TokenResponse(access_token=token)
 
 
-@router.post("/auth/register", response_model=TokenResponse, status_code=201, tags=["auth"])
-def register(payload: UserCreate) -> TokenResponse:
-    """Registra un usuario nuevo en MongoDB y devuelve un JWT para login automático."""
+@router.post("/auth/register", response_model=User, status_code=201, tags=["auth"])
+def register(payload: UserCreate) -> User:
+    """Registra un usuario nuevo, envía email de verificación y devuelve el perfil público."""
     if users_col.find_one({"email": payload.email}):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
@@ -108,6 +122,8 @@ def register(payload: UserCreate) -> TokenResponse:
     now = datetime.now(timezone.utc)
     user_id = next_id("users")
     role_ids = _default_role_ids()
+    verification_token = str(uuid4())
+
     users_col.insert_one({
         "id": user_id,
         "email": payload.email,
@@ -118,14 +134,34 @@ def register(payload: UserCreate) -> TokenResponse:
         "password_hash": hash_password(payload.password),
         "created_at": now,
         "updated_at": now,
-        "verification_token": str(uuid4()),
+        "verification_token": verification_token,
         "token_created_at": now,
         "role": ROLELESS_DEFAULT_ROLE_NAME,
-        "status": "active"
+        "status": "active",
+        "is_verified": False,
     })
 
-    token = create_access_token(user_id)
-    return TokenResponse(access_token=token)
+    verify_link = f"{_frontend_url()}/verify/{verification_token}"
+    subject = "NewsRadar – Verifica tu cuenta"
+    body = (
+        f"Hola {payload.first_name},\n\n"
+        f"Gracias por registrarte en NewsRadar.\n\n"
+        f"Haz clic en el siguiente enlace para verificar tu cuenta "
+        f"(válido durante 24 horas):\n\n"
+        f"{verify_link}\n\n"
+        f"Si no has creado esta cuenta, ignora este mensaje.\n\n"
+        f"— El equipo de NewsRadar"
+    )
+    sent, error = send_notification_email_with_error(payload.email, subject, body)
+    if not sent:
+        # Registramos el fallo pero no bloqueamos el registro; el admin puede reenviar manualmente.
+        import logging
+        logging.getLogger(__name__).warning(
+            "No se pudo enviar el email de verificación a %s: %s", payload.email, error
+        )
+
+    doc = users_col.find_one({"id": user_id})
+    return sanitize_user(_doc_to_userindb(doc))
 
 
 @router.get("/auth/verify/{token}", tags=["auth"])
@@ -147,7 +183,7 @@ def verify_email(token: str):
 
 @router.post("/auth/forgot-password", tags=["auth"])
 def forgot_password(payload: LoginRequest):
-    """Genera token de recuperación de contraseña y lo almacena en MongoDB."""
+    """Genera token de recuperación de contraseña y envía el email al usuario."""
     doc = users_col.find_one({"email": payload.email})
     if doc:
         reset_token = str(uuid4())
@@ -158,7 +194,24 @@ def forgot_password(payload: LoginRequest):
                 "reset_token_at": datetime.now(timezone.utc),
             }},
         )
-        print(f"DEBUG: Token de recuperación para {payload.email}: {reset_token}")
+        reset_link = f"{_frontend_url()}/reset-password?token={reset_token}"
+        subject = "NewsRadar – Recuperación de contraseña"
+        body = (
+            f"Hola,\n\n"
+            f"Hemos recibido una solicitud para restablecer la contraseña de tu cuenta "
+            f"en NewsRadar ({payload.email}).\n\n"
+            f"Haz clic en el siguiente enlace para crear una nueva contraseña "
+            f"(válido durante 24 horas):\n\n"
+            f"{reset_link}\n\n"
+            f"Si no solicitaste este cambio, ignora este mensaje.\n\n"
+            f"— El equipo de NewsRadar"
+        )
+        sent, error = send_notification_email_with_error(payload.email, subject, body)
+        if not sent:
+            import logging
+            logging.getLogger(__name__).warning(
+                "No se pudo enviar el email de recuperación a %s: %s", payload.email, error
+            )
 
     return {"message": "Si el email está registrado, recibirá instrucciones de recuperación"}
 
