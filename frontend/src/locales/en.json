@@ -28,7 +28,13 @@
     "activeSources": "Active Sources",
     "alerts": "Alerts",
     "rssChannels": "RSS Channels",
-    "activeBadge": "Active"
+    "activeBadge": "Active",
+    "chartTitle": "News Captured per Day",
+    "chartSubtitle": "Daily ingestion volume (last 30 days)",
+    "noCapture": "No capture data available",
+    "volumeByCategory": "Volume by Category",
+    "noData": "No data available",
+    "newsTooltip": "{{date}}: {{count}} news"
   },
   "login": {
     "tagline": "The Informed Lens",
@@ -77,17 +83,38 @@
     "namePlaceholder": "E.g: Market Volatility",
     "cronLabel": "Frequency (Cron)",
     "cronHint": "Examples: */15 * * * * (every 15 min), 0 9 * * 1-5 (9AM Mon-Fri)",
+    "frequencyLabel": "Frequency",
+    "freq15min": "Every 15 minutes",
+    "freq1h": "Every hour",
+    "freq12h": "Every 12 hours",
+    "freq24h": "Every 24 hours",
     "cancel": "Cancel",
     "createSubmit": "Create Alert",
     "errorLoad": "Error loading alerts",
-    "errorCreate": "Error creating alert"
+    "errorCreate": "Error creating alert",
+    "rssChannelsLabel": "RSS Channels",
+    "rssChannelsPlaceholder": "Search RSS channels...",
+    "suggestSynonyms": "Synonyms",
+    "synonymsHint": "Select those you want to include as descriptors"
   },
   "categories": {
-    "FIN_MRKT": "Finance & Markets",
-    "SEC_POL": "Political Security",
-    "TECH": "Technology",
-    "ENERGY": "Energy",
-    "HEALTH": "Health"
+    "01000000": "Arts, Culture & Entertainment",
+    "02000000": "Crime, Law & Justice",
+    "03000000": "Disasters & Accidents",
+    "04000000": "Economy, Business & Finance",
+    "05000000": "Education",
+    "06000000": "Environment",
+    "07000000": "Health",
+    "08000000": "Human Interest",
+    "09000000": "Labour",
+    "10000000": "Lifestyle & Leisure",
+    "11000000": "Politics",
+    "12000000": "Religion & Beliefs",
+    "13000000": "Science & Technology",
+    "14000000": "Society",
+    "15000000": "Sport",
+    "16000000": "Conflict, War & Peace",
+    "17000000": "Weather"
   },
   "profile": {
     "pageTitle": "Profile Settings",
@@ -113,7 +140,20 @@
     "urlLabel": "RSS URL",
     "urlPlaceholder": "https://domain.com/feed.xml",
     "connectButton": "Connect Stream",
-    "defaultSourceName": "New Source"
+    "defaultSourceName": "New Source",
+    "categoryModalTitle": "Configure RSS channel",
+    "categoryModalDesc": "Select the source and category for this RSS feed.",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "-- Choose a category --",
+    "sourceLabel": "Source",
+    "sourcePlaceholder": "-- Choose a source --",
+    "newSource": "New source...",
+    "sourceNameLabel": "Source name",
+    "sourceNamePlaceholder": "e.g. El País",
+    "addButton": "Add source",
+    "sourcesCount": "sources",
+    "channelsCount": "channels",
+    "noChannels": "No channels for this source"
   },
   "summary": {
     "pageTitle": "Intelligence Summary",
@@ -123,7 +163,8 @@
     "byCategory": "Keywords by Category",
     "newsCount": "{{count}} news",
     "noData": "No data",
-    "noNewsProcessed": "No news processed yet"
+    "noNewsProcessed": "No news processed yet",
+    "appearances": "{{count}} appearances"
   },
   "language": {
     "select": "Select language",

@@ -7,25 +7,41 @@ import { apiFetch } from '../api/apiClient'
 
 function SourcesPage() {
   const { t } = useTranslation()
-  const [sources, setSources] = useState([])
+  const [groupedSources, setGroupedSources] = useState([])
+  const [expandedSources, setExpandedSources] = useState(new Set())
   const [newUrl, setNewUrl] = useState('')
   const [loading, setLoading] = useState(true)
-  const [validating, setValidating] = useState(false)
   const [submitError, setSubmitError] = useState(null)
 
-  // Category modal state (shown when feed has no detectable category)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [pendingUrl, setPendingUrl] = useState(null)
-  const [categories, setCategories] = useState([])
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
+  const [selectedSourceId, setSelectedSourceId] = useState('')
+  const [newSourceName, setNewSourceName] = useState('')
   const [modalError, setModalError] = useState(null)
+
+  const categories = [
+    { id: 1,  code: '01000000' },
+    { id: 2,  code: '02000000' },
+    { id: 3,  code: '03000000' },
+    { id: 4,  code: '04000000' },
+    { id: 5,  code: '05000000' },
+    { id: 6,  code: '06000000' },
+    { id: 7,  code: '07000000' },
+    { id: 8,  code: '08000000' },
+    { id: 9,  code: '09000000' },
+    { id: 10, code: '10000000' },
+    { id: 11, code: '11000000' },
+    { id: 12, code: '12000000' },
+    { id: 13, code: '13000000' },
+    { id: 14, code: '14000000' },
+    { id: 15, code: '15000000' },
+    { id: 16, code: '16000000' },
+    { id: 17, code: '17000000' },
+  ]
 
   useEffect(() => {
     fetchSources()
-    apiFetch('/api/v1/categories')
-      .then((r) => r.json())
-      .then(setCategories)
-      .catch(() => {})
   }, [])
 
   const fetchSources = async () => {
@@ -34,29 +50,42 @@ function SourcesPage() {
       const response = await apiFetch('/api/v1/information-sources')
       if (!response.ok) throw new Error('API no disponible')
       const data = await response.json()
-      const allChannels = await Promise.all(
+
+      const withChannels = await Promise.all(
         data.map(async (src) => {
           const chRes = await apiFetch(`/api/v1/information-sources/${src.id}/rss-channels`)
-          if (!chRes.ok) return []
-          const channels = await chRes.json()
-          return channels.map((ch) => ({
-            id: ch.id,
-            sourceId: src.id,
-            name: src.name,
-            url: ch.url,
-          }))
+          const channels = chRes.ok ? await chRes.json() : []
+          return { id: src.id, name: src.name, url: src.url, channels }
         }),
       )
-      setSources(allChannels.flat())
+      setGroupedSources(withChannels)
     } catch (err) {
       console.warn('Error cargando fuentes:', err.message)
-      setSources([])
+      setGroupedSources([])
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDelete = async (sourceId, channelId) => {
+  const toggleExpand = (sourceId) => {
+    setExpandedSources((prev) => {
+      const next = new Set(prev)
+      next.has(sourceId) ? next.delete(sourceId) : next.add(sourceId)
+      return next
+    })
+  }
+
+  const handleDeleteSource = async (sourceId) => {
+    try {
+      await apiFetch(`/api/v1/information-sources/${sourceId}`, { method: 'DELETE' })
+    } catch (err) {
+      console.warn('Error eliminando fuente:', err.message)
+    }
+    setGroupedSources((prev) => prev.filter((s) => s.id !== sourceId))
+    setExpandedSources((prev) => { const next = new Set(prev); next.delete(sourceId); return next })
+  }
+
+  const handleDeleteChannel = async (sourceId, channelId) => {
     try {
       await apiFetch(`/api/v1/information-sources/${sourceId}/rss-channels/${channelId}`, {
         method: 'DELETE',
@@ -64,7 +93,13 @@ function SourcesPage() {
     } catch (err) {
       console.warn('Error eliminando canal:', err.message)
     }
-    setSources((prev) => prev.filter((s) => !(s.sourceId === sourceId && s.id === channelId)))
+    setGroupedSources((prev) =>
+      prev.map((s) =>
+        s.id === sourceId
+          ? { ...s, channels: s.channels.filter((ch) => ch.id !== channelId) }
+          : s,
+      ),
+    )
   }
 
   const extractDomainName = (url) => {
@@ -77,18 +112,23 @@ function SourcesPage() {
     }
   }
 
-  const createSourceAndChannel = async (url, categoryId) => {
-    const srcRes = await apiFetch('/api/v1/information-sources', {
-      method: 'POST',
-      body: JSON.stringify({ name: extractDomainName(url), url }),
-    })
-    if (!srcRes.ok) {
-      const err = await srcRes.json().catch(() => ({}))
-      throw new Error(err.detail || 'Error creando fuente')
-    }
-    const src = await srcRes.json()
+  const createSourceAndChannel = async (url, categoryId, sourceId, sourceName) => {
+    let finalSourceId = sourceId
 
-    const chRes = await apiFetch(`/api/v1/information-sources/${src.id}/rss-channels`, {
+    if (sourceId === 'new') {
+      const srcRes = await apiFetch('/api/v1/information-sources', {
+        method: 'POST',
+        body: JSON.stringify({ name: sourceName, url: new URL(url).origin }),
+      })
+      if (!srcRes.ok) {
+        const err = await srcRes.json().catch(() => ({}))
+        throw new Error(err.detail || 'Error creando fuente')
+      }
+      const src = await srcRes.json()
+      finalSourceId = src.id
+    }
+
+    const chRes = await apiFetch(`/api/v1/information-sources/${finalSourceId}/rss-channels`, {
       method: 'POST',
       body: JSON.stringify({ url, category_id: categoryId }),
     })
@@ -101,53 +141,52 @@ function SourcesPage() {
     setShowCategoryModal(false)
     setPendingUrl(null)
     setSelectedCategoryId('')
+    setSelectedSourceId('')
+    setNewSourceName('')
     setModalError(null)
     fetchSources()
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
     if (!newUrl.trim()) return
     setSubmitError(null)
-    setValidating(true)
-
-    try {
-      const res = await apiFetch('/api/v1/rss/preview', {
-        method: 'POST',
-        body: JSON.stringify({ url: newUrl }),
-      })
-      const data = await res.json()
-
-      if (data.status === 'parse_error') {
-        setSubmitError(data.error || 'No se pudo analizar el feed RSS')
-      } else if (data.status === 'ok') {
-        const match = categories.find((c) => c.name === data.detected_categories[0])
-        if (!match) {
-          setPendingUrl(newUrl)
-          setShowCategoryModal(true)
-        } else {
-          await createSourceAndChannel(newUrl, match.id)
-        }
-      } else {
-        setPendingUrl(newUrl)
-        setShowCategoryModal(true)
-      }
-    } catch (err) {
-      setSubmitError(err.message || 'Error al verificar la URL')
-    } finally {
-      setValidating(false)
-    }
+    setPendingUrl(newUrl)
+    setNewSourceName(extractDomainName(newUrl))
+    setShowCategoryModal(true)
   }
 
   const handleModalConfirm = async () => {
-    if (!selectedCategoryId) return
+    if (!selectedCategoryId || !selectedSourceId) return
+    if (selectedSourceId === 'new' && !newSourceName.trim()) return
     setModalError(null)
     try {
-      await createSourceAndChannel(pendingUrl, Number(selectedCategoryId))
+      await createSourceAndChannel(
+        pendingUrl,
+        Number(selectedCategoryId),
+        selectedSourceId,
+        newSourceName.trim(),
+      )
     } catch (err) {
       setModalError(err.message || 'Error al añadir la fuente')
     }
   }
+
+  const closeModal = () => {
+    setShowCategoryModal(false)
+    setPendingUrl(null)
+    setSelectedCategoryId('')
+    setSelectedSourceId('')
+    setNewSourceName('')
+    setModalError(null)
+  }
+
+  const isConfirmDisabled =
+    !selectedCategoryId ||
+    !selectedSourceId ||
+    (selectedSourceId === 'new' && !newSourceName.trim())
+
+  const totalChannels = groupedSources.reduce((acc, s) => acc + s.channels.length, 0)
 
   return (
     <div className="bg-surface min-h-screen">
@@ -165,7 +204,15 @@ function SourcesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
               <section className="bg-surface-container-low rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-6">{t('sources.activeSources')}</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold">{t('sources.activeSources')}</h3>
+                  {!loading && totalChannels > 0 && (
+                    <span className="text-sm text-slate-500">
+                      {groupedSources.length} {t('sources.sourcesCount')} · {totalChannels} {t('sources.channelsCount')}
+                    </span>
+                  )}
+                </div>
+
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
                     <span className="material-symbols-outlined animate-spin text-slate-400">
@@ -173,37 +220,71 @@ function SourcesPage() {
                     </span>
                     <span className="ml-2 text-slate-500">{t('sources.loading')}</span>
                   </div>
-                ) : sources.length === 0 ? (
+                ) : groupedSources.length === 0 ? (
                   <div className="text-center py-8 text-slate-500">
                     <span className="material-symbols-outlined text-4xl mb-2">rss_feed</span>
                     <p>{t('sources.empty')}</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {sources.map((source) => (
-                      <div
-                        key={`${source.sourceId}-${source.id}`}
-                        className="p-4 bg-white rounded-lg border border-transparent hover:border-outline-variant flex justify-between items-center shadow-sm transition-all"
-                      >
-                        <div className="flex items-center gap-4">
-                          <span className="material-symbols-outlined text-slate-400">
-                            rss_feed
-                          </span>
-                          <div>
-                            <span className="font-bold block">{source.name}</span>
-                            <span className="text-xs text-slate-400 truncate max-w-xs block">
-                              {source.url}
-                            </span>
+                  <div className="space-y-2">
+                    {groupedSources.map((source) => {
+                      const isOpen = expandedSources.has(source.id)
+                      return (
+                        <div key={source.id} className="bg-white rounded-lg shadow-sm overflow-hidden border border-transparent hover:border-outline-variant transition-all">
+                          {/* Source header row */}
+                          <div className="flex items-center justify-between px-4 py-3">
+                            <button
+                              onClick={() => toggleExpand(source.id)}
+                              className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                            >
+                              <span className="material-symbols-outlined text-slate-400 text-base">
+                                {isOpen ? 'expand_less' : 'expand_more'}
+                              </span>
+                              <span className="material-symbols-outlined text-primary-container">
+                                public
+                              </span>
+                              <span className="font-bold truncate">{source.name}</span>
+                              <span className="ml-1 text-xs font-semibold bg-primary-container text-white rounded-full px-2 py-0.5 shrink-0">
+                                {source.channels.length}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSource(source.id)}
+                              className="material-symbols-outlined text-slate-400 hover:text-red-500 transition-colors ml-3 shrink-0"
+                            >
+                              delete
+                            </button>
                           </div>
+
+                          {/* Channel list */}
+                          {isOpen && (
+                            <div className="border-t border-slate-100 divide-y divide-slate-50">
+                              {source.channels.length === 0 ? (
+                                <p className="text-xs text-slate-400 px-12 py-3">{t('sources.noChannels')}</p>
+                              ) : (
+                                source.channels.map((ch) => (
+                                  <div
+                                    key={ch.id}
+                                    className="flex items-center justify-between px-12 py-2 bg-slate-50/60 hover:bg-slate-100/60 transition-colors"
+                                  >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <span className="material-symbols-outlined text-slate-300 text-sm">rss_feed</span>
+                                      <span className="text-xs text-slate-500 truncate">{ch.url}</span>
+                                    </div>
+                                    <button
+                                      onClick={() => handleDeleteChannel(source.id, ch.id)}
+                                      className="material-symbols-outlined text-slate-300 hover:text-red-500 transition-colors text-sm ml-3 shrink-0"
+                                    >
+                                      delete
+                                    </button>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <button
-                          onClick={() => handleDelete(source.sourceId, source.id)}
-                          className="material-symbols-outlined text-slate-400 hover:text-red-500 transition-colors"
-                        >
-                          delete
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </section>
@@ -231,10 +312,9 @@ function SourcesPage() {
                   </div>
                   <button
                     type="submit"
-                    disabled={validating}
-                    className="w-full bg-white text-primary-container font-black py-4 rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
+                    className="w-full bg-white text-primary-container font-black py-4 rounded-lg hover:bg-slate-100 transition-colors"
                   >
-                    {validating ? '...' : t('sources.connectButton')}
+                    {t('sources.connectButton')}
                   </button>
                 </form>
               </section>
@@ -244,47 +324,82 @@ function SourcesPage() {
       </main>
       <MobileNav />
 
-      {/* Category selection modal */}
       {showCategoryModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-slate-800">Seleccionar categoría</h2>
+              <h2 className="text-xl font-bold text-slate-800">{t('sources.categoryModalTitle')}</h2>
               <button
-                onClick={() => {
-                  setShowCategoryModal(false)
-                  setPendingUrl(null)
-                  setSelectedCategoryId('')
-                  setModalError(null)
-                }}
+                onClick={closeModal}
                 className="material-symbols-outlined text-slate-400 hover:text-slate-600"
               >
                 close
               </button>
             </div>
-            <p className="text-slate-500 mb-6">
-              No se detectó categoría automáticamente para este feed. Selecciona una para
-              clasificar sus artículos.
-            </p>
-            <select
-              value={selectedCategoryId}
-              onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 mb-2 text-slate-800"
-            >
-              <option value="">-- Elige una categoría --</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            {modalError && <p className="text-red-500 text-sm mb-4">{modalError}</p>}
+            <p className="text-slate-500 mb-6">{t('sources.categoryModalDesc')}</p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs uppercase font-bold text-slate-500 mb-1">
+                  {t('sources.sourceLabel')}
+                </label>
+                <select
+                  value={selectedSourceId}
+                  onChange={(e) => setSelectedSourceId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-800"
+                >
+                  <option value="">{t('sources.sourcePlaceholder')}</option>
+                  {groupedSources.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                  <option value="new">{t('sources.newSource')}</option>
+                </select>
+              </div>
+
+              {selectedSourceId === 'new' && (
+                <div>
+                  <label className="block text-xs uppercase font-bold text-slate-500 mb-1">
+                    {t('sources.sourceNameLabel')}
+                  </label>
+                  <input
+                    type="text"
+                    value={newSourceName}
+                    onChange={(e) => setNewSourceName(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-800"
+                    placeholder={t('sources.sourceNamePlaceholder')}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs uppercase font-bold text-slate-500 mb-1">
+                  {t('sources.categoryLabel')}
+                </label>
+                <select
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-800"
+                >
+                  <option value="">{t('sources.categoryPlaceholder')}</option>
+                  {categories.map((c) => (
+                    <option key={c.code} value={c.id}>
+                      {t(`categories.${c.code}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {modalError && <p className="text-red-500 text-sm mt-4">{modalError}</p>}
+
             <button
-              disabled={!selectedCategoryId}
+              disabled={isConfirmDisabled}
               onClick={handleModalConfirm}
-              className="w-full mt-4 bg-primary-container text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
+              className="w-full mt-6 bg-primary-container text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
             >
-              Añadir fuente
+              {t('sources.addButton')}
             </button>
           </div>
         </div>

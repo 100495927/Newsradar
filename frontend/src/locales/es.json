@@ -28,7 +28,13 @@
     "activeSources": "Fuentes Activas",
     "alerts": "Alertas",
     "rssChannels": "Canales RSS",
-    "activeBadge": "Activas"
+    "activeBadge": "Activas",
+    "chartTitle": "Noticias Capturadas por Día",
+    "chartSubtitle": "Volumen de ingesta diaria (últimos 30 días)",
+    "noCapture": "Sin datos de captura disponibles",
+    "volumeByCategory": "Volumen por Categoría",
+    "noData": "Sin datos disponibles",
+    "newsTooltip": "{{date}}: {{count}} noticias"
   },
   "login": {
     "tagline": "El Lente Informado",
@@ -77,17 +83,38 @@
     "namePlaceholder": "Ej: Volatilidad del Mercado",
     "cronLabel": "Frecuencia (Cron)",
     "cronHint": "Ejemplos: */15 * * * * (cada 15 min), 0 9 * * 1-5 (9AM L-V)",
+    "frequencyLabel": "Frecuencia",
+    "freq15min": "Cada 15 minutos",
+    "freq1h": "Cada hora",
+    "freq12h": "Cada 12 horas",
+    "freq24h": "Cada 24 horas",
     "cancel": "Cancelar",
     "createSubmit": "Crear Alerta",
     "errorLoad": "Error al cargar alertas",
-    "errorCreate": "Error al crear alerta"
+    "errorCreate": "Error al crear alerta",
+    "rssChannelsLabel": "Canales RSS",
+    "rssChannelsPlaceholder": "Buscar canales RSS...",
+    "suggestSynonyms": "Sinónimos",
+    "synonymsHint": "Selecciona los que quieras incluir como descriptores"
   },
   "categories": {
-    "FIN_MRKT": "Finanzas y Mercados",
-    "SEC_POL": "Seguridad Política",
-    "TECH": "Tecnología",
-    "ENERGY": "Energía",
-    "HEALTH": "Salud"
+    "01000000": "Arte, cultura y entretenimiento",
+    "02000000": "Crimen, ley y justicia",
+    "03000000": "Desastres y accidentes",
+    "04000000": "Economía, negocios y finanzas",
+    "05000000": "Educación",
+    "06000000": "Medio ambiente",
+    "07000000": "Salud",
+    "08000000": "Interés humano",
+    "09000000": "Trabajo",
+    "10000000": "Estilo de vida y ocio",
+    "11000000": "Política",
+    "12000000": "Religión y creencias",
+    "13000000": "Ciencia y tecnología",
+    "14000000": "Sociedad",
+    "15000000": "Deporte",
+    "16000000": "Conflicto, guerra y paz",
+    "17000000": "Tiempo y meteorología"
   },
   "profile": {
     "pageTitle": "Configuración de Perfil",
@@ -113,7 +140,20 @@
     "urlLabel": "URL RSS",
     "urlPlaceholder": "https://dominio.com/feed.xml",
     "connectButton": "Conectar Stream",
-    "defaultSourceName": "Nueva Fuente"
+    "defaultSourceName": "Nueva Fuente",
+    "categoryModalTitle": "Configurar canal RSS",
+    "categoryModalDesc": "Selecciona la fuente y la categoría para este feed RSS.",
+    "categoryLabel": "Categoría",
+    "categoryPlaceholder": "-- Elige una categoría --",
+    "sourceLabel": "Fuente",
+    "sourcePlaceholder": "-- Elige una fuente --",
+    "newSource": "Nueva fuente...",
+    "sourceNameLabel": "Nombre de la fuente",
+    "sourceNamePlaceholder": "p.ej. El País",
+    "addButton": "Añadir fuente",
+    "sourcesCount": "fuentes",
+    "channelsCount": "canales",
+    "noChannels": "Esta fuente no tiene canales"
   },
   "summary": {
     "pageTitle": "Resumen de Inteligencia",
@@ -123,7 +163,8 @@
     "byCategory": "Palabras Clave por Categoría",
     "newsCount": "{{count}} noticias",
     "noData": "Sin datos",
-    "noNewsProcessed": "No hay noticias procesadas todavía"
+    "noNewsProcessed": "No hay noticias procesadas todavía",
+    "appearances": "{{count}} apariciones"
   },
   "language": {
     "select": "Seleccionar idioma",

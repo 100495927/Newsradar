@@ -1,8 +1,11 @@
+import { useTranslation } from 'react-i18next'
+
 function CategoryVolumeCard({ categories, loading }) {
+  const { t } = useTranslation()
   return (
     <section className="bg-slate-900 text-white p-8 rounded-xl shadow-xl flex-1 ring-1 ring-white/10">
       <h2 className="text-sm font-black headline-font uppercase tracking-[0.2em] mb-8 border-b border-white/10 pb-4">
-        Volumen por Categoría
+        {t('dashboard.volumeByCategory')}
       </h2>
 
       {loading ? (
@@ -16,7 +19,7 @@ function CategoryVolumeCard({ categories, loading }) {
         </div>
       ) : categories.length === 0 ? (
         <p className="text-slate-500 text-xs uppercase tracking-widest text-center py-8">
-          Sin datos disponibles
+          {t('dashboard.noData')}
         </p>
       ) : (
         <div className="space-y-6">

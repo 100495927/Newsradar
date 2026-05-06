@@ -22,6 +22,7 @@ function scaleFont(value, min, max) {
 }
 
 function WordCloudDisplay({ words }) {
+  const { t } = useTranslation()
   if (words.length === 0) return null
   const values = words.map((w) => w.value)
   const min = Math.min(...values)
@@ -45,7 +46,7 @@ function WordCloudDisplay({ words }) {
             key={item.word}
             className="font-black uppercase tracking-tight cursor-default select-none transition-all duration-200 hover:scale-110 hover:text-[#0A192F]"
             style={{ fontSize: `${size}rem`, color, opacity }}
-            title={`${item.value} apariciones`}
+            title={t('summary.appearances', { count: item.value })}
           >
             {item.word}
           </span>
@@ -162,7 +163,7 @@ function SummaryPage() {
                       >
                         <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
                           <h3 className="font-black text-xs uppercase tracking-widest text-slate-800">
-                            {cat.id}
+                            {t(`categories.${cat.id.padStart(8, '0')}`, cat.id)}
                           </h3>
                           <span className="text-[10px] font-bold text-slate-400">
                             {t('summary.newsCount', { count: cat.total.toLocaleString() })}
