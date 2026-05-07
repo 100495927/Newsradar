@@ -118,7 +118,7 @@ def _load_iptc_categories_from_mongo() -> None:
     """Carga el catálogo IPTC persistido en MongoDB."""
     docs = list(
         categories_col.find(
-            {"deleted_at": {"$exists": False}},
+            {"nivel": 1},
             {"_id": 1, "descripciones": 1},
         ).sort("_id", 1)
     )

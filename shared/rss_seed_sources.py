@@ -200,6 +200,20 @@ STANDARD_RSS_SOURCES: tuple[RSSSeedSource, ...] = (
     RSSSeedSource("Sport", "Baloncesto", "https://www.sport.es/es/noticias/nba/rss.xml", category_id=15000000),
     RSSSeedSource("Sport", "Tenis", "https://www.sport.es/es/noticias/tenis/rss.xml", category_id=15000000),
     RSSSeedSource("Sport", "Automovilismo", "https://www.sport.es/es/noticias/motor/rss.xml", category_id=15000000),
+    RSSSeedSource("El Mundo", "Policía y justicia", "https://www.elmundo.es/rss/cronica-negra.xml", category_id=2000000),
+    RSSSeedSource("ABC", "Policía y justicia", "https://www.abc.es/rss/2.0/sucesos/", category_id=2000000),
+    RSSSeedSource("El País", "Catástrofes y accidentes", "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/clima-y-medio-ambiente", category_id=3000000),
+    RSSSeedSource("RTVE", "Catástrofes y accidentes", "https://www.rtve.es/noticias/rss/emergencias.xml", category_id=3000000),
+    RSSSeedSource("20 Minutos", "Interés humano", "https://www.20minutos.es/rss/gente/", category_id=8000000),
+    RSSSeedSource("El Mundo", "Interés humano", "https://www.elmundo.es/rss/gente.xml", category_id=8000000),
+    RSSSeedSource("Expansión", "Mano de obra", "https://e00-expansion.uecdn.es/rss/empleo.xml", category_id=9000000),
+    RSSSeedSource("El País", "Mano de obra", "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/economia/empleo", category_id=9000000),
+    RSSSeedSource("Vatican News", "Religión y culto", "https://www.vaticannews.va/es/rss.xml", category_id=12000000),
+    RSSSeedSource("ABC", "Religión y culto", "https://www.abc.es/rss/2.0/religion/", category_id=12000000),
+    RSSSeedSource("BBC News", "Conflicto, guerra y paz", "https://feeds.bbci.co.uk/mundo/temas/guerra/rss.xml", category_id=16000000),
+    RSSSeedSource("DW Español", "Conflicto, guerra y paz", "https://rss.dw.com/rdf/rss-es-seguridad", category_id=16000000),
+    RSSSeedSource("El Tiempo", "Meteorología", "https://www.eltiempo.es/rss/rss.xml", category_id=17000000),
+    RSSSeedSource("RTVE", "Meteorología", "https://www.rtve.es/noticias/rss/tiempo.xml", category_id=17000000),
 )
 
 

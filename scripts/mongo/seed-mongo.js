@@ -1,9 +1,9 @@
 db = db.getSiblingDB(process.env.MONGO_APP_DB);
 
-const DEFAULT_ADMIN_EMAIL = process.env.NEWSRADAR_ADMIN_EMAIL || "AdminDefault@newsradar.com";
+const DEFAULT_ADMIN_EMAIL = process.env.NEWSRADAR_ADMIN_EMAIL || "admin@newsradar.com";
 const DEFAULT_ADMIN_PASSWORD_HASH =
   process.env.NEWSRADAR_ADMIN_PASSWORD_HASH ||
-  "$2b$12$0ToWA9DEv0ZllCHPqxXtKev5L2au/M4VvXVMX5MBp/ydq79CfdBBC";
+  "$2b$12$uTKblh4KngynF/XGVsMYVe7rkzxjKS8e6DdMENj5RbFi1jmKKDsAS";
 
 const IPTC_TOP_LEVEL_CATEGORIES = [
   { id: 1000000, name: "Artes, cultura, entretenimiento y medios" },
@@ -193,6 +193,20 @@ const STANDARD_RSS_SOURCES = [
   { medio: "Sport", rss: "Baloncesto", url: "https://www.sport.es/es/noticias/nba/rss.xml", category_id: 15000000 },
   { medio: "Sport", rss: "Tenis", url: "https://www.sport.es/es/noticias/tenis/rss.xml", category_id: 15000000 },
   { medio: "Sport", rss: "Automovilismo", url: "https://www.sport.es/es/noticias/motor/rss.xml", category_id: 15000000 },
+  { medio: "El Mundo", rss: "Policía y justicia", url: "https://www.elmundo.es/rss/cronica-negra.xml", category_id: 2000000 },
+  { medio: "ABC", rss: "Policía y justicia", url: "https://www.abc.es/rss/2.0/sucesos/", category_id: 2000000 },
+  { medio: "El País", rss: "Catástrofes y accidentes", url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/clima-y-medio-ambiente", category_id: 3000000 },
+  { medio: "RTVE", rss: "Catástrofes y accidentes", url: "https://www.rtve.es/noticias/rss/emergencias.xml", category_id: 3000000 },
+  { medio: "20 Minutos", rss: "Interés humano", url: "https://www.20minutos.es/rss/gente/", category_id: 8000000 },
+  { medio: "El Mundo", rss: "Interés humano", url: "https://www.elmundo.es/rss/gente.xml", category_id: 8000000 },
+  { medio: "Expansión", rss: "Mano de obra", url: "https://e00-expansion.uecdn.es/rss/empleo.xml", category_id: 9000000 },
+  { medio: "El País", rss: "Mano de obra", url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/economia/empleo", category_id: 9000000 },
+  { medio: "Vatican News", rss: "Religión y culto", url: "https://www.vaticannews.va/es/rss.xml", category_id: 12000000 },
+  { medio: "ABC", rss: "Religión y culto", url: "https://www.abc.es/rss/2.0/religion/", category_id: 12000000 },
+  { medio: "BBC News", rss: "Conflicto, guerra y paz", url: "https://feeds.bbci.co.uk/mundo/temas/guerra/rss.xml", category_id: 16000000 },
+  { medio: "DW Español", rss: "Conflicto, guerra y paz", url: "https://rss.dw.com/rdf/rss-es-seguridad", category_id: 16000000 },
+  { medio: "El Tiempo", rss: "Meteorología", url: "https://www.eltiempo.es/rss/rss.xml", category_id: 17000000 },
+  { medio: "RTVE", rss: "Meteorología", url: "https://www.rtve.es/noticias/rss/tiempo.xml", category_id: 17000000 },
 ];
 
 function nextCounter(name) {

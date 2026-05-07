@@ -41,7 +41,7 @@ def _frontend_url() -> str:
 
 router = APIRouter()
 ROLELESS_DEFAULT_ROLE_ID = 1
-ROLELESS_DEFAULT_ROLE_NAME = "manager"
+ROLELESS_DEFAULT_ROLE_NAME = "gestor"
 
 
 # ---------------------------------------------------------------------------
