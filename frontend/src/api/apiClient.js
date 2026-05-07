@@ -111,14 +111,7 @@ export async function getTimeline() {
 }
 
 export async function getWordCloud(categoryCode) {
-  const metrics = await _latestStats()
-  const prefix = `cloud_${categoryCode}_`
-  const words = []
-  for (const m of metrics) {
-    if (m.name.startsWith(prefix)) {
-      words.push({ word: m.name.replace(prefix, ''), value: m.value })
-    }
-  }
-  words.sort((a, b) => b.value - a.value)
-  return words
+  const response = await apiFetch(`/api/v1/stats/cloud/${categoryCode}`)
+  if (!response.ok) return []
+  return response.json()
 }

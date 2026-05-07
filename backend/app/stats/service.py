@@ -57,6 +57,7 @@ def get_global_stats() -> dict[str, Any]:
     # 2. Agregación de Noticias por categoría
     noticias_por_categoria = list(
         rss_entradas_col.aggregate([
+            {"$match": {"category_id": {"$ne": None}}},
             {"$group": {"_id": "$category_id", "total": {"$sum": 1}}},
             {"$project": {"_id": 0, "id": "$_id", "total": 1}},
             {"$sort": {"total": -1, "id": 1}},
