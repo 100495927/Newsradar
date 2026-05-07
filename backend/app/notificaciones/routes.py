@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 
 from ..alertas.routes import ensure_alert_for_user
 from ..auth.user import UserInDB
-from ..dependencies import ensure_gestor_role, ensure_user_can_access, get_current_user
+from ..dependencies import ensure_gestor_role, get_current_user
 from ..store import alerts_col, next_mongo_id, notifications_col
 from .models import (
     Notification,
@@ -95,7 +95,7 @@ def list_alert_notifications(
     current_user: UserInDB = Depends(get_current_user),
 ) -> List[Notification]:
     """Lista notificaciones de una alerta sin exponer campos internos."""
-    ensure_user_can_access(user_id, current_user)
+
     ensure_alert_for_user(user_id, alert_id)
     cursor = notifications_col.find({"alert_id": alert_id}, {"_id": 0}).sort("timestamp", -1)
     return [_doc_to_notification(doc) for doc in cursor]
@@ -113,7 +113,7 @@ def create_alert_notification(
     current_user: UserInDB = Depends(ensure_gestor_role),
 ) -> Notification:
     """Crea una notificacion contractual reutilizando la configuracion interna de la alerta."""
-    ensure_user_can_access(user_id, current_user)
+
     alert = ensure_alert_for_user(user_id, alert_id)
     alert_doc = alerts_col.find_one(
         {"id": alert_id, "user_id": user_id},
@@ -155,7 +155,7 @@ def get_alert_notification(
     current_user: UserInDB = Depends(get_current_user),
 ) -> Notification:
     """Obtiene una notificacion contractual de una alerta concreta."""
-    ensure_user_can_access(user_id, current_user)
+
     ensure_alert_for_user(user_id, alert_id)
     return _doc_to_notification(ensure_notification_for_alert(alert_id, notification_id))
 
@@ -172,7 +172,7 @@ def update_alert_notification(
     current_user: UserInDB = Depends(ensure_gestor_role),
 ) -> Notification:
     """Actualiza una notificacion contractual existente."""
-    ensure_user_can_access(user_id, current_user)
+
     ensure_alert_for_user(user_id, alert_id)
     ensure_notification_for_alert(alert_id, notification_id)
     update_data = payload.model_dump(exclude_unset=True)
@@ -204,7 +204,7 @@ def delete_alert_notification(
     current_user: UserInDB = Depends(ensure_gestor_role),
 ) -> None:
     """Elimina una notificacion de una alerta."""
-    ensure_user_can_access(user_id, current_user)
+
     ensure_alert_for_user(user_id, alert_id)
     ensure_notification_for_alert(alert_id, notification_id)
     notifications_col.delete_one({"id": notification_id, "alert_id": alert_id})
@@ -223,7 +223,7 @@ def list_user_notifications(
     current_user: UserInDB = Depends(get_current_user),
 ) -> List[NotificationMailboxItem]:
     """Lista el buzon interno del usuario filtrando el canal app."""
-    ensure_user_can_access(user_id, current_user)
+
     cursor = notifications_col.find(
         {"user_id": user_id, "delivery_channels": "app"},
         {"_id": 0},
@@ -241,7 +241,7 @@ def get_user_notification(
     current_user: UserInDB = Depends(get_current_user),
 ) -> NotificationMailboxItem:
     """Obtiene una notificacion extendida del buzon del usuario."""
-    ensure_user_can_access(user_id, current_user)
+
     return _doc_to_mailbox_item(ensure_notification_for_user(user_id, notification_id))
 
 
@@ -255,7 +255,7 @@ def mark_notification_read(
     current_user: UserInDB = Depends(get_current_user),
 ) -> NotificationReadState:
     """Marca una notificacion del buzon como leida."""
-    ensure_user_can_access(user_id, current_user)
+
     ensure_notification_for_user(user_id, notification_id)
     read_at = datetime.now(timezone.utc)
     notifications_col.update_one(

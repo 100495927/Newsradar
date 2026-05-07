@@ -6,7 +6,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Response
 from shared.utils import next_run_after, next_run_on_or_after, validate_minute_cron_expression
 
-from ..dependencies import ensure_gestor_role, ensure_user_can_access, get_current_user
+from ..dependencies import ensure_gestor_role, get_current_user
 from ..auth.user import UserInDB
 from shared.iptc_catalog import resolve_category
 from ..store import (
@@ -85,12 +85,9 @@ def _normalize_notification_channels(channels: list[str] | None) -> list[str]:
     return normalized
 
 
-def _resolve_alert_category_or_400(categories: list[dict] | None) -> tuple[int, list[dict[str, str]]]:
+def _resolve_alert_category_or_400(categories: list[dict] | None) -> tuple[int | None, list[dict[str, str]]]:
     if not categories:
-        raise HTTPException(
-            status_code=400,
-            detail="La alerta debe incluir exactamente una categoría IPTC",
-        )
+        return None, []
     if len(categories) != 1:
         raise HTTPException(
             status_code=400,
@@ -167,7 +164,8 @@ def _validate_alert_scope_or_400(
                 detail=f"Canales RSS no encontrados: {missing_channels}",
             )
         incompatible_channels = [
-            int(doc["id"]) for doc in channel_docs if int(doc["category_id"]) != category_id
+            int(doc["id"]) for doc in channel_docs
+            if category_id is not None and int(doc["category_id"]) != category_id
         ]
         if incompatible_channels:
             raise HTTPException(
@@ -249,7 +247,7 @@ def _validate_alert_scope_or_400(
 @router.get("/users/{user_id}/alerts", response_model=List[Alert])
 def list_user_alerts(user_id: int, _: UserInDB = Depends(get_current_user)) -> List[Alert]:
     """Lista alertas de un usuario concreto."""
-    ensure_user_can_access(user_id, _)
+
     ensure_user_exists(user_id)
     return [_doc_to_alert(doc) for doc in alerts_col.find({"user_id": user_id}, {"_id": 0}).sort("id", 1)]
 
@@ -265,14 +263,8 @@ def create_user_alert(
     current_user: UserInDB = Depends(ensure_gestor_role),
 ) -> Alert:
     """Crea una alerta para un usuario autenticado."""
-    ensure_user_can_access(user_id, current_user)
-    ensure_user_exists(user_id)
 
-    if not payload.descriptors:
-        raise HTTPException(
-            status_code=400,
-            detail="La alerta debe incluir al menos un descriptor",
-        )
+    ensure_user_exists(user_id)
 
     if alerts_col.count_documents({"user_id": user_id}) >= 20:
         raise HTTPException(
@@ -322,7 +314,7 @@ def get_user_alert(
     current_user: UserInDB = Depends(get_current_user),
 ) -> Alert:
     """Recupera una alerta concreta de un usuario."""
-    ensure_user_can_access(user_id, current_user)
+
     return ensure_alert_for_user(user_id, alert_id)
 
 
@@ -334,15 +326,9 @@ def update_user_alert(
     current_user: UserInDB = Depends(ensure_gestor_role),
 ) -> Alert:
     """Actualiza una alerta de usuario."""
-    ensure_user_can_access(user_id, current_user)
+
     ensure_alert_for_user(user_id, alert_id)
     update_data = payload.model_dump(exclude_unset=True)
-
-    if "descriptors" in update_data and not update_data["descriptors"]:
-        raise HTTPException(
-            status_code=400,
-            detail="La alerta debe incluir al menos un descriptor",
-        )
 
     now = datetime.now(timezone.utc)
 
@@ -413,7 +399,7 @@ def delete_user_alert(
     current_user: UserInDB = Depends(ensure_gestor_role),
 ) -> None:
     """Elimina una alerta y sus notificaciones vinculadas."""
-    ensure_user_can_access(user_id, current_user)
+
     ensure_alert_for_user(user_id, alert_id)
     notifications_col.delete_many({"alert_id": alert_id})
     alerts_col.delete_one({"id": alert_id, "user_id": user_id})
@@ -429,7 +415,7 @@ def get_alert_notification_settings(
     current_user: UserInDB = Depends(ensure_gestor_role),
 ) -> AlertNotificationSettings:
     """Devuelve la configuracion interna de canales de notificacion de una alerta."""
-    ensure_user_can_access(user_id, current_user)
+
     ensure_alert_for_user(user_id, alert_id)
     alert = alerts_col.find_one(
         {"id": alert_id, "user_id": user_id},
@@ -451,7 +437,7 @@ def update_alert_notification_settings(
     current_user: UserInDB = Depends(ensure_gestor_role),
 ) -> AlertNotificationSettings:
     """Actualiza la configuracion de entrega app/email sin alterar el contrato publico de Alert."""
-    ensure_user_can_access(user_id, current_user)
+
     ensure_alert_for_user(user_id, alert_id)
     channels = _normalize_notification_channels(payload.channels)
     alerts_col.update_one(
