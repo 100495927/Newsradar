@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import List
 
@@ -31,6 +32,27 @@ router = APIRouter(tags=["alerts"])
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+_DESCRIPTOR_PADDING = ["noticias", "información", "actualización", "alertas", "seguimiento", "monitoreo", "análisis"]
+
+
+def _expand_descriptors(name: str, descriptors: list[str]) -> list[str]:
+    """Ensures at least 3 and at most 10 descriptors, expanding from name if needed."""
+    result = list(dict.fromkeys(d for d in descriptors if d and d.strip()))
+    if len(result) < 3:
+        words = [w.lower() for w in re.findall(r'\w+', name) if len(w) >= 3]
+        for w in words:
+            if w not in result:
+                result.append(w)
+            if len(result) >= 3:
+                break
+    for pad in _DESCRIPTOR_PADDING:
+        if len(result) >= 3:
+            break
+        if pad not in result:
+            result.append(pad)
+    return result[:10]
+
 
 def ensure_user_exists(user_id: int) -> None:
     """Lanza 404 si el usuario no existe."""
@@ -275,6 +297,7 @@ def create_user_alert(
     now = datetime.now(timezone.utc)
     _validate_cron_or_400(payload.cron_expression)
     category_id, normalized_categories = _resolve_alert_category_or_400(payload.categories)
+    expanded_descriptors = _expand_descriptors(payload.name, payload.descriptors or [])
     normalized_channel_ids, normalized_source_ids = _validate_alert_scope_or_400(
         category_id,
         _normalize_resource_ids(payload.rss_channels_ids, "rss_channels_ids"),
@@ -291,6 +314,7 @@ def create_user_alert(
         "id": alert_id,
         "user_id": user_id,
         **payload_data,
+        "descriptors": expanded_descriptors,
         "categories": normalized_categories,
         "category_id": category_id,
         "rss_channel_ids": normalized_channel_ids,
