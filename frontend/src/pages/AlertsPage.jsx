@@ -97,7 +97,7 @@ function AlertsPage() {
           const r = await apiFetch(`/api/v1/information-sources/${src.id}/rss-channels`)
           if (!r.ok) return []
           const channels = await r.json()
-          return channels.map((ch) => ({ id: String(ch.id), label: `${src.name} — ${ch.url}` }))
+          return channels.map((ch) => ({ id: String(ch.id), label: `${src.name} — ${ch.url}`, categoryId: ch.category_id }))
         }),
       )
       setRssChannels(channelLists.flat())
@@ -494,7 +494,7 @@ function AlertsPage() {
                 <select
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
                   value={newAlert.cat}
-                  onChange={(e) => setNewAlert({ ...newAlert, cat: e.target.value })}
+                  onChange={(e) => setNewAlert({ ...newAlert, cat: e.target.value, rssChannelIds: [] })}
                 >
                   {categories.length === 0 && (
                     <option value="" disabled>
@@ -514,7 +514,7 @@ function AlertsPage() {
                   {t('alerts.rssChannelsLabel', 'Canales RSS')}
                 </label>
                 <MultiSelectSearch
-                  options={rssChannels}
+                  options={rssChannels.filter((ch) => ch.categoryId === parseInt(newAlert.cat, 10))}
                   selected={newAlert.rssChannelIds}
                   onChange={(ids) => setNewAlert({ ...newAlert, rssChannelIds: ids })}
                   placeholder={t('alerts.rssChannelsPlaceholder')}
@@ -666,7 +666,7 @@ function AlertsPage() {
                 <select
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
                   value={editData.cat}
-                  onChange={(e) => setEditData({ ...editData, cat: e.target.value })}
+                  onChange={(e) => setEditData({ ...editData, cat: e.target.value, rssChannelIds: [] })}
                 >
                   {categories.length === 0 && (
                     <option value="" disabled>
@@ -686,7 +686,7 @@ function AlertsPage() {
                   {t('alerts.rssChannelsLabel', 'Canales RSS')}
                 </label>
                 <MultiSelectSearch
-                  options={rssChannels}
+                  options={rssChannels.filter((ch) => ch.categoryId === parseInt(editData.cat, 10))}
                   selected={editData.rssChannelIds}
                   onChange={(ids) => setEditData({ ...editData, rssChannelIds: ids })}
                   placeholder={t('alerts.rssChannelsPlaceholder')}
