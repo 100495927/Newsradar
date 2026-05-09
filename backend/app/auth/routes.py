@@ -375,7 +375,6 @@ def delete_user(user_id: int, _: UserInDB = Depends(get_current_user)) -> None:
 
 @router.get("/roles", response_model=List[Role], tags=["roles"])
 def list_roles(_: UserInDB = Depends(get_current_user)) -> List[Role]:
-    _ensure_manager_role()
     return list(roles_store.values())
 
 
@@ -392,15 +391,14 @@ def create_role(payload: RoleCreate, _: UserInDB = Depends(get_current_user)) ->
     if normalized in _created_role_names:
         raise HTTPException(status_code=409, detail="Ya existe un rol con ese nombre")
 
-    # Si el rol gestor ya fue sembrado automáticamente y coincide con el nombre,
-    # registrarlo como explícito y devolverlo (mantiene id=1)
-    mgr = roles_store.get(ROLELESS_DEFAULT_ROLE_ID)
-    if mgr and _normalize_role_name(mgr.name) == normalized:
-        _created_role_names.add(normalized)
-        return mgr
+    # Si ya existe algún rol en el store con este nombre (auto-sembrado o no),
+    # registrarlo como explícito y devolverlo — preserva su id original
+    for rid, existing in roles_store.items():
+        if _normalize_role_name(existing.name) == normalized:
+            _created_role_names.add(normalized)
+            return existing
 
-    # Crear nuevo rol con siguiente ID disponible
-    _ensure_manager_role()
+    # No existe — crear nuevo con el siguiente id disponible sin avanzar el contador artificialmente
     role_id = next_id("roles")
     while role_id in roles_store:
         role_id = next_id("roles")
@@ -413,7 +411,6 @@ def create_role(payload: RoleCreate, _: UserInDB = Depends(get_current_user)) ->
 
 @router.get("/roles/{role_id}", response_model=Role, tags=["roles"])
 def get_role(role_id: int, _: UserInDB = Depends(get_current_user)) -> Role:
-    _ensure_manager_role()
     role = roles_store.get(role_id)
     if not role:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
@@ -426,7 +423,6 @@ def update_role(
     payload: RoleUpdate,
     _: UserInDB = Depends(get_current_user),
 ) -> Role:
-    _ensure_manager_role()
     if role_id not in roles_store:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
 
@@ -452,7 +448,6 @@ def update_role(
     tags=["roles"],
 )
 def delete_role(role_id: int, _: UserInDB = Depends(get_current_user)) -> None:
-    _ensure_manager_role()
     if role_id not in roles_store:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
     if users_col.find_one({"role_ids": role_id}):

@@ -141,11 +141,10 @@ def _load_iptc_categories_from_mongo() -> None:
 
 
 def create_seed_data() -> None:
-    """Carga en memoria el catálogo y el rol canónico a partir de Mongo."""
+    """Carga en memoria el catálogo y los contadores a partir de Mongo."""
     _verify_required_collections()
     _sync_user_counter_from_mongo()
     _load_iptc_categories_from_mongo()
-    _ensure_manager_role()
 
 
 @app.on_event("startup")
