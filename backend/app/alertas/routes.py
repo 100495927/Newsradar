@@ -131,7 +131,13 @@ def _resolve_alert_category_or_400(categories: list[dict] | None) -> tuple[int |
     category_by_code = resolve_category(code) if code else None
     category_by_label = resolve_category(label) if label else None
 
-    if category_by_code is not None and category_by_label is not None:
+    if code and label:
+        # Ambos campos presentes: deben referirse a la misma categoría IPTC
+        if category_by_code is None or category_by_label is None:
+            raise HTTPException(
+                status_code=400,
+                detail="El code y el label de la categoría no corresponden a la misma categoría IPTC",
+            )
         if category_by_code.id != category_by_label.id:
             raise HTTPException(
                 status_code=400,

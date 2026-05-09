@@ -37,6 +37,14 @@ from .user import (
 from shared.utils import send_notification_email_with_error
 
 
+_HTML_TAG_RE = re.compile(r'<[^>]+>')
+
+
+def _sanitize(value: str) -> str:
+    """Elimina etiquetas HTML/script para prevenir XSS."""
+    return _HTML_TAG_RE.sub('', value).strip()
+
+
 def _frontend_url() -> str:
     return os.getenv("FRONTEND_URL", "http://localhost:5173")
 
@@ -289,9 +297,9 @@ def create_user(payload: UserCreate, _: UserInDB = Depends(get_current_user)) ->
         {
             "id": user_id,
             "email": email_lower,
-            "first_name": payload.first_name,
-            "last_name": payload.last_name,
-            "organization": payload.organization,
+            "first_name": _sanitize(payload.first_name),
+            "last_name": _sanitize(payload.last_name),
+            "organization": _sanitize(payload.organization),
             "role_ids": role_ids,
             "password_hash": hash_password(payload.password),
             "created_at": now,
@@ -337,6 +345,10 @@ def update_user(
         if existing and existing["id"] != user_id:
             raise HTTPException(status_code=409, detail="El email ya está en uso")
         data["email"] = email_lower
+
+    for field in ("first_name", "last_name", "organization"):
+        if field in data and isinstance(data[field], str):
+            data[field] = _sanitize(data[field])
 
     if "password" in data:
         data["password_hash"] = hash_password(data.pop("password"))

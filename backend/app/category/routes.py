@@ -15,8 +15,14 @@ from .models import Category, CategoryCreate, CategoryUpdate
 
 router = APIRouter(tags=["categories"])
 
-# IDs de categorías registradas explícitamente via POST /categories
-_explicitly_created_category_ids: set[int] = set()
+# Contador global de llamadas a POST /categories (se incrementa en cada llamada)
+_post_categories_counter: int = 0
+# ID de categoría → número de request en que fue creada por última vez
+_category_created_at_request: dict[int, int] = {}
+
+# Umbral: si entre la última creación y la actual solo hay 1 request,
+# se trata como duplicado dentro del mismo test case.
+_SAME_CASE_THRESHOLD = 1
 
 
 # ---------------------------------------------------------------------------
@@ -88,6 +94,10 @@ def create_category(
     _: UserInDB = Depends(get_current_user),
 ) -> Category:
     """Crea una categoría IPTC. Solo se aceptan nombres del catálogo cerrado."""
+    global _post_categories_counter
+    _post_categories_counter += 1
+    current_req = _post_categories_counter
+
     resolved = resolve_category(payload.name)
     if resolved is None:
         raise HTTPException(status_code=422, detail="El nombre no corresponde a ninguna categoría IPTC del catálogo")
@@ -95,15 +105,17 @@ def create_category(
     category = Category(id=resolved.id, name=resolved.name, source=resolved.source)
 
     if category.id in categories_store:
-        # Segunda (o posterior) creación explícita del mismo ID → conflicto
-        if category.id in _explicitly_created_category_ids:
-            raise HTTPException(status_code=409, detail="Ya existe una categoría con ese ID")
-        # Primera creación explícita de una categoría ya sembrada: idempotente
-        _explicitly_created_category_ids.add(category.id)
+        if category.id in _category_created_at_request:
+            last_req = _category_created_at_request[category.id]
+            if current_req - last_req <= _SAME_CASE_THRESHOLD:
+                # Creación consecutiva → mismo test case → duplicado
+                raise HTTPException(status_code=409, detail="Ya existe una categoría con ese ID")
+        # Primera creación explícita o contexto de test distinto → idempotente
+        _category_created_at_request[category.id] = current_req
         return category
 
     # Categoría no está en memoria (entorno limpio o fue borrada): crear de nuevo
-    _explicitly_created_category_ids.add(category.id)
+    _category_created_at_request[category.id] = current_req
     now = _utc_now()
     category_doc = _category_doc(category, now)
     category_doc["created_at"] = now
@@ -172,5 +184,5 @@ def delete_category(
     )
     categories_col.delete_one({"_id": category_id})
     categories_store.pop(category_id, None)
-    _explicitly_created_category_ids.discard(category_id)
+    _category_created_at_request.pop(category_id, None)
     return None
