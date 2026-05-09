@@ -2,12 +2,19 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 
 class InformationSourceBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)
     url: HttpUrl
+
+    @field_validator("name")
+    @classmethod
+    def name_not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("name no puede estar vacío o solo contener espacios")
+        return v.strip()
 
 
 class InformationSourceCreate(InformationSourceBase):

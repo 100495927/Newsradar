@@ -38,6 +38,11 @@ def _channel_query(source_id: int, channel_id: int) -> dict:
     }
 
 
+def _normalize_url(url: str) -> str:
+    """Elimina trailing slash para evitar duplicados por variantes equivalentes."""
+    return url.rstrip("/")
+
+
 def _doc_to_source(doc: dict) -> InformationSource:
     return InformationSource(
         id=doc["id"],
@@ -87,11 +92,13 @@ def create_information_source(
     payload: InformationSourceCreate,
     _: UserInDB = Depends(get_current_user),
 ) -> InformationSource:
-    if information_sources_col.find_one({"url": str(payload.url)}):
+    source_url = _normalize_url(str(payload.url))
+    if information_sources_col.find_one({"url": source_url, "deleted_at": {"$exists": False}}):
         raise HTTPException(status_code=409, detail="Ya existe una fuente con esa URL")
+    if information_sources_col.find_one({"name": payload.name, "deleted_at": {"$exists": False}}):
+        raise HTTPException(status_code=409, detail="Ya existe una fuente con ese nombre")
     now = _utc_now()
     source_id = next_mongo_id("information_sources")
-    source_url = str(payload.url)
     source_doc = {
         "id": source_id,
         "name": payload.name,
@@ -130,7 +137,7 @@ def update_information_source(
     now = _utc_now()
 
     source_name = update_data.get("name", source["name"])
-    source_url = str(update_data.get("url", source["url"]))
+    source_url = _normalize_url(str(update_data.get("url", source["url"])))
     set_fields = {
         "name": source_name,
         "url": source_url,
@@ -202,11 +209,11 @@ def create_source_channel(
 ) -> RSSChannel:
     ensure_information_source_exists(source_id)
     ensure_category_exists(payload.category_id)
-    if rss_channels_col.find_one({"information_source_id": source_id, "url": str(payload.url)}):
+    channel_url = _normalize_url(str(payload.url))
+    if rss_channels_col.find_one({"information_source_id": source_id, "url": channel_url, "deleted_at": {"$exists": False}}):
         raise HTTPException(status_code=409, detail="Ya existe un canal con esa URL para esta fuente")
     now = _utc_now()
     channel_id = next_mongo_id("rss_channels")
-    channel_url = str(payload.url)
     channel_doc = {
         "id": channel_id,
         "information_source_id": source_id,
@@ -260,7 +267,7 @@ def update_source_channel(
         set_fields["category_id"] = update_data["category_id"]
 
     if "url" in update_data:
-        set_fields["url"] = str(update_data["url"])
+        set_fields["url"] = _normalize_url(str(update_data["url"]))
 
     try:
         rss_channels_col.update_one(_channel_query(source_id, channel_id), {"$set": set_fields})

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from datetime import datetime, timezone
 from typing import List
 from uuid import uuid4
@@ -249,7 +250,8 @@ def list_users(_: UserInDB = Depends(get_current_user)) -> List[User]:
 @router.post("/users", response_model=User, status_code=201, tags=["users"])
 def create_user(payload: UserCreate, _: UserInDB = Depends(get_current_user)) -> User:
     """Crea usuario autenticado por token."""
-    if users_col.find_one({"email": payload.email}):
+    email_lower = str(payload.email).lower()
+    if users_col.find_one({"email": {"$regex": f"^{re.escape(email_lower)}$", "$options": "i"}}):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
     _sync_user_counter_from_mongo()
@@ -258,7 +260,7 @@ def create_user(payload: UserCreate, _: UserInDB = Depends(get_current_user)) ->
     users_col.insert_one(
         {
             "id": user_id,
-            "email": payload.email,
+            "email": email_lower,
             "first_name": payload.first_name,
             "last_name": payload.last_name,
             "organization": payload.organization,
@@ -288,17 +290,22 @@ def get_user(user_id: int, _: UserInDB = Depends(get_current_user)) -> User:
 def update_user(
     user_id: int,
     payload: UserUpdate,
-    current_user: UserInDB = Depends(get_current_user),
+    _: UserInDB = Depends(get_current_user),
 ) -> User:
-    """Actualiza el propio perfil; la logica de roles ya no altera permisos."""
-    if current_user.id != user_id:
-        raise HTTPException(status_code=403, detail="No tienes permiso para editar este perfil")
-
+    """Actualiza un usuario; cualquier usuario autenticado puede actualizar."""
     if not users_col.find_one({"id": user_id}):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     data = payload.model_dump(exclude_unset=True)
     data.pop("role_ids", None)
+
+    if "email" in data:
+        email_lower = str(data["email"]).lower()
+        existing = users_col.find_one({"email": {"$regex": f"^{re.escape(email_lower)}$", "$options": "i"}})
+        if existing and existing["id"] != user_id:
+            raise HTTPException(status_code=409, detail="El email ya está en uso")
+        data["email"] = email_lower
+
     if "password" in data:
         data["password_hash"] = hash_password(data.pop("password"))
 
@@ -349,9 +356,11 @@ def create_role(payload: RoleCreate, _: UserInDB = Depends(get_current_user)) ->
 
 @router.get("/roles/{role_id}", response_model=Role, tags=["roles"])
 def get_role(role_id: int, _: UserInDB = Depends(get_current_user)) -> Role:
-    """Responde satisfactoriamente para cualquier role_id sin efectos laterales."""
     _ensure_manager_role()
-    return Role(id=role_id, name=ROLELESS_DEFAULT_ROLE_NAME)
+    role = roles_store.get(role_id)
+    if not role:
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+    return role
 
 
 @router.put("/roles/{role_id}", response_model=Role, tags=["roles"])
@@ -360,11 +369,14 @@ def update_role(
     payload: RoleUpdate,
     _: UserInDB = Depends(get_current_user),
 ) -> Role:
-    """Acepta la operacion por compatibilidad sin modificar el backend."""
-    if payload.name is not None:
-        ensure_role_name_allowed(payload.name)
     _ensure_manager_role()
-    return Role(id=role_id, name=ROLELESS_DEFAULT_ROLE_NAME)
+    if role_id not in roles_store:
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+    current = roles_store[role_id]
+    updated_name = payload.name if payload.name is not None else current.name
+    updated = Role(id=role_id, name=updated_name)
+    roles_store[role_id] = updated
+    return updated
 
 
 @router.delete(
@@ -375,5 +387,7 @@ def update_role(
     tags=["roles"],
 )
 def delete_role(role_id: int, _: UserInDB = Depends(get_current_user)) -> None:
-    """Acepta el borrado por compatibilidad sin tocar permisos ni persistencia."""
     _ensure_manager_role()
+    if role_id not in roles_store:
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+    roles_store.pop(role_id, None)

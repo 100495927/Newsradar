@@ -30,7 +30,7 @@ class UserBase(BaseModel):
     email: EmailStr
     first_name: str = Field(..., min_length=1, max_length=120)
     last_name: str = Field(..., min_length=1, max_length=120)
-    organization: Optional[str] = Field(None, max_length=180)
+    organization: str = Field(..., min_length=1, max_length=180)
 
 
 class UserCreate(UserBase):
@@ -42,7 +42,7 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     first_name: Optional[str] = Field(None, min_length=1, max_length=120)
     last_name: Optional[str] = Field(None, min_length=1, max_length=120)
-    organization: Optional[str] = Field(None, max_length=180)
+    organization: Optional[str] = Field(None, min_length=1, max_length=180)
     role_ids: Optional[List[int]] = None
     password: Optional[str] = Field(None, min_length=6, max_length=128)
 
