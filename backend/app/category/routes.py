@@ -9,7 +9,7 @@ from pymongo.errors import DuplicateKeyError
 
 from ..auth.user import UserInDB
 from ..dependencies import get_current_user
-from ..store import categories_col, categories_store, next_mongo_id, rss_channels_col
+from ..store import categories_col, categories_store, next_mongo_id
 from shared.iptc_catalog import resolve_category
 from .models import Category, CategoryCreate, CategoryUpdate
 
@@ -177,11 +177,6 @@ def delete_category(
     if category_id not in categories_store:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
 
-    now = _utc_now()
-    rss_channels_col.update_many(
-        {"category_id": category_id, "deleted_at": {"$exists": False}},
-        {"$set": {"active": False, "deleted_at": now, "updated_at": now}},
-    )
     categories_col.delete_one({"_id": category_id})
     categories_store.pop(category_id, None)
     _category_created_at_request.pop(category_id, None)

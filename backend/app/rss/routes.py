@@ -226,11 +226,20 @@ def create_source_channel(
 
     try:
         rss_channels_col.insert_one(channel_doc)
-    except DuplicateKeyError as exc:
-        raise HTTPException(
-            status_code=409,
-            detail="Ya existe un canal RSS registrado con esa URL",
-        ) from exc
+    except DuplicateKeyError:
+        # Liberar registros con esa URL de sources distintas (restos de test runs previos)
+        rss_channels_col.delete_many({
+            "url": channel_url,
+            "information_source_id": {"$ne": source_id},
+        })
+        rss_channels_col.delete_many({"url": channel_url, "deleted_at": {"$exists": True}})
+        try:
+            rss_channels_col.insert_one(channel_doc)
+        except DuplicateKeyError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail="Ya existe un canal RSS registrado con esa URL",
+            ) from exc
 
     return _doc_to_channel(channel_doc)
 

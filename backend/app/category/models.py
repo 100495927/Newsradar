@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field
 
 
 class CategoryBase(BaseModel):
@@ -21,8 +21,3 @@ class CategoryUpdate(BaseModel):
 
 class Category(CategoryBase):
     id: int
-
-    @computed_field
-    @property
-    def code(self) -> str:
-        return str(self.id).zfill(8)
