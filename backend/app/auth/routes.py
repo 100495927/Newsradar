@@ -64,14 +64,39 @@ def _sync_user_counter_from_mongo() -> None:
         store.counters["users"] = max(store.counters["users"], max_doc["id"] + 1)
 
 
-def _ensure_manager_role() -> Role:
-    """Garantiza un rol canonico de gestor para compatibilidad del contrato."""
-    role = roles_store.get(ROLELESS_DEFAULT_ROLE_ID)
-    if isinstance(role, Role) and role.name == ROLELESS_DEFAULT_ROLE_NAME:
-        return role
+_ROLE_NAME_RE = re.compile(r'^[\w\s-]+$', re.UNICODE)
 
+# Nombres normalizados de roles creados explícitamente vía POST /roles
+_created_role_names: set[str] = set()
+
+
+def _normalize_role_name(name: str) -> str:
+    return " ".join(name.strip().lower().split())
+
+
+def _is_valid_role_name(name: str) -> bool:
+    return bool(_ROLE_NAME_RE.match(name.strip())) and bool(name.strip())
+
+
+def _role_name_conflict(name: str, exclude_id: int | None = None) -> bool:
+    normalized = _normalize_role_name(name)
+    for rid, role in roles_store.items():
+        if exclude_id is not None and rid == exclude_id:
+            continue
+        if _normalize_role_name(role.name) == normalized:
+            return True
+    return False
+
+
+def _ensure_manager_role() -> Role:
+    role = roles_store.get(ROLELESS_DEFAULT_ROLE_ID)
+    if isinstance(role, Role):
+        return role
     canonical_role = Role(id=ROLELESS_DEFAULT_ROLE_ID, name=ROLELESS_DEFAULT_ROLE_NAME)
     roles_store[ROLELESS_DEFAULT_ROLE_ID] = canonical_role
+    from .. import store
+    if store.counters["roles"] <= ROLELESS_DEFAULT_ROLE_ID:
+        store.counters["roles"] = ROLELESS_DEFAULT_ROLE_ID + 1
     return canonical_role
 
 
@@ -79,14 +104,15 @@ def _default_role_ids() -> list[int]:
     return [_ensure_manager_role().id]
 
 
-def ensure_role_ids_exist(role_ids: List[int]) -> None:
-    """Se acepta por compatibilidad, pero ya no condiciona nada."""
-    return None
-
-
-def ensure_role_name_allowed(role_name: str) -> None:
-    """Los endpoints de roles se normalizan a gestor sin restricciones funcionales."""
-    return None
+def _validate_role_ids_for_user(role_ids: List[int]) -> List[int]:
+    """Valida que los role_ids existan y no sean más de uno. Devuelve los ids a usar."""
+    if not role_ids:
+        return _default_role_ids()
+    if len(role_ids) > 1:
+        raise HTTPException(status_code=400, detail="Solo se puede asignar un rol por usuario")
+    if role_ids[0] not in roles_store:
+        raise HTTPException(status_code=404, detail="El rol especificado no existe")
+    return role_ids
 
 
 # ---------------------------------------------------------------------------
@@ -254,6 +280,8 @@ def create_user(payload: UserCreate, _: UserInDB = Depends(get_current_user)) ->
     if users_col.find_one({"email": {"$regex": f"^{re.escape(email_lower)}$", "$options": "i"}}):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
+    role_ids = _validate_role_ids_for_user(payload.role_ids)
+
     _sync_user_counter_from_mongo()
     now = datetime.now(timezone.utc)
     user_id = next_id("users")
@@ -264,7 +292,7 @@ def create_user(payload: UserCreate, _: UserInDB = Depends(get_current_user)) ->
             "first_name": payload.first_name,
             "last_name": payload.last_name,
             "organization": payload.organization,
-            "role_ids": _default_role_ids(),
+            "role_ids": role_ids,
             "password_hash": hash_password(payload.password),
             "created_at": now,
             "updated_at": now,
@@ -297,7 +325,11 @@ def update_user(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     data = payload.model_dump(exclude_unset=True)
-    data.pop("role_ids", None)
+
+    if "role_ids" in data:
+        role_ids = data.pop("role_ids") or []
+        validated = _validate_role_ids_for_user(role_ids)
+        data["role_ids"] = validated
 
     if "email" in data:
         email_lower = str(data["email"]).lower()
@@ -343,15 +375,40 @@ def delete_user(user_id: int, _: UserInDB = Depends(get_current_user)) -> None:
 
 @router.get("/roles", response_model=List[Role], tags=["roles"])
 def list_roles(_: UserInDB = Depends(get_current_user)) -> List[Role]:
-    """Expone un unico rol canonico sin efecto funcional."""
-    return [_ensure_manager_role()]
+    _ensure_manager_role()
+    return list(roles_store.values())
 
 
 @router.post("/roles", response_model=Role, status_code=201, tags=["roles"])
 def create_role(payload: RoleCreate, _: UserInDB = Depends(get_current_user)) -> Role:
-    """Acepta la operacion por compatibilidad, normalizando siempre a gestor."""
-    ensure_role_name_allowed(payload.name)
-    return _ensure_manager_role()
+    name = payload.name.strip()
+
+    if not _is_valid_role_name(name):
+        raise HTTPException(status_code=422, detail="Nombre de rol con caracteres no permitidos")
+
+    normalized = _normalize_role_name(name)
+
+    # Detectar duplicado entre roles explícitamente creados
+    if normalized in _created_role_names:
+        raise HTTPException(status_code=409, detail="Ya existe un rol con ese nombre")
+
+    # Si el rol gestor ya fue sembrado automáticamente y coincide con el nombre,
+    # registrarlo como explícito y devolverlo (mantiene id=1)
+    mgr = roles_store.get(ROLELESS_DEFAULT_ROLE_ID)
+    if mgr and _normalize_role_name(mgr.name) == normalized:
+        _created_role_names.add(normalized)
+        return mgr
+
+    # Crear nuevo rol con siguiente ID disponible
+    _ensure_manager_role()
+    role_id = next_id("roles")
+    while role_id in roles_store:
+        role_id = next_id("roles")
+
+    role = Role(id=role_id, name=name)
+    roles_store[role_id] = role
+    _created_role_names.add(normalized)
+    return role
 
 
 @router.get("/roles/{role_id}", response_model=Role, tags=["roles"])
@@ -372,8 +429,16 @@ def update_role(
     _ensure_manager_role()
     if role_id not in roles_store:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
+
+    if payload.name is not None:
+        name = payload.name.strip()
+        if not _is_valid_role_name(name):
+            raise HTTPException(status_code=422, detail="Nombre de rol con caracteres no permitidos")
+        if _role_name_conflict(name, exclude_id=role_id):
+            raise HTTPException(status_code=409, detail="Ya existe un rol con ese nombre")
+
     current = roles_store[role_id]
-    updated_name = payload.name if payload.name is not None else current.name
+    updated_name = payload.name.strip() if payload.name is not None else current.name
     updated = Role(id=role_id, name=updated_name)
     roles_store[role_id] = updated
     return updated
@@ -390,4 +455,7 @@ def delete_role(role_id: int, _: UserInDB = Depends(get_current_user)) -> None:
     _ensure_manager_role()
     if role_id not in roles_store:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
-    roles_store.pop(role_id, None)
+    if users_col.find_one({"role_ids": role_id}):
+        raise HTTPException(status_code=409, detail="El rol está asignado a usuarios y no puede eliminarse")
+    role = roles_store.pop(role_id)
+    _created_role_names.discard(_normalize_role_name(role.name))
