@@ -36,6 +36,10 @@ router = APIRouter(tags=["alerts"])
 _DESCRIPTOR_PADDING = ["noticias", "información", "actualización", "alertas", "seguimiento", "monitoreo", "análisis"]
 
 
+def _normalize_alert_name(name: str) -> str:
+    return " ".join(name.strip().lower().split())
+
+
 def _expand_descriptors(name: str, descriptors: list[str]) -> list[str]:
     """Ensures at least 3 and at most 10 descriptors, expanding from name if needed."""
     result = list(dict.fromkeys(d for d in descriptors if d and d.strip()))
@@ -124,7 +128,19 @@ def _resolve_alert_category_or_400(categories: list[dict] | None) -> tuple[int |
         code = getattr(candidate, "code", None)
         label = getattr(candidate, "label", None)
 
-    category = resolve_category(code) or resolve_category(label)
+    category_by_code = resolve_category(code) if code else None
+    category_by_label = resolve_category(label) if label else None
+
+    if category_by_code is not None and category_by_label is not None:
+        if category_by_code.id != category_by_label.id:
+            raise HTTPException(
+                status_code=400,
+                detail="El code y el label de la categoría no corresponden a la misma categoría IPTC",
+            )
+        category = category_by_code
+    else:
+        category = category_by_code or category_by_label
+
     if category is None:
         raise HTTPException(
             status_code=400,
@@ -294,6 +310,13 @@ def create_user_alert(
             detail="Un gestor no puede tener más de 20 alertas",
         )
 
+    name_normalized = _normalize_alert_name(payload.name)
+    if alerts_col.count_documents({"user_id": user_id, "name_normalized": name_normalized}) > 0:
+        raise HTTPException(
+            status_code=409,
+            detail="Ya existe una alerta con ese nombre para este usuario",
+        )
+
     now = datetime.now(timezone.utc)
     _validate_cron_or_400(payload.cron_expression)
     category_id, normalized_categories = _resolve_alert_category_or_400(payload.categories)
@@ -314,6 +337,7 @@ def create_user_alert(
         "id": alert_id,
         "user_id": user_id,
         **payload_data,
+        "name_normalized": name_normalized,
         "descriptors": expanded_descriptors,
         "categories": normalized_categories,
         "category_id": category_id,

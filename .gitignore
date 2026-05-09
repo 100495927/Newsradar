@@ -17,3 +17,5 @@ data/elasticsearch/config/*
 !data/elasticsearch/config/elasticsearch.yml
 
 newsradar_api/
+.claude
+devops_verifica-main

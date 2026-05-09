@@ -87,7 +87,6 @@ def test_crear_alerta_persiste_scope_rss_en_mongo(monkeypatch):
     monkeypatch.setattr(alert_routes, "next_mongo_id", lambda _key: 33)
     scheduled_next_run = datetime(2026, 5, 2, 13, 0, tzinfo=timezone.utc)
     monkeypatch.setattr(alert_routes, "next_run_after", lambda *_args, **_kwargs: scheduled_next_run)
-    monkeypatch.setattr(alert_routes, "ensure_user_can_access", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(alert_routes, "ensure_user_exists", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(
         alert_routes,
@@ -116,7 +115,7 @@ def test_crear_alerta_persiste_scope_rss_en_mongo(monkeypatch):
         "id": 33,
         "user_id": 7,
         "name": "Alerta energia",
-        "descriptors": ["energia"],
+        "descriptors": ["energia", "alerta", "noticias"],
         "categories": [{"code": "4000000", "label": "Economía, negocios y finanzas"}],
         "rss_channels_ids": ["101"],
         "information_sources_ids": [],
@@ -138,7 +137,6 @@ def test_crear_alerta_persiste_varios_rss_channels(monkeypatch):
         "next_run_after",
         lambda *_args, **_kwargs: datetime(2026, 5, 2, 12, 15, tzinfo=timezone.utc),
     )
-    monkeypatch.setattr(alert_routes, "ensure_user_can_access", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(alert_routes, "ensure_user_exists", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(
         alert_routes,
@@ -169,7 +167,6 @@ def test_crear_alerta_persiste_varios_rss_channels(monkeypatch):
 
 def test_crear_alerta_rechaza_varias_categorias(monkeypatch):
     monkeypatch.setattr(alert_routes, "alerts_col", FakeCollection([]))
-    monkeypatch.setattr(alert_routes, "ensure_user_can_access", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(alert_routes, "ensure_user_exists", lambda *_args, **_kwargs: None)
 
     payload = AlertCreate(
