@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class Metric(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100)
+    name: str = Field(..., min_length=1, max_length=80)
     value: float
 
 

@@ -9,12 +9,19 @@ class InformationSourceBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)
     url: HttpUrl
 
-    @field_validator("name")
+    @field_validator("name", mode="before")
     @classmethod
-    def name_not_blank(cls, v: str) -> str:
-        if not v.strip():
+    def name_not_blank(cls, v: object) -> object:
+        if isinstance(v, str) and not v.strip():
             raise ValueError("name no puede estar vacío o solo contener espacios")
-        return v.strip()
+        return v.strip() if isinstance(v, str) else v
+
+    @field_validator("url", mode="before")
+    @classmethod
+    def url_not_blank(cls, v: object) -> object:
+        if isinstance(v, str) and not v.strip():
+            raise ValueError("url no puede estar vacía")
+        return v
 
 
 class InformationSourceCreate(InformationSourceBase):
@@ -33,6 +40,13 @@ class InformationSource(InformationSourceBase):
 class RSSChannelBase(BaseModel):
     url: HttpUrl
     category_id: int
+
+    @field_validator("url", mode="before")
+    @classmethod
+    def url_not_blank(cls, v: object) -> object:
+        if isinstance(v, str) and not v.strip():
+            raise ValueError("url no puede estar vacía")
+        return v
 
 
 class RSSChannelCreate(RSSChannelBase):

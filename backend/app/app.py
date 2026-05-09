@@ -67,15 +67,14 @@ def _sync_user_counter_from_mongo() -> None:
         counters["users"] = max_doc["id"] + 1
 
 
-def _ensure_manager_role() -> int:
-    """Mantiene un unico rol funcional de gestor para compatibilidad."""
-    roles_store.clear()
-    roles_store[ROLELESS_DEFAULT_ROLE_ID] = Role(
-        id=ROLELESS_DEFAULT_ROLE_ID,
-        name=ROLELESS_DEFAULT_ROLE_NAME,
-    )
+def _seed_manager_role() -> None:
+    """Siembra el rol gestor si no existe, sin limpiar el store ni sobreescribir roles explícitos."""
+    if ROLELESS_DEFAULT_ROLE_ID not in roles_store:
+        roles_store[ROLELESS_DEFAULT_ROLE_ID] = Role(
+            id=ROLELESS_DEFAULT_ROLE_ID,
+            name="gestor",
+        )
     counters["roles"] = max(counters["roles"], ROLELESS_DEFAULT_ROLE_ID + 1)
-    return ROLELESS_DEFAULT_ROLE_ID
 
 
 def _verify_required_collections() -> None:
@@ -141,10 +140,11 @@ def _load_iptc_categories_from_mongo() -> None:
 
 
 def create_seed_data() -> None:
-    """Carga en memoria el catálogo y los contadores a partir de Mongo."""
+    """Carga en memoria el catálogo, los contadores y el rol por defecto."""
     _verify_required_collections()
     _sync_user_counter_from_mongo()
     _load_iptc_categories_from_mongo()
+    _seed_manager_role()
 
 
 @app.on_event("startup")

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, computed_field
 
 class CategoryBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)
-    source: str = Field(default="IPTC", pattern="^IPTC$")
+    source: str = Field(..., pattern="^IPTC$")
 
 
 class CategoryCreate(CategoryBase):

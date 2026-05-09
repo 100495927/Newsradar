@@ -64,7 +64,7 @@ def _sync_user_counter_from_mongo() -> None:
         store.counters["users"] = max(store.counters["users"], max_doc["id"] + 1)
 
 
-_ROLE_NAME_RE = re.compile(r'^[\w\s-]+$', re.UNICODE)
+_ROLE_NAME_RE = re.compile(r'^[a-zA-ZÀ-ÿ0-9 _-]+$')
 
 # Nombres normalizados de roles creados explícitamente vía POST /roles
 _created_role_names: set[str] = set()

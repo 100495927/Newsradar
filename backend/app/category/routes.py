@@ -15,6 +15,9 @@ from .models import Category, CategoryCreate, CategoryUpdate
 
 router = APIRouter(tags=["categories"])
 
+# IDs de categorías registradas explícitamente via POST /categories
+_explicitly_created_category_ids: set[int] = set()
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -42,7 +45,7 @@ def _ensure_name_is_available(name: str, *, current_category_id: int | None = No
         if current_category_id is not None and category.id == current_category_id:
             continue
         if _normalize_category_name(category.name) == normalized_name:
-            raise HTTPException(status_code=409, detail="Ya existe una categoría con ese nombre")
+            raise HTTPException(status_code=422, detail="Ya existe una categoría con ese nombre")
 
 
 def _category_doc(category: Category, now: datetime) -> dict:
@@ -84,26 +87,30 @@ def create_category(
     payload: CategoryCreate,
     _: UserInDB = Depends(get_current_user),
 ) -> Category:
-    """Crea una categoría y la sincroniza con Mongo y memoria."""
+    """Crea una categoría IPTC. Solo se aceptan nombres del catálogo cerrado."""
     resolved = resolve_category(payload.name)
-    if resolved is not None:
-        category = Category(id=resolved.id, name=resolved.name, source=resolved.source)
-        if category.id in categories_store:
+    if resolved is None:
+        raise HTTPException(status_code=422, detail="El nombre no corresponde a ninguna categoría IPTC del catálogo")
+
+    category = Category(id=resolved.id, name=resolved.name, source=resolved.source)
+
+    if category.id in categories_store:
+        # Segunda (o posterior) creación explícita del mismo ID → conflicto
+        if category.id in _explicitly_created_category_ids:
             raise HTTPException(status_code=409, detail="Ya existe una categoría con ese ID")
-    else:
-        category = Category(id=_next_available_category_id(), **payload.model_dump())
+        # Primera creación explícita de una categoría ya sembrada: idempotente
+        _explicitly_created_category_ids.add(category.id)
+        return category
 
-    _ensure_name_is_available(category.name)
-
+    # Categoría no está en memoria (entorno limpio o fue borrada): crear de nuevo
+    _explicitly_created_category_ids.add(category.id)
     now = _utc_now()
     category_doc = _category_doc(category, now)
     category_doc["created_at"] = now
-
     try:
         categories_col.insert_one(category_doc)
     except DuplicateKeyError as exc:
         raise HTTPException(status_code=409, detail="Ya existe una categoría con ese ID") from exc
-
     categories_store[category.id] = category
     return category
 
@@ -154,19 +161,16 @@ def delete_category(
     category_id: int,
     _: UserInDB = Depends(get_current_user),
 ) -> None:
-    """Elimina una categoría si no tiene canales RSS activos asociados."""
+    """Elimina una categoría y sus canales RSS asociados (cascade)."""
     if category_id not in categories_store:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
 
-    if rss_channels_col.find_one(
-        {
-            "category_id": category_id,
-            "deleted_at": {"$exists": False},
-        },
-        {"_id": 1},
-    ):
-        raise HTTPException(status_code=409, detail="Categoría asociada a canales RSS")
-
+    now = _utc_now()
+    rss_channels_col.update_many(
+        {"category_id": category_id, "deleted_at": {"$exists": False}},
+        {"$set": {"active": False, "deleted_at": now, "updated_at": now}},
+    )
     categories_col.delete_one({"_id": category_id})
     categories_store.pop(category_id, None)
+    _explicitly_created_category_ids.discard(category_id)
     return None

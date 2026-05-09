@@ -39,8 +39,8 @@ def _channel_query(source_id: int, channel_id: int) -> dict:
 
 
 def _normalize_url(url: str) -> str:
-    """Elimina trailing slash para evitar duplicados por variantes equivalentes."""
-    return url.rstrip("/")
+    """Normaliza URL: lowercase + sin trailing slash para evitar duplicados por variantes equivalentes."""
+    return url.lower().rstrip("/")
 
 
 def _doc_to_source(doc: dict) -> InformationSource:
