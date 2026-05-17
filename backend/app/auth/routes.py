@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 from typing import List
 from uuid import uuid4
 
-import pymongo
 from fastapi import APIRouter, Depends, HTTPException, Response
+from pymongo.errors import DuplicateKeyError
 
 from ..dependencies import (
     es_token_valido,
@@ -18,6 +18,7 @@ from ..dependencies import (
 from ..store import (
     alerts_col,
     next_id,
+    next_mongo_id,
     notifications_col,
     roles_store,
     users_col,
@@ -61,15 +62,6 @@ def _doc_to_userindb(doc: dict) -> UserInDB:
     """Convierte un documento MongoDB en UserInDB eliminando el _id de Mongo."""
     doc = normalize_legacy_user_doc(doc)
     return UserInDB(**doc)
-
-
-def _sync_user_counter_from_mongo() -> None:
-    """Evita IDs duplicados cuando el contador en memoria arranca desfasado."""
-    max_doc = users_col.find_one(sort=[("id", pymongo.DESCENDING)])
-    if max_doc and isinstance(max_doc.get("id"), int):
-        from .. import store
-
-        store.counters["users"] = max(store.counters["users"], max_doc["id"] + 1)
 
 
 _ROLE_NAME_RE = re.compile(r'^[a-zA-ZÀ-ÿ0-9 _-]+$')
@@ -152,13 +144,12 @@ def register(payload: UserCreate) -> User:
     if users_col.find_one({"email": payload.email}):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
-    _sync_user_counter_from_mongo()
     now = datetime.now(timezone.utc)
-    user_id = next_id("users")
+    user_id = next_mongo_id("users")
     role_ids = _default_role_ids()
     verification_token = str(uuid4())
 
-    users_col.insert_one({
+    user_doc = {
         "id": user_id,
         "email": payload.email,
         "first_name": payload.first_name,
@@ -173,7 +164,11 @@ def register(payload: UserCreate) -> User:
         "role": ROLELESS_DEFAULT_ROLE_NAME,
         "status": "active",
         "is_verified": False,
-    })
+    }
+    try:
+        users_col.insert_one(user_doc)
+    except DuplicateKeyError:
+        raise HTTPException(status_code=409, detail="El email ya está registrado") from None
 
     verify_link = f"{_frontend_url()}/verify/{verification_token}"
     subject = "NewsRadar – Verifica tu cuenta"
@@ -290,25 +285,27 @@ def create_user(payload: UserCreate, _: UserInDB = Depends(get_current_user)) ->
 
     role_ids = _validate_role_ids_for_user(payload.role_ids)
 
-    _sync_user_counter_from_mongo()
     now = datetime.now(timezone.utc)
-    user_id = next_id("users")
-    users_col.insert_one(
-        {
-            "id": user_id,
-            "email": email_lower,
-            "first_name": _sanitize(payload.first_name),
-            "last_name": _sanitize(payload.last_name),
-            "organization": _sanitize(payload.organization),
-            "role_ids": role_ids,
-            "password_hash": hash_password(payload.password),
-            "created_at": now,
-            "updated_at": now,
-            "role": ROLELESS_DEFAULT_ROLE_NAME,
-            "status": "active",
-            "is_verified": False,
-        }
-    )
+    user_id = next_mongo_id("users")
+    user_doc = {
+        "id": user_id,
+        "email": email_lower,
+        "first_name": _sanitize(payload.first_name),
+        "last_name": _sanitize(payload.last_name),
+        "organization": _sanitize(payload.organization),
+        "role_ids": role_ids,
+        "password_hash": hash_password(payload.password),
+        "created_at": now,
+        "updated_at": now,
+        "role": ROLELESS_DEFAULT_ROLE_NAME,
+        "status": "active",
+        "is_verified": False,
+    }
+    try:
+        users_col.insert_one(user_doc)
+    except DuplicateKeyError:
+        raise HTTPException(status_code=409, detail="El email ya está registrado") from None
+
     doc = users_col.find_one({"id": user_id})
     return sanitize_user(_doc_to_userindb(doc))
 
@@ -355,7 +352,10 @@ def update_user(
 
     if data:
         data["updated_at"] = datetime.now(timezone.utc)
-        users_col.update_one({"id": user_id}, {"$set": data})
+        try:
+            users_col.update_one({"id": user_id}, {"$set": data})
+        except DuplicateKeyError:
+            raise HTTPException(status_code=409, detail="El email ya está en uso") from None
 
     updated = users_col.find_one({"id": user_id})
     return sanitize_user(_doc_to_userindb(updated))
