@@ -32,7 +32,7 @@ from .store import (
 
 API_PREFIX = "/api/v1"
 ROLELESS_DEFAULT_ROLE_ID = 1
-ROLELESS_DEFAULT_ROLE_NAME = "manager"
+ROLELESS_DEFAULT_ROLE_NAME = "gestor"
 
 app = FastAPI(
     title="NewsRadar API",
