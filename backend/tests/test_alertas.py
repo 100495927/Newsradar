@@ -100,7 +100,7 @@ def test_crear_alerta_persiste_scope_rss_en_mongo(monkeypatch):
     payload = AlertCreate(
         name="Alerta energia",
         descriptors=["energia"],
-        categories=[{"code": "4000000", "label": "Economía, negocios y finanzas"}],
+        categories=[{"code": "04000000", "label": "Economía, negocios y finanzas"}],
         rss_channels_ids=["101"],
         cron_expression="*/15 * * * *",
     )
@@ -116,7 +116,7 @@ def test_crear_alerta_persiste_scope_rss_en_mongo(monkeypatch):
         "user_id": 7,
         "name": "Alerta energia",
         "descriptors": ["energia", "alerta", "noticias"],
-        "categories": [{"code": "4000000", "label": "Economía, negocios y finanzas"}],
+        "categories": [{"code": "04000000", "label": "Economía, negocios y finanzas"}],
         "rss_channels_ids": ["101"],
         "information_sources_ids": [],
         "cron_expression": "*/15 * * * *",
@@ -150,7 +150,7 @@ def test_crear_alerta_persiste_varios_rss_channels(monkeypatch):
     payload = AlertCreate(
         name="Alerta multi-canal",
         descriptors=["energia"],
-        categories=[{"code": "4000000", "label": "Economía, negocios y finanzas"}],
+        categories=[{"code": "04000000", "label": "Economía, negocios y finanzas"}],
         rss_channels_ids=["101", "202", "303"],
         cron_expression="*/15 * * * *",
     )
@@ -186,7 +186,7 @@ def test_crear_alerta_rechaza_varias_categorias(monkeypatch):
             current_user=_dummy_user(),
         )
 
-    assert "exactamente una categor" in str(exc_info.value).lower()
+    assert "como máximo una categor" in str(exc_info.value).lower()
 
 
 def test_next_run_after_avoids_running_new_alert_in_a_past_minute() -> None:

@@ -272,7 +272,7 @@ COLLECTION_SPECS = [
                             },
                         },
                     },
-                    "category_id": {"bsonType": ["int", "long"]},
+                    "category_id": {"bsonType": ["int", "long", "null"]},
                     "rss_channel_ids": {
                         "bsonType": "array",
                         "items": {"bsonType": ["int", "long"]},

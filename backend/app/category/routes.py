@@ -145,14 +145,22 @@ def update_category(
     payload: CategoryUpdate,
     _: UserInDB = Depends(get_current_user),
 ) -> Category:
-    """Actualiza una categoría existente sin cambiar su ID."""
+    """Actualiza una categoría existente sin salir del catálogo IPTC cerrado."""
     category = categories_store.get(category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
 
     update_data = payload.model_dump(exclude_unset=True)
+    if "name" in update_data:
+        resolved = resolve_category(update_data["name"])
+        if resolved is None:
+            raise HTTPException(status_code=422, detail="El nombre no corresponde a ninguna categoría IPTC del catálogo")
+        if resolved.id != category_id:
+            raise HTTPException(status_code=422, detail="El nombre no corresponde al ID oficial de esta categoría")
+        update_data["name"] = resolved.name
+        update_data["source"] = resolved.source
+
     updated = category.model_copy(update=update_data)
-    _ensure_name_is_available(updated.name, current_category_id=category_id)
 
     categories_col.update_one(
         {"_id": category_id},
