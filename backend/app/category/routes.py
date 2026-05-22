@@ -155,8 +155,6 @@ def update_category(
         resolved = resolve_category(update_data["name"])
         if resolved is None:
             raise HTTPException(status_code=422, detail="El nombre no corresponde a ninguna categoría IPTC del catálogo")
-        if resolved.id != category_id:
-            raise HTTPException(status_code=422, detail="El nombre no corresponde al ID oficial de esta categoría")
         update_data["name"] = resolved.name
         update_data["source"] = resolved.source
 

@@ -326,6 +326,9 @@ def create_user_alert(
 
     now = datetime.now(timezone.utc)
     _validate_cron_or_400(payload.cron_expression)
+    raw_descriptors = [d for d in (payload.descriptors or []) if d and d.strip()]
+    if len(raw_descriptors) != len(set(raw_descriptors)):
+        raise HTTPException(status_code=422, detail="Los descriptores no pueden contener duplicados")
     category_id, normalized_categories = _resolve_alert_category_or_400(payload.categories)
     expanded_descriptors = _expand_descriptors(payload.name, payload.descriptors or [])
     normalized_channel_ids, normalized_source_ids = _validate_alert_scope_or_400(
