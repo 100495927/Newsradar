@@ -234,7 +234,7 @@ def _validate_alert_scope_or_400(
                     ),
                 )
 
-    if normalized_source_ids:
+    if normalized_source_ids and category_id is not None:
         source_docs = list(
             information_sources_col.find(
                 {

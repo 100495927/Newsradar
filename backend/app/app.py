@@ -114,16 +114,13 @@ def _seed_static_iptc_categories() -> None:
 
 
 def _load_iptc_categories_from_mongo() -> None:
-    """Carga el catálogo IPTC persistido en MongoDB."""
+    """Carga el catálogo IPTC desde MongoDB y restaura las que falten."""
     docs = list(
         categories_col.find(
             {"nivel": 1},
             {"_id": 1, "descripciones": 1},
         ).sort("_id", 1)
     )
-    if not docs:
-        _seed_static_iptc_categories()
-        return
 
     categories_store.clear()
     for doc in docs:
@@ -137,6 +134,21 @@ def _load_iptc_categories_from_mongo() -> None:
             name=name,
             source="IPTC",
         )
+
+    # Restaurar categorías IPTC que falten en MongoDB (borradas por tests GC)
+    now = datetime.now(timezone.utc)
+    for cat in IPTC_TOP_LEVEL_CATEGORIES:
+        if cat.id not in categories_store:
+            categories_col.update_one(
+                {"_id": cat.id},
+                {"$setOnInsert": {
+                    "_id": cat.id, "nivel": 1, "id_padre": None,
+                    "descripciones": [{"idioma": "es", "nombre": cat.name, "descripcion": cat.name}],
+                    "subcategorias": [], "updated_at": now, "created_at": now,
+                }},
+                upsert=True,
+            )
+            categories_store[cat.id] = Category(id=cat.id, name=cat.name, source=cat.source)
 
 
 def create_seed_data() -> None:
