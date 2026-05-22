@@ -1,6 +1,10 @@
 from __future__ import annotations
+import socket
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from typing import List
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pymongo.errors import DuplicateKeyError
@@ -19,6 +23,45 @@ from .models import (
 )
 
 router = APIRouter(tags=["information-sources", "rss-channels"])
+
+
+def _url_accessible(url: str, timeout: int = 5) -> bool:
+    """False only on definite failures: DNS error or connection refused."""
+    try:
+        parsed = urlparse(url)
+        host = parsed.hostname or ""
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        socket.create_connection((host, port), timeout=timeout).close()
+        return True
+    except (socket.gaierror, ConnectionRefusedError):
+        return False
+    except Exception:
+        return True  # timeout or other uncertain failure — be permissive
+
+
+def _is_rss_content(url: str, timeout: int = 5) -> bool:
+    """False only when GET confirms the content is definitively not RSS."""
+    try:
+        req = urllib.request.Request(url, headers={"Accept-Encoding": "identity"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            content_type = resp.headers.get("Content-Type", "").lower()
+            if "application/json" in content_type:
+                return False
+            chunk = resp.read(4096)
+            if any(tag in chunk for tag in (b"<rss", b"<feed", b"<channel")):
+                return True
+            # HTML body with no RSS tags → not RSS
+            if "text/html" in content_type:
+                return False
+            return False
+    except urllib.error.HTTPError as exc:
+        # Only reject if server confirms JSON content type
+        if "application/json" in exc.headers.get("Content-Type", "").lower():
+            return False
+        return True  # can't confirm non-RSS — be permissive
+    except Exception:
+        return True  # network/timeout — be permissive
+
 
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -93,6 +136,8 @@ def create_information_source(
     _: UserInDB = Depends(get_current_user),
 ) -> InformationSource:
     source_url = _normalize_url(str(payload.url))
+    if not _url_accessible(source_url):
+        raise HTTPException(status_code=422, detail="URL no accesible")
     if information_sources_col.find_one({"url": source_url, "deleted_at": {"$exists": False}}):
         raise HTTPException(status_code=409, detail="Ya existe una fuente con esa URL")
     if information_sources_col.find_one({"name": payload.name, "deleted_at": {"$exists": False}}):
@@ -138,6 +183,8 @@ def update_information_source(
 
     source_name = update_data.get("name", source["name"])
     source_url = _normalize_url(str(update_data.get("url", source["url"])))
+    if "url" in update_data and not _url_accessible(source_url):
+        raise HTTPException(status_code=422, detail="URL no accesible")
     set_fields = {
         "name": source_name,
         "url": source_url,
@@ -210,6 +257,10 @@ def create_source_channel(
     ensure_information_source_exists(source_id)
     ensure_category_exists(payload.category_id)
     channel_url = _normalize_url(str(payload.url))
+    if not _url_accessible(channel_url):
+        raise HTTPException(status_code=422, detail="URL no accesible")
+    if not _is_rss_content(channel_url):
+        raise HTTPException(status_code=422, detail="La URL no contiene contenido RSS")
     if rss_channels_col.find_one({"information_source_id": source_id, "url": channel_url, "deleted_at": {"$exists": False}}):
         raise HTTPException(status_code=409, detail="Ya existe un canal con esa URL para esta fuente")
     now = _utc_now()
@@ -276,7 +327,10 @@ def update_source_channel(
         set_fields["category_id"] = update_data["category_id"]
 
     if "url" in update_data:
-        set_fields["url"] = _normalize_url(str(update_data["url"]))
+        new_url = _normalize_url(str(update_data["url"]))
+        if not _is_rss_content(new_url):
+            raise HTTPException(status_code=422, detail="La URL no contiene contenido RSS")
+        set_fields["url"] = new_url
 
     try:
         rss_channels_col.update_one(_channel_query(source_id, channel_id), {"$set": set_fields})
