@@ -138,8 +138,8 @@ Actualizacion contractual aplicada el `2026-04-29`:
 
 - `Alert`, `AlertCreate` y `AlertUpdate` incorporan los campos `rss_channels_ids` e `information_sources_ids`.
 - En esta fase el contrato publico ya refleja esos campos, aunque su explotacion funcional interna puede evolucionar despues.
-- Aunque `categories` se modela como lista por compatibilidad y futura extension, funcionalmente la alerta debe llevar por ahora una sola categoria IPTC.
-- Si la alerta no informa `rss_channels_ids`, su alcance funcional son todos los canales RSS de esa categoria.
+- Aunque `categories` se modela como lista por compatibilidad y futura extension, funcionalmente la alerta puede llevar cero o una categoria IPTC.
+- Si la alerta no informa `rss_channels_ids`, su alcance funcional son todos los canales RSS de esa categoria, o todos los canales si la alerta no informa categoria.
 - Si la alerta informa `rss_channels_ids`, el alcance funcional se restringe a esos canales concretos.
 - Si la alerta selecciona `rss_channels_ids` o `information_sources_ids`, esos canales o fuentes deben ser compatibles con la categoria de la alerta; en caso contrario la API respondera `400 Bad Request`.
 
@@ -147,8 +147,8 @@ Actualizacion contractual aplicada el `2026-04-29`:
 
 ```json
 {
-  "code": "politics",
-  "label": "Politics"
+  "code": "11000000",
+  "label": "Política"
 }
 ```
 
@@ -161,7 +161,7 @@ Actualizacion contractual aplicada el `2026-04-29`:
   "name": "Elecciones",
   "descriptors": ["congreso", "senado"],
   "categories": [
-    { "code": "11000000", "label": "Politica" }
+    { "code": "11000000", "label": "Política" }
   ],
   "rss_channels_ids": ["101", "205"],
   "information_sources_ids": ["1", "7"],
@@ -176,7 +176,7 @@ Actualizacion contractual aplicada el `2026-04-29`:
   "name": "Elecciones",
   "descriptors": ["congreso", "senado"],
   "categories": [
-    { "code": "11000000", "label": "Politica" }
+    { "code": "11000000", "label": "Política" }
   ],
   "rss_channels_ids": ["101", "205"],
   "information_sources_ids": ["1", "7"],
@@ -191,7 +191,7 @@ Actualizacion contractual aplicada el `2026-04-29`:
   "name": "Elecciones Europa",
   "descriptors": ["parlamento europeo"],
   "categories": [
-    { "code": "11000000", "label": "Politica" }
+    { "code": "11000000", "label": "Política" }
   ],
   "rss_channels_ids": ["301"],
   "information_sources_ids": ["9"],
@@ -218,8 +218,8 @@ Actualizacion contractual aplicada el `2026-04-29`:
 
 ```json
 {
-  "id": 1,
-  "name": "Politics",
+  "id": 11000000,
+  "name": "Política",
   "source": "IPTC"
 }
 ```
@@ -241,7 +241,7 @@ Actualizacion contractual aplicada el `2026-04-29`:
   "id": 1,
   "information_source_id": 1,
   "url": "https://elpais.com/rss",
-  "category_id": 2
+  "category_id": 11000000
 }
 ```
 
@@ -308,9 +308,9 @@ Actualizacion contractual aplicada el `2026-04-29`:
 | Metodo | Ruta | Auth | Request | Response | Notas |
 |---|---|---|---|---|---|
 | GET | `/api/v1/users/{user_id}/alerts` | Si | Path param `user_id` | `List[Alert]` | |
-| POST | `/api/v1/users/{user_id}/alerts` | Si | `AlertCreate` | `Alert` | `201 Created`; requiere rol `manager`; `400` si la alerta no tiene exactamente una categoria valida o si sus fuentes/canales no son compatibles con ella |
+| POST | `/api/v1/users/{user_id}/alerts` | Si | `AlertCreate` | `Alert` | `201 Created`; requiere rol `manager`; `400` si la alerta informa mas de una categoria, una categoria invalida o fuentes/canales incompatibles con ella |
 | GET | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | Path params | `Alert` | |
-| PUT | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | `AlertUpdate` | `Alert` | `400` si deja la alerta sin exactamente una categoria valida o con categorias/fuentes incompatibles |
+| PUT | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | `AlertUpdate` | `Alert` | `400` si deja mas de una categoria, una categoria invalida o categorias/fuentes incompatibles |
 | DELETE | `/api/v1/users/{user_id}/alerts/{alert_id}` | Si | Path params | Sin body | `204 No Content`; borra notificaciones asociadas |
 
 ### 5.6 Notificaciones

@@ -76,7 +76,7 @@ def test_notification_values_are_correct(
         json={
             "name": "Energía",
             "descriptors": ["energía", "gas"],
-            "categories": [{"code": "04000000", "label": "Economía"}],
+            "categories": [{"code": "04000000", "label": "Economía, negocios y finanzas"}],
             "cron_expression": "0 * * * *",
         },
         headers=headers,

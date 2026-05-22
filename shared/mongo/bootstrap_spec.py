@@ -189,7 +189,7 @@ COLLECTION_SPECS = [
                     "first_name": {"bsonType": "string"},
                     "last_name": {"bsonType": "string"},
                     "organization": {"bsonType": ["string", "null"]},
-                    "role": {"enum": ["manager", "reader"]},
+                    "role": {"enum": ["gestor", "reader"]},
                     "status": {"enum": ["pending_verification", "active", "disabled"]},
                     "password_hash": {"bsonType": ["string", "null"]},
                     "email_verified_at": {"bsonType": ["date", "null"]},
@@ -272,7 +272,7 @@ COLLECTION_SPECS = [
                             },
                         },
                     },
-                    "category_id": {"bsonType": ["int", "long"]},
+                    "category_id": {"bsonType": ["int", "long", "null"]},
                     "rss_channel_ids": {
                         "bsonType": "array",
                         "items": {"bsonType": ["int", "long"]},

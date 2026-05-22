@@ -89,7 +89,7 @@ def test_resolve_alert_category_rejects_multiple_categories() -> None:
         )
 
     assert exc_info.value.status_code == 400
-    assert "exactamente una" in str(exc_info.value.detail).lower()
+    assert "como máximo una" in str(exc_info.value.detail).lower()
 
 
 def test_doc_to_alert_does_not_expose_internal_enabled_flag() -> None:
@@ -99,7 +99,7 @@ def test_doc_to_alert_does_not_expose_internal_enabled_flag() -> None:
             "user_id": 7,
             "name": "Energia",
             "descriptors": ["energia"],
-            "categories": [{"code": "4000000", "label": "Economía, negocios y finanzas"}],
+            "categories": [{"code": "04000000", "label": "Economía, negocios y finanzas"}],
             "rss_channel_ids": [101],
             "information_sources_ids": [3],
             "cron_expression": "*/15 * * * *",

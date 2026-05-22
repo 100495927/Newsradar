@@ -148,7 +148,6 @@ STANDARD_RSS_SOURCES: tuple[RSSSeedSource, ...] = (
     RSSSeedSource("Expansión", "Mercados bursátiles", "https://e00-expansion.uecdn.es/rss/mercados.xml", category_id=4000000),
     RSSSeedSource("Expansión", "Empresas", "https://e00-expansion.uecdn.es/rss/empresas.xml", category_id=4000000),
     RSSSeedSource("Expansión", "Economía 2", "https://e00-expansion.uecdn.es/rss/economia.xml", category_id=4000000),
-    RSSSeedSource("Expansión", "Ciencia y tecnología", "https://e00-expansion.uecdn.es/rss/tecnologia.xml", category_id=13000000),
     RSSSeedSource("El Periódico", "Política", "https://www.elperiodico.com/es/rss/rss_portada.xml", category_id=11000000),
     RSSSeedSource("El Periódico", "Política 2", "https://www.elperiodico.com/es/rss/rss_politica.xml", category_id=11000000),
     RSSSeedSource("El Periódico", "Economía", "https://www.elperiodico.com/es/rss/rss_economia.xml", category_id=4000000),

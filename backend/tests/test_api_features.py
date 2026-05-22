@@ -98,37 +98,30 @@ def test_create_category_persists_new_category(monkeypatch) -> None:
     monkeypatch.setattr(category_routes, "next_mongo_id", lambda _key: 42)
 
     response = category_routes.create_category(
-        payload=category_routes.CategoryCreate(name="Innovacion local", source="IPTC"),
+        payload=category_routes.CategoryCreate(name="Sociedad", source="IPTC"),
         _=_dummy_user(),
     )
 
-    assert response.id == 42
-    assert response.name == "Innovacion local"
-    assert categories_store[42] == response
-    assert categories_col.docs[0]["_id"] == 42
-    assert categories_col.docs[0]["descripciones"][0]["nombre"] == "Innovacion local"
+    assert response.id == 14000000
+    assert response.name == "Sociedad"
+    assert categories_store[14000000] == response
+    assert categories_col.docs[0]["_id"] == 14000000
+    assert categories_col.docs[0]["descripciones"][0]["nombre"] == "Sociedad"
 
 
-def test_create_category_rejects_duplicate_normalized_name(monkeypatch) -> None:
-    monkeypatch.setattr(
-        category_routes,
-        "categories_store",
-        {
-            42: Category(id=42, name="Innovacion local", source="IPTC"),
-        },
-    )
+def test_create_category_rejects_non_catalog_name(monkeypatch) -> None:
+    monkeypatch.setattr(category_routes, "categories_store", {})
     monkeypatch.setattr(category_routes, "categories_col", FakeCategoriesCollection())
-    monkeypatch.setattr(category_routes, "next_mongo_id", lambda _key: 43)
 
     try:
         category_routes.create_category(
-            payload=category_routes.CategoryCreate(name="Innovacion   Local", source="IPTC"),
+            payload=category_routes.CategoryCreate(name="Innovacion local", source="IPTC"),
             _=_dummy_user(),
         )
     except HTTPException as exc:
-        assert exc.status_code == 409
+        assert exc.status_code == 422
     else:
-        raise AssertionError("Expected duplicate category conflict")
+        raise AssertionError("Expected non-catalog category error")
 
 
 def test_list_categories_returns_loaded_catalog(monkeypatch) -> None:
@@ -148,22 +141,22 @@ def test_list_categories_returns_loaded_catalog(monkeypatch) -> None:
 
 def test_update_category_persists_existing_category(monkeypatch) -> None:
     categories_store = {
-        42: Category(id=42, name="Innovacion local", source="IPTC"),
+        14000000: Category(id=14000000, name="Sociedad", source="IPTC"),
     }
-    categories_col = FakeCategoriesCollection([{"_id": 42, "descripciones": []}])
+    categories_col = FakeCategoriesCollection([{"_id": 14000000, "descripciones": []}])
     monkeypatch.setattr(category_routes, "categories_store", categories_store)
     monkeypatch.setattr(category_routes, "categories_col", categories_col)
 
     response = category_routes.update_category(
-        category_id=42,
-        payload=category_routes.CategoryUpdate(name="Innovacion regional"),
+        category_id=14000000,
+        payload=category_routes.CategoryUpdate(name="sociedad"),
         _=_dummy_user(),
     )
 
-    assert response.id == 42
-    assert response.name == "Innovacion regional"
-    assert categories_store[42].name == "Innovacion regional"
-    assert categories_col.docs[0]["descripciones"][0]["nombre"] == "Innovacion regional"
+    assert response.id == 14000000
+    assert response.name == "Sociedad"
+    assert categories_store[14000000].name == "Sociedad"
+    assert categories_col.docs[0]["descripciones"][0]["nombre"] == "Sociedad"
 
 
 def test_update_category_missing_returns_404(monkeypatch) -> None:
@@ -181,45 +174,43 @@ def test_update_category_missing_returns_404(monkeypatch) -> None:
         raise AssertionError("Expected missing category error")
 
 
-def test_update_category_rejects_duplicate_normalized_name(monkeypatch) -> None:
+def test_update_category_rejects_name_for_other_catalog_id(monkeypatch) -> None:
     monkeypatch.setattr(
         category_routes,
         "categories_store",
         {
-            42: Category(id=42, name="Innovacion local", source="IPTC"),
-            43: Category(id=43, name="Sociedad civil", source="IPTC"),
+            11000000: Category(id=11000000, name="Política", source="IPTC"),
+            14000000: Category(id=14000000, name="Sociedad", source="IPTC"),
         },
     )
     monkeypatch.setattr(category_routes, "categories_col", FakeCategoriesCollection())
 
     try:
         category_routes.update_category(
-            category_id=43,
-            payload=category_routes.CategoryUpdate(name="innovacion   LOCAL"),
+            category_id=14000000,
+            payload=category_routes.CategoryUpdate(name="Política"),
             _=_dummy_user(),
         )
     except HTTPException as exc:
-        assert exc.status_code == 409
+        assert exc.status_code == 422
     else:
-        raise AssertionError("Expected duplicate category conflict")
+        raise AssertionError("Expected catalog ID/name mismatch")
 
 
-def test_delete_category_with_active_rss_channel_returns_409(monkeypatch) -> None:
-    monkeypatch.setattr(
-        category_routes,
-        "categories_store",
-        {
-            42: Category(id=42, name="Innovacion local", source="IPTC"),
-        },
-    )
-    monkeypatch.setattr(category_routes, "rss_channels_col", FakeChannelsCollection([{"category_id": 42}]))
+def test_delete_category_with_active_rss_channel_keeps_channel(monkeypatch) -> None:
+    categories_store = {
+        14000000: Category(id=14000000, name="Sociedad", source="IPTC"),
+    }
+    categories_col = FakeCategoriesCollection([{"_id": 14000000, "descripciones": []}])
+    channels_col = FakeChannelsCollection([{"category_id": 14000000}])
+    monkeypatch.setattr(category_routes, "categories_store", categories_store)
+    monkeypatch.setattr(category_routes, "categories_col", categories_col)
 
-    try:
-        category_routes.delete_category(category_id=42, _=_dummy_user())
-    except HTTPException as exc:
-        assert exc.status_code == 409
-    else:
-        raise AssertionError("Expected category in-use conflict")
+    response = category_routes.delete_category(category_id=14000000, _=_dummy_user())
+
+    assert response is None
+    assert 14000000 not in categories_store
+    assert channels_col.docs == [{"category_id": 14000000}]
 
 
 def test_delete_category_missing_returns_404(monkeypatch) -> None:
@@ -235,17 +226,16 @@ def test_delete_category_missing_returns_404(monkeypatch) -> None:
 
 def test_delete_category_without_channels_removes_category(monkeypatch) -> None:
     categories_store = {
-        9999: Category(id=9999, name="Categoria temporal", source="IPTC"),
+        7000000: Category(id=7000000, name="Salud", source="IPTC"),
     }
-    categories_col = FakeCategoriesCollection([{"_id": 9999, "descripciones": []}])
+    categories_col = FakeCategoriesCollection([{"_id": 7000000, "descripciones": []}])
     monkeypatch.setattr(category_routes, "categories_store", categories_store)
     monkeypatch.setattr(category_routes, "categories_col", categories_col)
-    monkeypatch.setattr(category_routes, "rss_channels_col", FakeChannelsCollection([]))
 
-    response = category_routes.delete_category(category_id=9999, _=_dummy_user())
+    response = category_routes.delete_category(category_id=7000000, _=_dummy_user())
 
     assert response is None
-    assert 9999 not in categories_store
+    assert 7000000 not in categories_store
     assert categories_col.docs == []
 
 
@@ -307,7 +297,6 @@ def test_create_notification_uses_alert_delivery_channels(monkeypatch) -> None:
     monkeypatch.setattr(notification_routes, "alerts_col", alerts_col)
     monkeypatch.setattr(notification_routes, "notifications_col", notifications_col)
     monkeypatch.setattr(notification_routes, "next_mongo_id", lambda _key: 55)
-    monkeypatch.setattr(notification_routes, "ensure_user_can_access", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(
         notification_routes,
         "ensure_alert_for_user",

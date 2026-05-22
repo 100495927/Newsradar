@@ -32,7 +32,7 @@ from .store import (
 
 API_PREFIX = "/api/v1"
 ROLELESS_DEFAULT_ROLE_ID = 1
-ROLELESS_DEFAULT_ROLE_NAME = "manager"
+ROLELESS_DEFAULT_ROLE_NAME = "gestor"
 
 app = FastAPI(
     title="NewsRadar API",
@@ -61,10 +61,19 @@ app.include_router(stats_router, prefix=f"{API_PREFIX}/stats")
 # -- Startup --
 
 def _sync_user_counter_from_mongo() -> None:
-    """Alinea el contador de usuarios con el mayor ID persistido en MongoDB."""
+    """Alinea los contadores de usuarios con el mayor ID persistido en MongoDB."""
     max_doc = users_col.find_one(sort=[("id", pymongo.DESCENDING)])
     if max_doc and isinstance(max_doc.get("id"), int):
-        counters["users"] = max_doc["id"] + 1
+        max_user_id = int(max_doc["id"])
+        counters["users"] = max_user_id + 1
+        counters_col.update_one(
+            {"_id": "users"},
+            {
+                "$max": {"seq": max_user_id},
+                "$set": {"updated_at": datetime.now(timezone.utc)},
+            },
+            upsert=True,
+        )
 
 
 def _seed_manager_role() -> None:

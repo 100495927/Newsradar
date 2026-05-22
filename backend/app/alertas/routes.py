@@ -117,7 +117,7 @@ def _resolve_alert_category_or_400(categories: list[dict] | None) -> tuple[int |
     if len(categories) != 1:
         raise HTTPException(
             status_code=400,
-            detail="La alerta debe incluir exactamente una categoría IPTC",
+            detail="La alerta debe incluir como máximo una categoría IPTC",
         )
 
     candidate = categories[0]
@@ -153,7 +153,7 @@ def _resolve_alert_category_or_400(categories: list[dict] | None) -> tuple[int |
             detail="La categoría de la alerta no corresponde a una categoría IPTC válida",
         )
 
-    return category.id, [{"code": str(category.id), "label": category.name}]
+    return category.id, [{"code": category.code, "label": category.name}]
 
 
 def _normalize_resource_ids(raw_ids: list[str] | None, field_name: str) -> list[int]:
@@ -256,30 +256,31 @@ def _validate_alert_scope_or_400(
                 detail=f"Fuentes de informacion no encontradas: {missing_sources}",
             )
 
-        compatible_source_ids = {
-            int(doc["information_source_id"])
-            for doc in rss_channels_col.find(
-                {
-                    "information_source_id": {"$in": normalized_source_ids},
-                    "category_id": category_id,
-                    "deleted_at": {"$exists": False},
-                },
-                {"information_source_id": 1, "_id": 0},
-            )
-        }
-        incompatible_sources = [
-            source_id
-            for source_id in normalized_source_ids
-            if source_id not in compatible_source_ids
-        ]
-        if incompatible_sources:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Las fuentes seleccionadas no tienen canales RSS compatibles con la "
-                    f"categoria de la alerta: {incompatible_sources}"
-                ),
-            )
+        if category_id is not None:
+            compatible_source_ids = {
+                int(doc["information_source_id"])
+                for doc in rss_channels_col.find(
+                    {
+                        "information_source_id": {"$in": normalized_source_ids},
+                        "category_id": category_id,
+                        "deleted_at": {"$exists": False},
+                    },
+                    {"information_source_id": 1, "_id": 0},
+                )
+            }
+            incompatible_sources = [
+                source_id
+                for source_id in normalized_source_ids
+                if source_id not in compatible_source_ids
+            ]
+            if incompatible_sources:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Las fuentes seleccionadas no tienen canales RSS compatibles con la "
+                        f"categoria de la alerta: {incompatible_sources}"
+                    ),
+                )
 
     return normalized_channel_ids, normalized_source_ids
 

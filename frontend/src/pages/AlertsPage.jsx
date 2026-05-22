@@ -9,11 +9,36 @@ import { apiFetch, getCategories } from '../api/apiClient'
 
 const MAX_ALERTS = 20
 
+function normalizeCategoryCode(code) {
+  const raw = String(code ?? '').trim()
+  return /^\d+$/.test(raw) ? raw.padStart(8, '0') : raw
+}
+
+function parseDescriptors(value) {
+  return String(value ?? '')
+    .split(/[,;\n]/)
+    .map((descriptor) => descriptor.trim())
+    .filter(Boolean)
+}
+
+function mergeDescriptors(...descriptorGroups) {
+  const seen = new Set()
+  const merged = []
+  descriptorGroups.flat().forEach((descriptor) => {
+    const normalized = descriptor.trim()
+    const key = normalized.toLocaleLowerCase()
+    if (!normalized || seen.has(key)) return
+    seen.add(key)
+    merged.push(normalized)
+  })
+  return merged
+}
+
 function toLocal(a) {
   return {
     id: a.id,
     name: a.name,
-    cat: a.categories?.[0]?.code ?? '',
+    cat: normalizeCategoryCode(a.categories?.[0]?.code),
     cron: a.cron_expression,
     enabled: a.enabled ?? true,
     rssChannelIds: (a.rss_channels_ids ?? []).map(String),
@@ -31,7 +56,13 @@ function AlertsPage() {
 
   // Create modal
   const [showModal, setShowModal] = useState(false)
-  const [newAlert, setNewAlert] = useState({ name: '', cat: '', cron: '*/15 * * * *', rssChannelIds: [] })
+  const [newAlert, setNewAlert] = useState({
+    name: '',
+    descriptorsText: '',
+    cat: '',
+    cron: '*/15 * * * *',
+    rssChannelIds: [],
+  })
   const [error, setError] = useState('')
   const [synonymSuggestions, setSynonymSuggestions] = useState([])
   const [acceptedSynonyms, setAcceptedSynonyms] = useState([])
@@ -39,8 +70,15 @@ function AlertsPage() {
 
   // Edit modal
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editData, setEditData] = useState({ id: null, name: '', cat: '', cron: '*/15 * * * *', rssChannelIds: [] })
-  const [editExtraDescriptors, setEditExtraDescriptors] = useState([])
+  const [editData, setEditData] = useState({
+    id: null,
+    name: '',
+    descriptorsText: '',
+    cat: '',
+    cron: '*/15 * * * *',
+    rssChannelIds: [],
+  })
+  const [editAcceptedSynonyms, setEditAcceptedSynonyms] = useState([])
   const [editSuggestions, setEditSuggestions] = useState([])
   const [editError, setEditError] = useState('')
   const [loadingEditSynonyms, setLoadingEditSynonyms] = useState(false)
@@ -59,7 +97,11 @@ function AlertsPage() {
   const cronLabel = (cron) => frequencies.find((f) => f.value === cron)?.label ?? cron
 
   const catLabel = (code) => categories.find((c) => c.value === code)?.label ?? code
-  const categoryPayload = (code) => (code ? [{ code, label: catLabel(code) }] : [])
+  const categoryPayload = (code) => {
+    const normalizedCode = normalizeCategoryCode(code)
+    const category = categories.find((c) => c.value === normalizedCode)
+    return category ? [{ code: normalizedCode, label: category.canonicalName }] : []
+  }
 
   const limitReached = alerts.length >= MAX_ALERTS
 
@@ -75,6 +117,7 @@ function AlertsPage() {
       const normalized = apiCategories.map((category) => ({
         value: category.code,
         label: t(`categories.${category.code}`, category.name),
+        canonicalName: category.name,
       }))
       setCategories(normalized)
       if (normalized.length > 0) {
@@ -135,7 +178,7 @@ function AlertsPage() {
         name: alert.name,
         cron_expression: alert.cron,
         enabled: alert.enabled,
-        descriptors: alert.descriptors.length > 0 ? alert.descriptors : [alert.name],
+        descriptors: alert.descriptors ?? [],
         categories: categoryPayload(alert.cat),
         rss_channels_ids: alert.rssChannelIds ?? [],
       }),
@@ -176,10 +219,15 @@ function AlertsPage() {
       setError('No se ha podido cargar la lista de categorias')
       return
     }
+    const descriptors = mergeDescriptors(parseDescriptors(newAlert.descriptorsText), acceptedSynonyms)
+    if (descriptors.length === 0) {
+      setError(t('alerts.descriptorsRequired', 'Introduce al menos un descriptor separado por comas'))
+      return
+    }
     const payload = {
-      name: newAlert.name,
+      name: newAlert.name.trim(),
       cron_expression: newAlert.cron,
-      descriptors: [newAlert.name, ...acceptedSynonyms],
+      descriptors,
       categories: selectedCategories,
       rss_channels_ids: newAlert.rssChannelIds,
     }
@@ -194,7 +242,13 @@ function AlertsPage() {
       }
       const saved = await res.json()
       setAlerts([...alerts, toLocal(saved)])
-      setNewAlert({ name: '', cat: categories[0]?.value ?? '', cron: '*/15 * * * *', rssChannelIds: [] })
+      setNewAlert({
+        name: '',
+        descriptorsText: '',
+        cat: categories[0]?.value ?? '',
+        cron: '*/15 * * * *',
+        rssChannelIds: [],
+      })
       setSynonymSuggestions([])
       setAcceptedSynonyms([])
       setShowModal(false)
@@ -206,16 +260,18 @@ function AlertsPage() {
   // ── Edit modal handlers ────────────────────────────────────────────────────
 
   const handleOpenEdit = (alert) => {
-    const extra = (alert.descriptors ?? []).filter((d) => d !== alert.name)
-    setEditData({ id: alert.id, name: alert.name, cat: alert.cat, cron: alert.cron, rssChannelIds: alert.rssChannelIds })
-    setEditExtraDescriptors(extra)
+    setEditData({
+      id: alert.id,
+      name: alert.name,
+      descriptorsText: (alert.descriptors ?? []).join(', '),
+      cat: alert.cat,
+      cron: alert.cron,
+      rssChannelIds: alert.rssChannelIds,
+    })
+    setEditAcceptedSynonyms([])
     setEditSuggestions([])
     setEditError('')
     setShowEditModal(true)
-  }
-
-  const removeEditDescriptor = (word) => {
-    setEditExtraDescriptors((prev) => prev.filter((d) => d !== word))
   }
 
   const handleFetchEditSynonyms = async () => {
@@ -226,7 +282,10 @@ function AlertsPage() {
       const res = await apiFetch(`/api/v1/synonyms?word=${encodeURIComponent(editData.name.trim())}`)
       if (!res.ok) return
       const data = await res.json()
-      setEditSuggestions(data.filter((w) => !editExtraDescriptors.includes(w) && w !== editData.name))
+      const currentDescriptors = mergeDescriptors(parseDescriptors(editData.descriptorsText), editAcceptedSynonyms)
+      setEditSuggestions(
+        data.filter((w) => !currentDescriptors.some((d) => d.toLocaleLowerCase() === w.toLocaleLowerCase())),
+      )
     } catch {
       // silencioso
     } finally {
@@ -235,10 +294,10 @@ function AlertsPage() {
   }
 
   const toggleEditSuggestion = (word) => {
-    if (editExtraDescriptors.includes(word)) {
-      removeEditDescriptor(word)
+    if (editAcceptedSynonyms.includes(word)) {
+      setEditAcceptedSynonyms((prev) => prev.filter((d) => d !== word))
     } else {
-      setEditExtraDescriptors((prev) => [...prev, word])
+      setEditAcceptedSynonyms((prev) => [...prev, word])
     }
   }
 
@@ -251,11 +310,16 @@ function AlertsPage() {
       return
     }
     const currentAlert = alerts.find((a) => a.id === editData.id)
+    const descriptors = mergeDescriptors(parseDescriptors(editData.descriptorsText), editAcceptedSynonyms)
+    if (descriptors.length === 0) {
+      setEditError(t('alerts.descriptorsRequired', 'Introduce al menos un descriptor separado por comas'))
+      return
+    }
     const payload = {
-      name: editData.name,
+      name: editData.name.trim(),
       cron_expression: editData.cron,
       enabled: currentAlert?.enabled ?? true,
-      descriptors: [editData.name, ...editExtraDescriptors],
+      descriptors,
       categories: selectedCategories,
       rss_channels_ids: editData.rssChannelIds,
     }
@@ -458,6 +522,25 @@ function AlertsPage() {
                     {t('alerts.suggestSynonyms', 'Sinónimos')}
                   </button>
                 </div>
+                <p className="text-xs text-slate-500">
+                  {t('alerts.nameHint', 'Solo identifica la alerta; no se usa como descriptor de búsqueda.')}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase text-slate-500">
+                  {t('alerts.descriptorsLabel', 'Descriptores')}
+                </label>
+                <textarea
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 min-h-24 resize-y"
+                  placeholder={t('alerts.descriptorsPlaceholder', 'Ej: elecciones, congreso, senado')}
+                  value={newAlert.descriptorsText}
+                  onChange={(e) => setNewAlert({ ...newAlert, descriptorsText: e.target.value })}
+                  required
+                />
+                <p className="text-xs text-slate-500">
+                  {t('alerts.descriptorsHint', 'Separa cada descriptor con una coma. Estos términos son los que disparan la alerta.')}
+                </p>
                 {synonymSuggestions.length > 0 && (
                   <div className="pt-1">
                     <p className="text-[10px] uppercase font-bold text-slate-400 mb-2">
@@ -604,29 +687,41 @@ function AlertsPage() {
                     {t('alerts.suggestSynonyms', 'Sinónimos')}
                   </button>
                 </div>
+                <p className="text-xs text-slate-500">
+                  {t('alerts.nameHint', 'Solo identifica la alerta; no se usa como descriptor de búsqueda.')}
+                </p>
+              </div>
 
-                {editExtraDescriptors.length > 0 && (
-                  <div className="pt-1">
-                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-2">
-                      {t('alerts.currentDescriptors', 'Descriptores actuales')}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {editExtraDescriptors.map((word) => (
-                        <span
-                          key={word}
-                          className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-primary-container text-white"
-                        >
-                          {word}
-                          <button
-                            type="button"
-                            onClick={() => removeEditDescriptor(word)}
-                            className="ml-1 text-white/70 hover:text-white leading-none"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase text-slate-500">
+                  {t('alerts.descriptorsLabel', 'Descriptores')}
+                </label>
+                <textarea
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 min-h-24 resize-y"
+                  placeholder={t('alerts.descriptorsPlaceholder', 'Ej: elecciones, congreso, senado')}
+                  value={editData.descriptorsText}
+                  onChange={(e) => {
+                    setEditData({ ...editData, descriptorsText: e.target.value })
+                    setEditSuggestions([])
+                  }}
+                  required
+                />
+                <p className="text-xs text-slate-500">
+                  {t('alerts.descriptorsHint', 'Separa cada descriptor con una coma. Estos términos son los que disparan la alerta.')}
+                </p>
+
+                {editAcceptedSynonyms.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {editAcceptedSynonyms.map((word) => (
+                      <button
+                        key={word}
+                        type="button"
+                        onClick={() => toggleEditSuggestion(word)}
+                        className="px-3 py-1 rounded-full text-xs font-medium bg-primary-container text-white"
+                      >
+                        {word} ×
+                      </button>
+                    ))}
                   </div>
                 )}
 
@@ -637,7 +732,7 @@ function AlertsPage() {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {editSuggestions.map((word) => {
-                        const isAdded = editExtraDescriptors.includes(word)
+                        const isAdded = editAcceptedSynonyms.includes(word)
                         return (
                           <button
                             key={word}
