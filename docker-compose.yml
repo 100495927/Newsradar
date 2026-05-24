@@ -12,6 +12,7 @@ services:
       # URL interna usada por el contenedor frontend para hacer proxy al backend.
       BACKEND_URL: http://backend:8000
       FRONTEND_PORT: ${FRONTEND_PORT:-5173}
+      VITE_NVIDIA_API_KEY: ${VITE_NVIDIA_API_KEY}
     ports:
       - "${FRONTEND_EXPOSE_PORT:-5173}:5173"
     depends_on:

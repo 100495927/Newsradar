@@ -67,6 +67,8 @@ function AlertsPage() {
   const [synonymSuggestions, setSynonymSuggestions] = useState([])
   const [acceptedSynonyms, setAcceptedSynonyms] = useState([])
   const [loadingSynonyms, setLoadingSynonyms] = useState(false)
+  const [synonymsFetched, setSynonymsFetched] = useState(false)
+  const [synonymsError, setSynonymsError] = useState('')
 
   // Edit modal
   const [showEditModal, setShowEditModal] = useState(false)
@@ -82,6 +84,8 @@ function AlertsPage() {
   const [editSuggestions, setEditSuggestions] = useState([])
   const [editError, setEditError] = useState('')
   const [loadingEditSynonyms, setLoadingEditSynonyms] = useState(false)
+  const [editSynonymsFetched, setEditSynonymsFetched] = useState(false)
+  const [editSynonymsError, setEditSynonymsError] = useState('')
 
   const frequencies = [
     { value: '* * * * *',     label: t('alerts.freq1min',  'Cada minuto') },
@@ -187,20 +191,49 @@ function AlertsPage() {
 
   // ── Create modal handlers ──────────────────────────────────────────────────
 
+  const fetchNvidiaSynonyms = async (word) => {
+    const apiKey = import.meta.env.VITE_NVIDIA_API_KEY
+    const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'meta/llama-3.1-8b-instruct',
+        messages: [
+          {
+            role: 'user',
+            content: `Dame exactamente 3 sinónimos o palabras relacionadas en español para el término "${word}" en el contexto de noticias. Responde SOLO con un array JSON de strings, sin explicación. Ejemplo: ["término1","término2","término3"]`,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 60,
+      }),
+    })
+    if (!res.ok) throw new Error('nvidia_error')
+    const data = await res.json()
+    const text = data.choices?.[0]?.message?.content ?? ''
+    const match = text.match(/\[.*?\]/s)
+    if (!match) throw new Error('parse_error')
+    return JSON.parse(match[0]).slice(0, 3)
+  }
+
   const handleFetchSynonyms = async () => {
     if (!newAlert.name.trim()) return
     setLoadingSynonyms(true)
     setSynonymSuggestions([])
     setAcceptedSynonyms([])
+    setSynonymsFetched(false)
+    setSynonymsError('')
     try {
-      const res = await apiFetch(`/api/v1/synonyms?word=${encodeURIComponent(newAlert.name.trim())}`)
-      if (!res.ok) return
-      const data = await res.json()
-      setSynonymSuggestions(data)
+      const synonyms = await fetchNvidiaSynonyms(newAlert.name.trim())
+      setSynonymSuggestions(synonyms)
     } catch {
-      // silencioso
+      setSynonymsError(t('alerts.synonymsError', 'No se pudieron obtener sugerencias'))
     } finally {
       setLoadingSynonyms(false)
+      setSynonymsFetched(true)
     }
   }
 
@@ -271,6 +304,8 @@ function AlertsPage() {
     setEditAcceptedSynonyms([])
     setEditSuggestions([])
     setEditError('')
+    setEditSynonymsFetched(false)
+    setEditSynonymsError('')
     setShowEditModal(true)
   }
 
@@ -278,18 +313,19 @@ function AlertsPage() {
     if (!editData.name.trim()) return
     setLoadingEditSynonyms(true)
     setEditSuggestions([])
+    setEditSynonymsFetched(false)
+    setEditSynonymsError('')
     try {
-      const res = await apiFetch(`/api/v1/synonyms?word=${encodeURIComponent(editData.name.trim())}`)
-      if (!res.ok) return
-      const data = await res.json()
+      const synonyms = await fetchNvidiaSynonyms(editData.name.trim())
       const currentDescriptors = mergeDescriptors(parseDescriptors(editData.descriptorsText), editAcceptedSynonyms)
       setEditSuggestions(
-        data.filter((w) => !currentDescriptors.some((d) => d.toLocaleLowerCase() === w.toLocaleLowerCase())),
+        synonyms.filter((w) => !currentDescriptors.some((d) => d.toLocaleLowerCase() === w.toLocaleLowerCase())),
       )
     } catch {
-      // silencioso
+      setEditSynonymsError(t('alerts.synonymsError', 'No se pudieron obtener sugerencias'))
     } finally {
       setLoadingEditSynonyms(false)
+      setEditSynonymsFetched(true)
     }
   }
 
@@ -486,6 +522,8 @@ function AlertsPage() {
                   setShowModal(false)
                   setSynonymSuggestions([])
                   setAcceptedSynonyms([])
+                  setSynonymsFetched(false)
+                  setSynonymsError('')
                 }}
                 className="material-symbols-outlined text-slate-400 hover:text-slate-600"
               >
@@ -507,6 +545,8 @@ function AlertsPage() {
                       setNewAlert({ ...newAlert, name: e.target.value })
                       setSynonymSuggestions([])
                       setAcceptedSynonyms([])
+                      setSynonymsFetched(false)
+                      setSynonymsError('')
                     }}
                     required
                   />
@@ -541,6 +581,14 @@ function AlertsPage() {
                 <p className="text-xs text-slate-500">
                   {t('alerts.descriptorsHint', 'Separa cada descriptor con una coma. Estos términos son los que disparan la alerta.')}
                 </p>
+                {synonymsError && (
+                  <p className="text-xs text-red-500 pt-1">{synonymsError}</p>
+                )}
+                {!synonymsError && synonymsFetched && !loadingSynonyms && synonymSuggestions.length === 0 && (
+                  <p className="text-xs text-slate-400 pt-1">
+                    {t('alerts.synonymsEmpty', 'No se encontraron sugerencias para esta palabra')}
+                  </p>
+                )}
                 {synonymSuggestions.length > 0 && (
                   <div className="pt-1">
                     <p className="text-[10px] uppercase font-bold text-slate-400 mb-2">
@@ -672,6 +720,8 @@ function AlertsPage() {
                     onChange={(e) => {
                       setEditData({ ...editData, name: e.target.value })
                       setEditSuggestions([])
+                      setEditSynonymsFetched(false)
+                      setEditSynonymsError('')
                     }}
                     required
                   />
@@ -725,6 +775,14 @@ function AlertsPage() {
                   </div>
                 )}
 
+                {editSynonymsError && (
+                  <p className="text-xs text-red-500 pt-1">{editSynonymsError}</p>
+                )}
+                {!editSynonymsError && editSynonymsFetched && !loadingEditSynonyms && editSuggestions.length === 0 && (
+                  <p className="text-xs text-slate-400 pt-1">
+                    {t('alerts.synonymsEmpty', 'No se encontraron sugerencias para esta palabra')}
+                  </p>
+                )}
                 {editSuggestions.length > 0 && (
                   <div className="pt-1">
                     <p className="text-[10px] uppercase font-bold text-slate-400 mb-2">
