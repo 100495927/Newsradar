@@ -88,6 +88,8 @@ services:
     volumes:
       - ./backend:/app/backend        # Sincroniza lógica
       - ./shared:/app/shared  
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   mongodb:
     image: mongo:8.2
@@ -157,6 +159,8 @@ services:
         condition: service_healthy
     networks:
       - newsradar_net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   alert-worker:
     build:

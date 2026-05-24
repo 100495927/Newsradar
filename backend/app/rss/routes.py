@@ -3,8 +3,9 @@ import socket
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import List
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pymongo.errors import DuplicateKeyError
@@ -23,6 +24,25 @@ from .models import (
 )
 
 router = APIRouter(tags=["information-sources", "rss-channels"])
+
+_LOCAL_RSS_MOCK_HOSTS = {"127.0.0.1", "localhost"}
+_LOCAL_RSS_MOCK_PORT = 8100
+
+
+def _is_containerized_runtime() -> bool:
+    return Path("/.dockerenv").exists()
+
+
+def _runtime_accessible_url(url: str) -> str:
+    parsed = urlparse(url)
+    if (
+        not _is_containerized_runtime()
+        or parsed.hostname not in _LOCAL_RSS_MOCK_HOSTS
+        or parsed.port != _LOCAL_RSS_MOCK_PORT
+    ):
+        return url
+
+    return urlunparse(parsed._replace(netloc=f"host.docker.internal:{parsed.port}"))
 
 
 def _url_accessible(url: str, timeout: int = 5) -> bool:
@@ -136,6 +156,7 @@ def create_information_source(
     _: UserInDB = Depends(get_current_user),
 ) -> InformationSource:
     source_url = _normalize_url(str(payload.url))
+    source_url = _runtime_accessible_url(source_url)
     if not _url_accessible(source_url):
         raise HTTPException(status_code=422, detail="URL no accesible")
     if information_sources_col.find_one({"url": source_url, "deleted_at": {"$exists": False}}):
@@ -183,6 +204,7 @@ def update_information_source(
 
     source_name = update_data.get("name", source["name"])
     source_url = _normalize_url(str(update_data.get("url", source["url"])))
+    source_url = _runtime_accessible_url(source_url)
     if "url" in update_data and not _url_accessible(source_url):
         raise HTTPException(status_code=422, detail="URL no accesible")
     set_fields = {
@@ -257,6 +279,7 @@ def create_source_channel(
     ensure_information_source_exists(source_id)
     ensure_category_exists(payload.category_id)
     channel_url = _normalize_url(str(payload.url))
+    channel_url = _runtime_accessible_url(channel_url)
     if not _url_accessible(channel_url):
         raise HTTPException(status_code=422, detail="URL no accesible")
     if not _is_rss_content(channel_url):
@@ -328,6 +351,7 @@ def update_source_channel(
 
     if "url" in update_data:
         new_url = _normalize_url(str(update_data["url"]))
+        new_url = _runtime_accessible_url(new_url)
         if not _is_rss_content(new_url):
             raise HTTPException(status_code=422, detail="La URL no contiene contenido RSS")
         set_fields["url"] = new_url

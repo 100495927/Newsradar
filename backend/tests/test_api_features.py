@@ -23,6 +23,9 @@ class FakeChannelsCollection:
                 return doc
         return None
 
+    def insert_one(self, doc: dict) -> None:
+        self.docs.append(dict(doc))
+
 
 class FakeCategoriesCollection:
     def __init__(self, docs: list[dict] | None = None) -> None:
@@ -280,6 +283,43 @@ def test_update_rss_channel_rejects_missing_category(monkeypatch) -> None:
         assert exc.status_code == 404
     else:
         raise AssertionError("Expected missing category error")
+
+
+def test_runtime_accessible_url_rewrites_local_mock_inside_container(monkeypatch) -> None:
+    monkeypatch.setattr(rss_routes, "_is_containerized_runtime", lambda: True)
+
+    rewritten = rss_routes._runtime_accessible_url("http://127.0.0.1:8100/rss")
+
+    assert rewritten == "http://host.docker.internal:8100/rss"
+
+
+def test_runtime_accessible_url_keeps_unreachable_loopback_test_url(monkeypatch) -> None:
+    monkeypatch.setattr(rss_routes, "_is_containerized_runtime", lambda: True)
+
+    rewritten = rss_routes._runtime_accessible_url("http://127.0.0.1:1/down")
+
+    assert rewritten == "http://127.0.0.1:1/down"
+
+
+def test_create_rss_channel_rewrites_local_mock_inside_container(monkeypatch) -> None:
+    channels_col = FakeChannelsCollection()
+    monkeypatch.setattr(rss_routes, "rss_channels_col", channels_col)
+    monkeypatch.setattr(rss_routes, "ensure_information_source_exists", lambda _source_id: {"id": 1})
+    monkeypatch.setattr(rss_routes, "ensure_category_exists", lambda _category_id: {"id": 14000000})
+    monkeypatch.setattr(rss_routes, "_is_containerized_runtime", lambda: True)
+    monkeypatch.setattr(rss_routes, "_url_accessible", lambda _url: True)
+    monkeypatch.setattr(rss_routes, "_is_rss_content", lambda _url: True)
+    monkeypatch.setattr(rss_routes, "next_mongo_id", lambda _key: 77)
+
+    response = rss_routes.create_source_channel(
+        source_id=1,
+        payload=rss_routes.RSSChannelCreate(url="http://127.0.0.1:8100/rss", category_id=14000000),
+        _=_dummy_user(),
+    )
+
+    assert response.id == 77
+    assert str(response.url) == "http://host.docker.internal:8100/rss"
+    assert channels_col.docs[0]["url"] == "http://host.docker.internal:8100/rss"
 
 
 def test_create_notification_uses_alert_delivery_channels(monkeypatch) -> None:
