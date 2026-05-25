@@ -311,7 +311,7 @@ def create_user_alert(
 
     ensure_user_exists(user_id)
 
-    if alerts_col.count_documents({"user_id": user_id}) >= 2:
+    if alerts_col.count_documents({"user_id": user_id}) >= 20:
         raise HTTPException(
             status_code=400,
             detail="Un gestor no puede tener más de 20 alertas",
