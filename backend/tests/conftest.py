@@ -32,6 +32,7 @@ def auth_user(client: TestClient) -> dict[str, object]:
         "last_name": "Dev",
         "organization": "DevOps",
         "role_ids": [1],
+        "telfNum": f"{uuid4().int % 1000000000:09d}",
     }
 
     register_response = client.post("/api/v1/auth/register", json=register_payload)

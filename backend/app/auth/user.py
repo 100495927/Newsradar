@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 # -- Roles --
@@ -31,11 +31,22 @@ class UserBase(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=120)
     last_name: str = Field(..., min_length=1, max_length=120)
     organization: str = Field(..., min_length=1, max_length=180)
+    telfNum: Optional[str] = None
 
 
 class UserCreate(UserBase):
     role_ids: List[int] = []
     password: str = Field(..., min_length=6, max_length=128)
+    telfNum: str = Field(..., min_length=9, max_length=9)
+
+    @field_validator("telfNum")
+    def _validate_telfnum(cls, v: str) -> str:  # pragma: no cover - simple validation
+        if not isinstance(v, str):
+            raise ValueError("telfNum debe ser una cadena de 9 dígitos")
+        val = v.strip()
+        if len(val) != 9 or not val.isdigit():
+            raise ValueError("telfNum debe contener exactamente 9 dígitos")
+        return val
 
 
 class UserUpdate(BaseModel):
