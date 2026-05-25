@@ -25,6 +25,9 @@ from .models import (
 
 router = APIRouter(tags=["information-sources", "rss-channels"])
 
+# Límite máximo de canales RSS por fuente (medio de comunicación)
+MAX_RSS_CHANNELS_PER_SOURCE = 5
+
 _LOCAL_RSS_MOCK_HOSTS = {"127.0.0.1", "localhost"}
 _LOCAL_RSS_MOCK_PORT = 8100
 
@@ -278,6 +281,16 @@ def create_source_channel(
 ) -> RSSChannel:
     ensure_information_source_exists(source_id)
     ensure_category_exists(payload.category_id)
+    # Limitar la creación de nuevos canales si la fuente ya tiene el máximo permitido
+    existing_count = rss_channels_col.count_documents({
+        "information_source_id": source_id,
+        "deleted_at": {"$exists": False},
+    })
+    if existing_count >= MAX_RSS_CHANNELS_PER_SOURCE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"La fuente ya tiene el número máximo de canales RSS ({MAX_RSS_CHANNELS_PER_SOURCE})",
+        )
     channel_url = _normalize_url(str(payload.url))
     channel_url = _runtime_accessible_url(channel_url)
     if not _url_accessible(channel_url):
