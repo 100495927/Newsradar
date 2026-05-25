@@ -70,6 +70,7 @@ def _doc_to_alert(doc: dict) -> Alert:
         id=doc["id"],
         user_id=doc["user_id"],
         name=doc["name"],
+        prioridad=int(doc["prioridad"]),
         descriptors=doc.get("descriptors", []),
         categories=doc.get("categories", []),
         rss_channels_ids=[str(value) for value in doc.get("rss_channel_ids", [])],

@@ -43,6 +43,7 @@ function toLocal(a) {
     enabled: a.enabled ?? true,
     rssChannelIds: (a.rss_channels_ids ?? []).map(String),
     descriptors: a.descriptors ?? [],
+    prioridad: a.prioridad ?? 1,
   }
 }
 
@@ -62,6 +63,7 @@ function AlertsPage() {
     cat: '',
     cron: '*/15 * * * *',
     rssChannelIds: [],
+    prioridad: 1,
   })
   const [error, setError] = useState('')
   const [synonymSuggestions, setSynonymSuggestions] = useState([])
@@ -79,6 +81,7 @@ function AlertsPage() {
     cat: '',
     cron: '*/15 * * * *',
     rssChannelIds: [],
+    prioridad: 1,
   })
   const [editAcceptedSynonyms, setEditAcceptedSynonyms] = useState([])
   const [editSuggestions, setEditSuggestions] = useState([])
@@ -185,6 +188,7 @@ function AlertsPage() {
         descriptors: alert.descriptors ?? [],
         categories: categoryPayload(alert.cat),
         rss_channels_ids: alert.rssChannelIds ?? [],
+        prioridad: alert.prioridad ?? 1,
       }),
     })
   }
@@ -247,6 +251,11 @@ function AlertsPage() {
     e.preventDefault()
     setError('')
     if (!newAlert.name.trim() || !newAlert.cron.trim()) return
+    const prioridadNum = Number(newAlert.prioridad)
+    if (!Number.isInteger(prioridadNum) || prioridadNum < 1 || prioridadNum > 4) {
+      setError('Prioridad debe ser un número entre 1 y 4')
+      return
+    }
     const selectedCategories = categoryPayload(newAlert.cat)
     if (selectedCategories.length === 0) {
       setError('No se ha podido cargar la lista de categorias')
@@ -260,6 +269,7 @@ function AlertsPage() {
     const payload = {
       name: newAlert.name.trim(),
       cron_expression: newAlert.cron,
+      prioridad: prioridadNum,
       descriptors,
       categories: selectedCategories,
       rss_channels_ids: newAlert.rssChannelIds,
@@ -281,6 +291,7 @@ function AlertsPage() {
         cat: categories[0]?.value ?? '',
         cron: '*/15 * * * *',
         rssChannelIds: [],
+        prioridad: 1,
       })
       setSynonymSuggestions([])
       setAcceptedSynonyms([])
@@ -300,6 +311,7 @@ function AlertsPage() {
       cat: alert.cat,
       cron: alert.cron,
       rssChannelIds: alert.rssChannelIds,
+      prioridad: alert.prioridad ?? 1,
     })
     setEditAcceptedSynonyms([])
     setEditSuggestions([])
@@ -340,6 +352,11 @@ function AlertsPage() {
   const handleSaveEdit = async (e) => {
     e.preventDefault()
     setEditError('')
+    const prioridadNum = Number(editData.prioridad)
+    if (!Number.isInteger(prioridadNum) || prioridadNum < 1 || prioridadNum > 4) {
+      setEditError('Prioridad debe ser un número entre 1 y 4')
+      return
+    }
     const selectedCategories = categoryPayload(editData.cat)
     if (selectedCategories.length === 0) {
       setEditError('No se ha podido cargar la lista de categorias')
@@ -354,6 +371,7 @@ function AlertsPage() {
     const payload = {
       name: editData.name.trim(),
       cron_expression: editData.cron,
+      prioridad: prioridadNum,
       enabled: currentAlert?.enabled ?? true,
       descriptors,
       categories: selectedCategories,
@@ -670,6 +688,22 @@ function AlertsPage() {
                 </select>
               </div>
 
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase text-slate-500">
+                  {t('alerts.prioridad', 'Prioridad')}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={4}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
+                  value={newAlert.prioridad}
+                  onChange={(e) => setNewAlert({ ...newAlert, prioridad: Number(e.target.value) })}
+                  required
+                />
+                <p className="text-xs text-slate-500">{t('alerts.prioridadHint', 'Valor entero entre 1 y 4')}</p>
+              </div>
+
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <div className="flex gap-4 justify-end pt-4">
                 <button
@@ -862,6 +896,22 @@ function AlertsPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase text-slate-500">
+                  {t('alerts.prioridad', 'Prioridad')}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={4}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
+                  value={editData.prioridad}
+                  onChange={(e) => setEditData({ ...editData, prioridad: Number(e.target.value) })}
+                  required
+                />
+                <p className="text-xs text-slate-500">{t('alerts.prioridadHint', 'Valor entero entre 1 y 4')}</p>
               </div>
 
               {editError && <p className="text-red-500 text-sm">{editError}</p>}

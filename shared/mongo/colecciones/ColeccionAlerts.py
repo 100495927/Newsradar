@@ -23,6 +23,7 @@ class ColeccionAlerts(Coleccion):
                 "id",
                 "user_id",
                 "name",
+                "prioridad",
                 "descriptors",
                 "category_id",
                 "rss_channel_ids",
@@ -38,6 +39,11 @@ class ColeccionAlerts(Coleccion):
                 "id": {"bsonType": ["int", "long"]},
                 "user_id": {"bsonType": ["int", "long"]},
                 "name": {"bsonType": "string"},
+                "prioridad": {
+                    "bsonType": ["int", "long"],
+                    "minimum": 1,
+                    "maximum": 3,
+                },
                 "descriptors": {
                     "bsonType": "array",
                     "minItems": 1,

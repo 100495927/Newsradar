@@ -62,6 +62,7 @@ def test_crear_alerta_requiere_autenticacion():
     """Prueba que la creación de una alerta sin token de autenticación falla."""
     payload = {
         "name": "Alerta de prueba",
+        "prioridad": 1,
         "descriptors": ["tecnologia", "IA"],
         "cron_expression": "0 12 * * *"
     }
@@ -78,7 +79,12 @@ def test_modelo_alerta_invalido():
     """Prueba que Pydantic rechaza alertas que no cumplen los requisitos."""
     # El campo 'name' tiene min_length=1. Si pasamos vacío, debe lanzar error.
     with pytest.raises(ValidationError):
-        AlertCreate(name="", cron_expression="0 12 * * *")
+        AlertCreate(name="", prioridad=1, cron_expression="0 12 * * *")
+
+
+def test_modelo_alerta_rechaza_prioridad_fuera_de_rango():
+    with pytest.raises(ValidationError):
+        AlertCreate(name="Alerta", prioridad=4, cron_expression="0 12 * * *")
 
 
 def test_crear_alerta_persiste_scope_rss_en_mongo(monkeypatch):
@@ -99,6 +105,7 @@ def test_crear_alerta_persiste_scope_rss_en_mongo(monkeypatch):
 
     payload = AlertCreate(
         name="Alerta energia",
+        prioridad=2,
         descriptors=["energia"],
         categories=[{"code": "04000000", "label": "Economía, negocios y finanzas"}],
         rss_channels_ids=["101"],
@@ -115,6 +122,7 @@ def test_crear_alerta_persiste_scope_rss_en_mongo(monkeypatch):
         "id": 33,
         "user_id": 7,
         "name": "Alerta energia",
+        "prioridad": 2,
         "descriptors": ["energia", "alerta", "noticias"],
         "categories": [{"code": "04000000", "label": "Economía, negocios y finanzas"}],
         "rss_channels_ids": ["101"],
@@ -122,6 +130,7 @@ def test_crear_alerta_persiste_scope_rss_en_mongo(monkeypatch):
         "cron_expression": "*/15 * * * *",
     }
     assert alerts_col.docs[0]["category_id"] == 4000000
+    assert alerts_col.docs[0]["prioridad"] == 2
     assert alerts_col.docs[0]["rss_channel_ids"] == [101]
     assert alerts_col.docs[0]["information_sources_ids"] == []
     assert alerts_col.docs[0]["enabled"] is True
@@ -149,6 +158,7 @@ def test_crear_alerta_persiste_varios_rss_channels(monkeypatch):
 
     payload = AlertCreate(
         name="Alerta multi-canal",
+        prioridad=3,
         descriptors=["energia"],
         categories=[{"code": "04000000", "label": "Economía, negocios y finanzas"}],
         rss_channels_ids=["101", "202", "303"],
@@ -162,6 +172,7 @@ def test_crear_alerta_persiste_varios_rss_channels(monkeypatch):
     )
 
     assert alert.rss_channels_ids == ["101", "202", "303"]
+    assert alert.prioridad == 3
     assert alerts_col.docs[0]["rss_channel_ids"] == [101, 202, 303]
 
 
@@ -171,6 +182,7 @@ def test_crear_alerta_rechaza_varias_categorias(monkeypatch):
 
     payload = AlertCreate(
         name="Alerta multicategoria",
+        prioridad=1,
         descriptors=["energia"],
         categories=[
             {"code": "4000000", "label": "Economía, negocios y finanzas"},

@@ -98,6 +98,7 @@ def test_doc_to_alert_does_not_expose_internal_enabled_flag() -> None:
             "id": 10,
             "user_id": 7,
             "name": "Energia",
+            "prioridad": 2,
             "descriptors": ["energia"],
             "categories": [{"code": "04000000", "label": "Economía, negocios y finanzas"}],
             "rss_channel_ids": [101],
@@ -107,6 +108,7 @@ def test_doc_to_alert_does_not_expose_internal_enabled_flag() -> None:
         }
     )
 
+    assert alert.prioridad == 2
     assert "enabled" not in alert.model_dump()
 
 

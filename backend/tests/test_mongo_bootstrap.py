@@ -14,9 +14,13 @@ def test_alerts_collection_bootstrap_spec_matches_runtime_expectations() -> None
     schema = alerts_spec["validator"]["$jsonSchema"]
 
     assert "category_id" in schema["required"]
+    assert "prioridad" in schema["required"]
     assert "rss_channel_ids" in schema["required"]
     assert "information_sources_ids" in schema["required"]
     assert "enabled" in schema["required"]
+    assert schema["properties"]["prioridad"]["bsonType"] == ["int", "long"]
+    assert schema["properties"]["prioridad"]["minimum"] == 1
+    assert schema["properties"]["prioridad"]["maximum"] == 3
     assert schema["properties"]["next_run_at"]["bsonType"] == ["date", "null"]
 
     index_names = {index["kwargs"]["name"] for index in alerts_spec["indexes"]}

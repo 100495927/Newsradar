@@ -12,6 +12,7 @@ class AlertCategoryItem(BaseModel):
 
 class AlertBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
+    prioridad: int = Field(..., ge=1, le=3)
     descriptors: List[str] = Field(default_factory=list)
     categories: List[AlertCategoryItem] = Field(default_factory=list)
     rss_channels_ids: List[str] = Field(default_factory=list)
@@ -25,6 +26,7 @@ class AlertCreate(AlertBase):
 
 class AlertUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=200)
+    prioridad: Optional[int] = Field(None, ge=1, le=3)
     descriptors: Optional[List[str]] = None
     categories: Optional[List[AlertCategoryItem]] = None
     rss_channels_ids: Optional[List[str]] = None
