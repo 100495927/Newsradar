@@ -252,8 +252,8 @@ function AlertsPage() {
     setError('')
     if (!newAlert.name.trim() || !newAlert.cron.trim()) return
     const prioridadNum = Number(newAlert.prioridad)
-    if (!Number.isInteger(prioridadNum) || prioridadNum < 1 || prioridadNum > 4) {
-      setError('Prioridad debe ser un número entre 1 y 4')
+    if (!Number.isInteger(prioridadNum) || prioridadNum < 1 || prioridadNum > 3) {
+      setError('Prioridad debe ser un número entre 1 y 3')
       return
     }
     const selectedCategories = categoryPayload(newAlert.cat)
@@ -353,8 +353,8 @@ function AlertsPage() {
     e.preventDefault()
     setEditError('')
     const prioridadNum = Number(editData.prioridad)
-    if (!Number.isInteger(prioridadNum) || prioridadNum < 1 || prioridadNum > 4) {
-      setEditError('Prioridad debe ser un número entre 1 y 4')
+    if (!Number.isInteger(prioridadNum) || prioridadNum < 1 || prioridadNum > 3) {
+      setEditError('Prioridad debe ser un número entre 1 y 3')
       return
     }
     const selectedCategories = categoryPayload(editData.cat)
@@ -695,13 +695,13 @@ function AlertsPage() {
                 <input
                   type="number"
                   min={1}
-                  max={4}
+                  max={3}
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
                   value={newAlert.prioridad}
                   onChange={(e) => setNewAlert({ ...newAlert, prioridad: Number(e.target.value) })}
                   required
                 />
-                <p className="text-xs text-slate-500">{t('alerts.prioridadHint', 'Valor entero entre 1 y 4')}</p>
+                <p className="text-xs text-slate-500">{t('alerts.prioridadHint', 'Valor entero entre 1 y 3')}</p>
               </div>
 
               {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -905,13 +905,13 @@ function AlertsPage() {
                 <input
                   type="number"
                   min={1}
-                  max={4}
+                  max={3}
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
                   value={editData.prioridad}
                   onChange={(e) => setEditData({ ...editData, prioridad: Number(e.target.value) })}
                   required
                 />
-                <p className="text-xs text-slate-500">{t('alerts.prioridadHint', 'Valor entero entre 1 y 4')}</p>
+                <p className="text-xs text-slate-500">{t('alerts.prioridadHint', 'Valor entero entre 1 y 3')}</p>
               </div>
 
               {editError && <p className="text-red-500 text-sm">{editError}</p>}
