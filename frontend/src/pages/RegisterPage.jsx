@@ -10,6 +10,7 @@ function RegisterPage() {
     last_name: '',
     email: '',
     organization: '',
+    telephone: '',
     password: '',
   })
   const [error, setError] = useState('')
@@ -23,6 +24,12 @@ function RegisterPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
+    // Validate telephone: must be exactly 9 digits
+    if (!/^\d{9}$/.test(form.telephone)) {
+      setError('El teléfono debe contener exactamente 9 dígitos')
+      setLoading(false)
+      return
+    }
     try {
       await register(form)
       navigate('/login?registered=true')
@@ -158,6 +165,23 @@ function RegisterPage() {
                   name="organization"
                   value={form.organization}
                   onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant px-1">
+                  Telf num
+                </label>
+                <input
+                  className="w-full px-4 py-3 rounded-lg bg-surface-container-low border-none focus:ring-2 focus:ring-surface-tint font-medium"
+                  placeholder="612345678"
+                  type="tel"
+                  name="telephone"
+                  value={form.telephone}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  pattern="[0-9]{9}"
+                  maxLength={9}
                   required
                 />
               </div>
