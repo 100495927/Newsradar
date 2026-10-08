@@ -1,89 +1,113 @@
-## 🟢 Estado del Proyecto (Sprint 2)
-**Estado de la CI:** ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+# NewsRadar 
+
+> ** Proyecto Académico Colaborativo**  
+> Este repositorio contiene un proyecto finalizado, desarrollado como parte del grado en Ingeniería Informática de la Universidad Carlos III de Madrid por el **Grupo 5 de DevOps**.
+
+**Estado de la CI:** ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)  
 **Arquitectura:** Sistema distribuido de 7 servicios orquestados con Docker.
+
+---
+
+## Resumen del Proyecto
+
+NewsRadar es un sistema distribuido diseñado para la extracción, indexado y monitorización de fuentes RSS, con un sistema de alertas integrado. 
 
 ### Estructura actual
 La estructura operativa del repo queda separada en:
 * `backend/`: API FastAPI.
-* `rss-worker/`: contiene la logica RSS y los runtimes `rss_worker/` y `alert_worker/`.
+* `rss-worker/`: contiene la lógica RSS y los runtimes `rss_worker/` y `alert_worker/`.
 * `shared/`: utilidades y acceso compartido a MongoDB.
 * `scripts/mongo/`: bootstrap inicial y utilidades administrativas de Mongo.
 
 ### Validaciones Automatizadas en CI
-En este Sprint hemos consolidado la integración de los siguientes componentes:
+Se ha consolidado la integración de los siguientes componentes:
 * **Motor de Búsqueda:** Health check de **Elasticsearch 9.3.2** y autoconfiguración de índices mediante *setup-worker*.
 * **Persistencia:** Base de datos **MongoDB 8.2** con autenticación y volúmenes persistentes.
 * **Backend:** Tests de integración con **Pytest** (validación de lógica de negocio y conectividad).
 * **Notificaciones:** Flujo SMTP verificado mediante *Gmail App Passwords*.
 * **Seguridad:** Verificación de aislamiento de variables de entorno (bloqueo de archivos `.env`).
 
+---
+
 ## Guía de Ejecución y Tests
 
 ### 1. Levantar el entorno completo
 Para arrancar todos los servicios (Frontend, Backend, Worker, Mongo, Elastic, Kibana):
 
-`docker compose up -d --build`
+```bash
+docker compose up -d --build
+```
 
 O con el wrapper del repo:
 
-`./run-docker-compose.sh`
+```bash
+./run-docker-compose.sh
+```
 
-## Guia de conexiones Docker
-
-La documentacion operativa de servicios y accesos (MongoDB, Elasticsearch y Kibana) esta en:
-
+### Guía de conexiones Docker
+La documentación operativa de servicios y accesos (MongoDB, Elasticsearch y Kibana) está en:
 - `docs/informes_ia/guia-conexiones-docker-servicios.md`
 
-> **Nota:** Los logs detallados de la ejecución de las pruebas se encuentran en la pestaña **Actions** del repositorio (requiere acceso de colaborador).
+> **Nota:** Los logs detallados de la ejecución de las pruebas automatizadas se encuentran en la pestaña **Actions** del repositorio.
 
 ### 2. Ejecutar tests de integración
+Este es el comando que garantiza que el contrato entre servicios se cumple:
 
-Este es el comando que garantiza que el contrato entre servicios se cumple
-
-`docker exec newsradar-backend pytest -s tests/api/test_sprint1.py`
+```bash
+docker exec newsradar-backend pytest -s tests/api/test_sprint1.py
+```
 
 ### 3. Scripts de pruebas manuales (Utilidades de equipo)
-
 Si se necesita probar funcionalidades específicas de extracción o de persistencia:
 
-  * **Verificar el worker RSS:** `docker exec newsradar-rss-worker python /app/rss-worker/rss_worker/healthcheck.py`
-  * **Reaplicar bootstrap de Mongo sobre una BD existente:** `docker exec newsradar-backend python /app/scripts/mongo/admin/apply_bootstrap.py`
+* **Verificar el worker RSS:** 
+  ```bash
+  docker exec newsradar-rss-worker python /app/rss-worker/rss_worker/healthcheck.py
+  ```
+* **Reaplicar bootstrap de Mongo sobre una BD existente:** 
+  ```bash
+  docker exec newsradar-backend python /app/scripts/mongo/admin/apply_bootstrap.py
+  ```
 
-### Estado actual de alertas y notificaciones
+---
 
-La funcionalidad de alertas y notificaciones queda actualmente asi:
+## Estado actual de alertas y notificaciones
 
-* Las alertas se persisten en MongoDB en la coleccion `alerts`.
+La funcionalidad de alertas y notificaciones queda actualmente así:
+
+* Las alertas se persisten en MongoDB en la colección `alerts`.
 * Cada alerta guarda `cron_expression`, `enabled`, `last_checked_at`, `last_run_at` y `next_run_at`.
-* El `alert-worker` procesa periodicamente solo las alertas vencidas.
-* Las coincidencias encontradas se persisten en la coleccion `notifications`.
+* El `alert-worker` procesa periódicamente solo las alertas vencidas.
+* Las coincidencias encontradas se persisten en la colección `notifications`.
 * El propio documento de `notifications` sirve como base del buzón interno de la aplicación.
-* Si la configuracion de la alerta incluye canal `email`, el `alert-worker` intenta enviar el correo y actualiza `email_status`, `email_sent_at` y `email_error`.
-* El contrato original de la API AG se mantiene en alertas y notificaciones; la configuracion de entrega y el buzón global quedan documentados como extensiones en `docs/contrato-api-backend.md`.
+* Si la configuración de la alerta incluye canal `email`, el `alert-worker` intenta enviar el correo y actualiza `email_status`, `email_sent_at` y `email_error`.
+* El contrato original de la API AG se mantiene en alertas y notificaciones; la configuración de entrega y el buzón global quedan documentados como extensiones en `docs/contrato-api-backend.md`.
 
 Documento detallado del workflow:
-
 - `docs/workflow-alertas-notificaciones.md`
 
-### Bootstrap de MongoDB
+---
 
-MongoDB se inicializa desde `scripts/mongo/init-mongo.sh` en el primer arranque del contenedor cuando `data/mongodb/data` esta vacio.
+## Bootstrap de MongoDB
+
+MongoDB se inicializa desde `scripts/mongo/init-mongo.sh` en el primer arranque del contenedor cuando `data/mongodb/data` está vacío.
 
 El bootstrap queda separado en dos pasos:
 
-* `scripts/mongo/init-mongo.js`: crea el usuario de aplicacion, las colecciones necesarias, sus validadores, indices y contadores.
-* `scripts/mongo/seed-mongo.js`: siembra el catalogo IPTC canonico, crea el usuario admin inicial y añade las 34 fuentes RSS base.
+* `scripts/mongo/init-mongo.js`: crea el usuario de aplicación, las colecciones necesarias, sus validadores, índices y contadores.
+* `scripts/mongo/seed-mongo.js`: siembra el catálogo IPTC canónico, crea el usuario admin inicial y añade las 34 fuentes RSS base.
 
 Por defecto, el admin inicial queda como `AdminDefault@newsradar.com` con la contraseña `NewsRadar2026`. Si se quiere cambiar el email o el hash bcrypt inicial, se pueden usar `NEWSRADAR_ADMIN_EMAIL` y `NEWSRADAR_ADMIN_PASSWORD_HASH`.
 
 Si una base persistida ya existe pero necesita reconciliar su estructura, se puede usar el script administrativo `scripts/mongo/admin/apply_bootstrap.py`.
 
 ### Reset y rebootstrap
-
 Para limpiar los datastores persistidos y forzar un nuevo bootstrap:
 
 * Linux/macOS: `./scripts/reset_datastores_and_rebootstrap.sh`
 * PowerShell: `./scripts/reset_datastores_and_rebootstrap.ps1`
+
+---
 
 ## Accesos Directos (Entorno Local)
 
@@ -94,19 +118,3 @@ Para limpiar los datastores persistidos y forzar un nuevo bootstrap:
 | **Kibana (Dashboard BI)** | [http://localhost:5601](http://localhost:5601) |
 | **Elasticsearch API** | [http://localhost:9200](http://localhost:9200) |
 | **MongoDB** | `localhost:27017` |
-
-## Información del Sprint 1
-
-<details>
-<summary><b>Haz clic para ver los detalles del Sprint 1</b></summary>
-
-### Logros alcanzados:
-* **Conectividad:** Validación inicial de MongoDB, Backend y SMTP.
-* **Despliegue:** Construcción de imágenes Docker y orquestación base.
-* **Backend:** Health check inicial del servidor FastAPI.
-* **Database:** Test de conexión y autenticación con MongoDB 7.0 (Migrado a 8.2 en Sprint 2).
-* **Notificaciones:** Integración básica con servicio SMTP.
-
-**Nota:** Los logs detallados de la ejecución de las pruebas se encuentran en la pestaña *Actions* del repositorio.
-
-</details>
